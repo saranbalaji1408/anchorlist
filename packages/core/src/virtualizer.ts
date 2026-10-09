@@ -29,18 +29,25 @@ export interface Snapshot {
   readonly pinned: boolean
 }
 
-/** Options of {@link createVirtualizer}. Pass a new object to `plan()` on every render. */
+/**
+ * Options of {@link createVirtualizer}. Pass the current options to `plan()` on
+ * every render; they take effect when that plan is committed. `align`,
+ * `initialSnapshot` and `maxCachedSizes` are read once, at creation.
+ */
 export interface VirtualizerOptions {
   /** Number of items. */
   count: number
   /** Stable key of the item at `index`. Keys must be unique. */
   getKey: (index: number) => Key
-  /** Size estimate for an unmeasured item. Default: average measured size (48 before any measurement). */
+  /**
+   * Size estimate for an unmeasured item. Default: 48, replaced at idle by the
+   * average measured size when that drifts by more than 10%.
+   */
   estimateSize?: (index: number) => number
   /**
    * The edge the list is pinned to. `'end'` for chat (newest at the bottom),
    * `'start'` for feeds. Anchoring uses the anchor item's edge on this side and
-   * `follow` applies to items added at this edge. Default `'start'`.
+   * `follow` applies to items added at this edge. Default `'start'`. Read at creation.
    */
   align?: Edge
   /** Extra px rendered before and after the viewport. Default 400. */
@@ -81,7 +88,7 @@ export interface VirtualizerOptions {
   onAtEdgeChange?: (atEdge: boolean) => void
   /** Scroll position to restore on mount. Read at creation only. */
   initialSnapshot?: Snapshot
-  /** Maximum number of cached sizes (least recently used are evicted). Read at creation only. */
+  /** Maximum number of cached sizes; the least recently measured are evicted. Default unlimited. Read at creation only. */
   maxCachedSizes?: number
 }
 
@@ -126,20 +133,29 @@ export interface Plan extends Range {
 /** A virtualizer instance. See `API.md` for the host contract. */
 export interface Virtualizer {
   /**
-   * Returns the range to render for `options`. Pure: it reads state but
-   * never mutates it, so it is safe in a render phase that may be discarded.
-   * Memoised on the options object.
+   * Returns the range to render for `options` (default: the committed
+   * options). Pure: it reads state but never mutates it, so it is safe in a
+   * render phase that may be discarded or repeated. Empty until `attach()`.
    */
   plan(options?: VirtualizerOptions): Plan
   /**
    * Applies the plan whose rows are now in the DOM: diffs keys, measures,
    * writes spacers and attributes, and restores the anchor. Call after the DOM
-   * update and before paint, with the exact object `plan()` returned.
+   * update and before paint, with the plan object that was rendered. May
+   * call `host.render(false)` when the range must change.
    */
   commit(plan: Plan): void
-  /** Connects the scroller. Call before the first `commit()` that should position the list. */
+  /**
+   * Connects the scroller (replacing a previous one) and runs the reconcile
+   * loop. Call once the scroll container, list and content elements exist,
+   * before the first `commit()` that renders rows.
+   */
   attach<E>(scroller: Scroller<E>): void
-  /** Ref callback for rows: `measureElement(el, key)` on mount, `measureElement(null, key)` on unmount. */
+  /**
+   * Registers a row element: `measureElement(el, key)` on mount,
+   * `measureElement(null, key)` on unmount. The element's main-axis border-box
+   * size is its item size (margins are not measured).
+   */
   measureElement(el: unknown, key: Key): void
   /** Detaches listeners and timers. The instance must not be used afterwards. */
   destroy(): void
@@ -196,8 +212,12 @@ interface TargetMode {
 type Mode = EdgeMode | ItemMode | TargetMode
 
 
-/** Corrections at or below this many px are not written. */
-const EPSILON = 0.5
+/**
+ * Corrections at or below this many px are not written. The anchor keeps its
+ * intended delta, so the residual stays within ±EPSILON and one change moves
+ * content by at most 2 × EPSILON = 0.5 px.
+ */
+const EPSILON = 0.25
 /** No scroll event for this long means momentum ended. */
 const IDLE_MS = 120
 /** Delay for idle work: key validation and estimate refresh. */
@@ -294,7 +314,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   const capture = (): ItemMode | null => {
     const n = idx.count
     const e = eff()
-    if (!n || !sc) return null
+    // Without a scroller nothing is mounted, so this uses model positions.
+    if (!n) return null
     let i = idx.findIndexAtOffset(e - listStart)
     while (i < n - 1 && listStart + idx.offsetOf(i) + idx.size(i) <= e) i++
     const point = (j: number): Point => ({ k: opts.getKey(j), d: edgeOf(j) - e })
@@ -302,6 +323,10 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   }
   const recapture = (): void => {
     mode = capture() ?? mode
+  }
+  /** Moves every point of an item anchor by `by` px. */
+  const shift = (m: Mode, by: number): void => {
+    if (m.t === 1) [m, ...m.f].forEach((p) => (p.d += by))
   }
 
   // ------------------------------------------------------------- scrolling
@@ -316,12 +341,13 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     lastEff = eff()
   }
   const commitPending = (force: boolean): void => {
-    if (sc && pending && !touching) {
-      if (force || !defer()) write(sc.offset() + pending)
+    // Only reachable with a scroller (events and timers stop on destroy).
+    if (pending && !touching) {
+      if (force || !defer()) write(sc!.offset() + pending)
       else scheduleIdle()
     }
   }
-  const scheduleIdle = (): void => later(0, pending ? () => commitPending(false) : undefined, IDLE_MS)
+  const scheduleIdle = (): void => later(0, () => commitPending(false), IDLE_MS)
 
   /** Moves the effective offset, deferring into a transform when a write would interrupt the user. */
   const scrollTo = (desired: number): void => {
@@ -356,11 +382,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     }
     const d = p.d
     if (opts.getKey(j) !== m.k) mode = { t: 1, k: opts.getKey(j), d, i: j, f: [] }
-    const desired = edgeOf(j) - d
-    scrollTo(desired)
-    // Unreachable (clamped at an end): adopt the real position so a later
-    // change that makes room does not catch up with a visible jump.
-    if (Math.abs(eff() - desired) > 1) recapture()
+    scrollTo(edgeOf(j) - d)
   }
 
   // ------------------------------------------------------------------- cycle
@@ -425,8 +447,16 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     passes = 0
     const m = mode
     // Settle: re-anchor on the measured layout (so fallback deltas never go
-    // stale), and turn an edge mode that is not a pin into an anchor.
-    if (m.t ? m.t < 2 : m !== EDGE || opts[more]) recapture()
+    // stale), and turn an edge mode that is not a pin into an anchor. The same
+    // anchor keeps its intended delta when it is off by a skipped correction
+    // (at most EPSILON), so those cannot add up. A larger difference means the
+    // position was unreachable (clamped): adopt it, so a later change that
+    // makes room does not catch up with a visible jump.
+    const c = (m.t ? m.t < 2 : m !== EDGE || opts[more]) && capture()
+    if (c) {
+      if (m.t === 1 && c.k === m.k && Math.abs(m.d - c.d) <= EPSILON) shift(c, m.d - c.d)
+      mode = c
+    }
     lastEff = eff()
     notify()
     if (needBackground) background()
@@ -527,7 +557,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       const same = vp === viewport && !(size < lastSize && s.offset() >= size - vp - 1)
       if (cr !== cross) cache.markStale()
       // Keep the pinned edge fixed: for `end`, content moves with the viewport end.
-      if (atEnd && mode.t === 1) [mode, ...mode.f].forEach((p) => (p.d += vp - viewport))
+      if (atEnd) shift(mode, vp - viewport)
       resized ||= !scroll || !same
       cross = cr
       viewport = vp
@@ -558,7 +588,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   const kick = (): void => {
     if (!sc) return
     restore()
-    if (mode.t === 2) lock()
+    lock()
     queueMicrotask(() => cycle(true))
   }
 
@@ -571,7 +601,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
         const d = keys.diff(o.count, o.getKey)
         r = d === NO_CHANGE ? rangeNow() : project(d, o)
       }
-      return { start: r.start, end: r.end, options: o }
+      return { ...r, options: o }
     },
 
     commit(range) {
@@ -617,8 +647,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     },
 
     destroy() {
-      timers.forEach((t) => t?.())
-      timers.length = 0
+      timers.splice(0).forEach((t) => t?.())
       sc?.translate((pending = 0))
       sc = null
     },
@@ -651,8 +680,9 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       return i < 0 ? null : { start: listStart + idx.offsetOf(i), size: idx.size(i), measured: cache.isFresh(key) }
     },
 
-    getTotalSize: () => idx.total(),
-    indexOf: (key) => keys.indexOf(key),
+    // Both are closures that do not use `this`.
+    getTotalSize: idx.total,
+    indexOf: keys.indexOf,
 
     getSnapshot() {
       const m = mode.t === 1 ? mode : capture()

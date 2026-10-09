@@ -18,8 +18,11 @@ export type ScrollerEvent =
   | 'scrollend'
   /** Direct user input. Cancels a pending `scrollToKey` lock. */
   | 'input'
+  /** Same as `input`. */
   | 'wheel'
+  /** Same as `input`. */
   | 'pointerdown'
+  /** Same as `input`. */
   | 'keydown'
 
 /** Main-axis position and size of an element. */
@@ -50,9 +53,9 @@ export interface Scroller<E = unknown> {
   scrollSize(): number
   /** How far the offset is past either end (rubber-band), 0 when inside. */
   overscrolled(): number
-  /** Main-axis box of a row element. */
+  /** Main-axis box of a row element, relative to the viewport start (transforms included). */
   measure(el: E): Box
-  /** Start of the list's padding box relative to the start of the viewport. */
+  /** Start of the list element relative to the viewport start (transforms included). */
   listStart(): number
   /** Sets the space before the first and after the last rendered row. */
   setSpacers(before: number, after: number): void
@@ -128,7 +131,11 @@ export const HORIZONTAL: Axis = {
 export interface ElementScrollerOptions {
   /** The scroll container (`overflow: auto`, `overflow-anchor: none`). */
   element: HTMLElement
-  /** The element that directly contains the rows. Its start/end padding is owned by the virtualizer. */
+  /**
+   * The element that directly contains the rows. Its main-axis padding is
+   * owned by the virtualizer (use `paddingStart`/`paddingEnd`). Give it and the
+   * scroll container no main-axis border.
+   */
   list: HTMLElement
   /** One wrapper around header, list and footer that receives deferred corrections. Defaults to `list`. */
   content?: HTMLElement
