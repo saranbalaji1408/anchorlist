@@ -1,1 +1,3 @@
-export const VERSION: string = '0.0.0'
+export { AnchorList } from './AnchorList'
+export type { AnchorListHandle, AnchorListProps } from './AnchorList'
+export { useAnchorList } from './useAnchorList'
