@@ -19,7 +19,8 @@ export default defineConfig({
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
   ],
   webServer: {
-    command: `pnpm --filter @anchorlist/fixture-react build && pnpm --filter @anchorlist/fixture-react preview --port ${PORT} --strictPort`,
+    // Builds the packages, then a development build of the fixture (StrictMode checks and React warnings on).
+    command: `pnpm build && pnpm --filter @anchorlist/fixture-react build:dev && pnpm --filter @anchorlist/fixture-react preview --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !isCI,
     timeout: 120_000,
