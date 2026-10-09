@@ -7,20 +7,25 @@
     "virtualized list",
     "virtual scroll",
     "virtual scroller",
+    "virtualization",
     "windowing",
     "infinite scroll",
     "reverse infinite scroll",
     "chat",
     "chat list",
     "scroll anchoring",
+    "scroll position",
+    "prepend",
     "dynamic height",
     "variable height",
-    "masonry",
-    "grid",
-    "typescript",
     "react",
+    "react virtual list",
+    "react chat",
+    "typescript",
     "vue",
-    "svelte"
+    "svelte",
+    "masonry",
+    "grid"
   ],
   "homepage": "https://saranbalaji1408.github.io/anchorlist/",
   "bugs": {
@@ -75,5 +80,11 @@
     "react-dom": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   }
 }
