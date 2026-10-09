@@ -57,6 +57,7 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "bench": "cd ../.. && BENCH=1 NODE_OPTIONS=--expose-gc vitest run packages/core/src/engine.perf.test.ts"
   }
 }
