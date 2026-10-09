@@ -9,16 +9,27 @@ const BASE = '/anchorlist/'
 const SITE_URL = `${SITE_ORIGIN}${BASE}`
 const REPO_URL = 'https://github.com/saranbalaji1408/anchorlist'
 const SITE_NAME = 'anchorlist'
-const SITE_TITLE = 'anchorlist — virtual list with stable scroll anchoring'
+const SITE_TITLE = 'anchorlist, a React virtual list with stable scroll anchoring'
 const SITE_DESCRIPTION =
-  'anchorlist is a tiny virtual list with stable scroll anchoring for React, Vue and Svelte: chat lists without scroll jump, reverse infinite scroll, infinite feeds, dynamic heights, masonry and grid.'
+  'anchorlist is a tiny virtual list for React with stable scroll anchoring: chat lists and reverse infinite scroll without scroll jump, infinite feeds and dynamic item heights. Vue and Svelte bindings are planned.'
 // TODO(og-image): replace the static placeholder with per-page build-time OG images
 // once a lightweight, maintained generator is chosen (e.g. satori + @resvg/resvg-js).
 const OG_IMAGE = `${SITE_URL}og.png`
 
 // vitepress-plugin-llms is typed against a newer Vite major than the one VitePress 1.x bundles.
 type VitePlugins = NonNullable<NonNullable<UserConfig['vite']>['plugins']>
-const llmsPlugins = llmstxt() as unknown as VitePlugins
+const llmsPlugins = llmstxt({
+  domain: SITE_ORIGIN,
+  title: SITE_NAME,
+  description: 'A virtual list for React with stable scroll anchoring (chat, reverse infinite scroll, feeds, dynamic heights).',
+  details: [
+    'anchorlist v0.1 ships `@anchorlist/core` (framework-agnostic engine, zero dependencies) and',
+    '`@anchorlist/react`; the unscoped `anchorlist` package re-exports both.',
+    "Use `align: 'end'` for chat (pinned to the newest item) and `align: 'start'` (default) for feeds.",
+    'Items need unique, stable keys; replace arrays instead of mutating them; never set scrollTop directly.',
+    'The React component API is being finalised; core option names are final.',
+  ].join('\n'),
+}) as unknown as VitePlugins
 
 const pkg = JSON.parse(
   readFileSync(fileURLToPath(new URL('../../packages/anchorlist/package.json', import.meta.url)), 'utf8'),
@@ -49,6 +60,8 @@ function structuredData(pageData: PageData, url: string): HeadConfig[] {
       programmingLanguage: 'TypeScript',
       runtimePlatform: 'browser',
       version: pkg.version,
+      keywords:
+        'virtual list, virtualized list, react virtual list, chat, reverse infinite scroll, infinite scroll, scroll anchoring, dynamic height',
     }),
   ]
 
@@ -156,8 +169,8 @@ export default defineConfig({
         text: 'Guide',
         items: [
           { text: 'Getting started', link: '/guide/getting-started' },
-          { text: 'Chat virtual list', link: '/guide/chat-virtual-list' },
-          { text: 'Infinite feeds', link: '/guide/feed' },
+          { text: 'Chat (pinned to the end)', link: '/guide/chat-virtual-list' },
+          { text: 'Feed (pinned to the start)', link: '/guide/feed' },
           { text: 'Dynamic height', link: '/guide/dynamic-height' },
         ],
       },
@@ -173,6 +186,6 @@ export default defineConfig({
     socialLinks: [{ icon: 'github', link: REPO_URL }],
     editLink: { pattern: `${REPO_URL}/edit/main/docs/:path`, text: 'Edit this page on GitHub' },
     search: { provider: 'local' },
-    footer: { message: 'Pre-release. Licence to be announced.' },
+    footer: { message: 'v0.1. Licence to be announced.' },
   },
 })
