@@ -28,12 +28,12 @@ yarn add anchorlist
 `anchorlist` re-exports `@anchorlist/core` and `@anchorlist/react`. If you only need one of them,
 install it directly. React 18 and 19 are supported as peer dependencies.
 
-<!-- react-api:start (assumed React API, see "React API used on this page" below) -->
-
 ## A chat list (pinned to the end)
 
 ```tsx
 import { AnchorList } from 'anchorlist'
+
+const renderMessage = (message) => <Message message={message} />
 
 function Chat({ messages, hasOlder, loadOlder }) {
   return (
@@ -44,7 +44,7 @@ function Chat({ messages, hasOlder, loadOlder }) {
       align="end"
       hasMoreStart={hasOlder}
       onStartReached={loadOlder}
-      renderItem={(message) => <Message message={message} />}
+      renderItem={renderMessage}
     />
   )
 }
@@ -59,6 +59,8 @@ read stays where it is. More in the [chat guide](./chat-virtual-list).
 ```tsx
 import { AnchorList } from 'anchorlist'
 
+const renderPost = (post) => <Post post={post} />
+
 function Feed({ posts, hasMore, loadMore }) {
   return (
     <AnchorList
@@ -67,22 +69,13 @@ function Feed({ posts, hasMore, loadMore }) {
       getKey={(post) => post.id}
       hasMoreEnd={hasMore}
       onEndReached={loadMore}
-      renderItem={(post) => <Post post={post} />}
+      renderItem={renderPost}
     />
   )
 }
 ```
 
 `align` defaults to `'start'`. More in the [feed guide](./feed).
-
-::: details React API used on this page
-These names are not final until `@anchorlist/react` is published:
-`AnchorList`, `items`, `getKey(item)`, `renderItem(item)`, `style`. The rest (`align`,
-`hasMoreStart`, `hasMoreEnd`, `onStartReached`, `onEndReached`) are
-[core options](/api/#options) passed through unchanged.
-:::
-
-<!-- react-api:end -->
 
 ## Rules that keep scrolling stable
 
@@ -91,6 +84,10 @@ These names are not final until `@anchorlist/react` is published:
 - **Replace arrays instead of mutating them.** Use `setMessages((m) => [...older, ...m])`, not
   `messages.unshift(...)`. The engine compares the previous and next list to detect prepends and
   trims.
+- **Keep `renderItem` stable.** Define it at module scope (as above) or wrap it in `useCallback`.
+  Rows receive no index, so a prepend re-renders no mounted row, but only while `renderItem` and
+  the item objects keep their identity. An inline arrow function re-renders every mounted row on
+  each parent render.
 - **Give the list a bounded height** (a fixed height, or a flex child with `min-height: 0`). The
   list scrolls inside its own container.
 - **Put row margins inside the row**, or use the `gap` option. A row's size is its border box.

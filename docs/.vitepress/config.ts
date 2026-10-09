@@ -27,7 +27,7 @@ const llmsPlugins = llmstxt({
     '`@anchorlist/react`; the unscoped `anchorlist` package re-exports both.',
     "Use `align: 'end'` for chat (pinned to the newest item) and `align: 'start'` (default) for feeds.",
     'Items need unique, stable keys; replace arrays instead of mutating them; never set scrollTop directly.',
-    'The React component API is being finalised; core option names are final.',
+    'Keep `renderItem` stable (module scope or useCallback) so a prepend re-renders no mounted row.',
   ].join('\n'),
 }) as unknown as VitePlugins
 

@@ -12,10 +12,10 @@ item heights. Pin a list to its end (chat) or its start (feed), with any mix of 
 npm install anchorlist
 ```
 
-<!-- react-api:start (assumed React API; reconcile with @anchorlist/react) -->
-
 ```tsx
 import { AnchorList } from 'anchorlist'
+
+const renderMessage = (m) => <Message message={m} /> // stable: module scope or useCallback
 
 <AnchorList
   style={{ height: 600 }}
@@ -24,22 +24,20 @@ import { AnchorList } from 'anchorlist'
   align="end"
   hasMoreStart={hasOlder}
   onStartReached={loadOlder}
-  renderItem={(m) => <Message message={m} />}
+  renderItem={renderMessage}
 />
 ```
-
-<!-- react-api:end -->
 
 ## Why anchorlist
 
 - **Stable scroll anchoring:** prepend history, append messages, remove items and resize rows
-  without the viewport jumping. The core's fuzz test checks this to within 0.5 px over 1.2M random
-  operations.
+  without the viewport jumping. The core's seeded fuzz test checks this to within 0.5 px after every
+  random operation.
 - **Chat and feeds from one option:** `align: 'end'` stays pinned to the newest item, and
   `'start'` serves top-anchored feeds.
 - **Dynamic heights:** rows are measured as they render, so no fixed row height or estimate is
   required.
-- **Small:** hard gzip budgets enforced in CI (core list entry 4.5 kB, React chat path 5.8 kB).
+- **Small:** hard gzip budgets enforced in CI. The React chat path (core + react) must stay at or below 5.8 kB and is currently 5.35 kB.
 
 ## Packages
 

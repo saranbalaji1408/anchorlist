@@ -1,7 +1,7 @@
 {
   "name": "@anchorlist/core",
   "version": "0.0.0",
-  "description": "Framework-agnostic virtual list engine with stable scroll anchoring: windowing, dynamic heights, chat-style reverse infinite scroll, feeds, masonry and grid. Zero dependencies.",
+  "description": "Framework-agnostic virtual list engine with stable scroll anchoring: windowing, dynamic heights, chat-style reverse infinite scroll and feeds without scroll jump. Zero dependencies.",
   "keywords": [
     "virtual list",
     "virtualized list",
@@ -13,10 +13,9 @@
     "chat",
     "chat list",
     "scroll anchoring",
+    "scroll position",
     "dynamic height",
     "variable height",
-    "masonry",
-    "grid",
     "typescript",
     "headless",
     "framework agnostic"

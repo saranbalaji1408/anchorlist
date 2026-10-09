@@ -16,12 +16,12 @@ npm install anchorlist
 
 Requires React 18 or 19.
 
-<!-- react-api:start (assumed React API; reconcile with @anchorlist/react before publishing) -->
-
 ## Chat (pinned to the end)
 
 ```tsx
 import { AnchorList } from 'anchorlist'
+
+const renderMessage = (m) => <Message message={m} /> // stable: module scope or useCallback
 
 <AnchorList
   style={{ height: 600 }}
@@ -30,7 +30,7 @@ import { AnchorList } from 'anchorlist'
   align="end"                 // opens at the newest message and follows new ones
   hasMoreStart={hasOlder}
   onStartReached={loadOlder}  // prepend older messages; the reader stays in place
-  renderItem={(m) => <Message message={m} />}
+  renderItem={renderMessage}
 />
 ```
 
@@ -39,20 +39,21 @@ import { AnchorList } from 'anchorlist'
 ```tsx
 import { AnchorList } from 'anchorlist'
 
+const renderPost = (p) => <Post post={p} />
+
 <AnchorList
   style={{ height: '100vh' }}
   items={posts}
   getKey={(p) => p.id}
   hasMoreEnd={hasMore}
   onEndReached={loadMore}     // infinite scroll
-  renderItem={(p) => <Post post={p} />}
+  renderItem={renderPost}
 />
 ```
 
-<!-- react-api:end -->
-
 Keys must be unique and stable. Replace the array on change (`[...older, ...messages]`) instead of
-mutating it.
+mutating it. Keep `renderItem` stable (module scope or `useCallback`) so a prepend re-renders no
+mounted row.
 
 ## Features
 
@@ -68,7 +69,7 @@ mutating it.
 | iOS Safari momentum and rubber-band | Corrections deferred through a transform, the fling is not interrupted |
 | Restore position | `getSnapshot()` / `initialSnapshot` |
 | Accessibility | `aria-posinset` / `aria-setsize` written on rows |
-| Size | Hard gzip budgets in CI: core list entry 4.5 kB, React chat path 5.8 kB |
+| Size | Hard gzip budgets in CI: React chat path (core + react) ≤ 5.8 kB, currently 5.35 kB; `@anchorlist/react` alone ≤ 1.3 kB, currently 1.01 kB |
 | Dependencies | Zero runtime dependencies in core; React is a peer dependency |
 
 ## How it compares

@@ -13,14 +13,7 @@ description: API reference for anchorlist, @anchorlist/react and @anchorlist/cor
 
 All packages are ESM only, ship TypeScript declarations and target ES2020.
 
-<!-- react-api:start (assumed React API; this whole section is reconciled once @anchorlist/react is final) -->
-
 ## React
-
-::: warning Being finalised
-The React API below follows the core's adapter contract. Names may change before
-`@anchorlist/react` is published. The core options it passes through are final.
-:::
 
 ```tsx
 import { AnchorList, type AnchorListHandle } from 'anchorlist'
@@ -56,8 +49,6 @@ A lower-level hook for custom markup. It returns `[virtualizer, plan]`. Render r
 `plan.start..plan.end` inside your list element, keyed by `options.getKey(i)`, with a ref that
 calls `virtualizer.measureElement(el, key)`. `elements()` returns `{ element, list, content? }`
 once they are mounted. Most apps should use `<AnchorList>`.
-
-<!-- react-api:end -->
 
 ## Core
 

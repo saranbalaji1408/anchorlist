@@ -1,7 +1,7 @@
 {
   "name": "anchorlist",
   "version": "0.0.0",
-  "description": "Virtual list with stable scroll anchoring for React, Vue and Svelte: chat lists without scroll jump, reverse infinite scroll, infinite feeds, dynamic heights, masonry and grid.",
+  "description": "Virtual list for React with stable scroll anchoring: chat lists and reverse infinite scroll without scroll jump, infinite feeds and dynamic heights. Framework-agnostic core, zero dependencies.",
   "keywords": [
     "virtual list",
     "virtualized list",
@@ -21,11 +21,7 @@
     "react",
     "react virtual list",
     "react chat",
-    "typescript",
-    "vue",
-    "svelte",
-    "masonry",
-    "grid"
+    "typescript"
   ],
   "homepage": "https://saranbalaji1408.github.io/anchorlist/",
   "bugs": {

@@ -21,15 +21,16 @@ The viewport is anchored to a **message key**, not to a pixel offset or an index
 the engine measures the rendered rows in the DOM and puts the anchor message back where it was
 before the browser paints. Prepends, trims, row resizes, width changes and removing the anchored
 message itself all leave the message you are reading in place. The engine's fuzz test checks this
-to within 0.5 px across 1.2 million random operations (see [How it is tested](#how-it-is-tested)).
-
-<!-- react-api:start (assumed React API, see "React API used on this page" below) -->
+to within 0.5 px after every random operation (see [How it is tested](#how-it-is-tested)).
 
 ## Basic chat list
 
 ```tsx
 import { useState } from 'react'
 import { AnchorList } from 'anchorlist'
+
+// Module scope keeps the function stable, so mounted rows don't re-render.
+const renderMessage = (message) => <MessageBubble message={message} />
 
 export function Chat({ initial, fetchOlder }) {
   const [messages, setMessages] = useState(initial)
@@ -54,7 +55,7 @@ export function Chat({ initial, fetchOlder }) {
       hasMoreStart={hasOlder}
       onStartReached={loadOlder}
       header={loading ? <Spinner /> : null}
-      renderItem={(message) => <MessageBubble message={message} />}
+      renderItem={renderMessage}
     />
   )
 }
@@ -131,16 +132,6 @@ re-renders only when that range changes:
 />
 ```
 
-::: details React API used on this page
-These names are not final until `@anchorlist/react` is published:
-`AnchorList`, `items`, `getKey(item)`, `renderItem(item)`, `header`, `sticky(range)`, `style`, `ref` with an
-`AnchorListHandle` exposing `scrollToEdge` and `scrollToKey`. The rest (`align`, `hasMoreStart`,
-`onStartReached`, `follow`, `onAtEdgeChange`, `startThreshold`) are
-[core options](/api/#options) passed through unchanged.
-:::
-
-<!-- react-api:end -->
-
 ## Keyboard and viewport resizes
 
 With `align: 'end'`, when the viewport height changes, content keeps its distance from the
@@ -174,10 +165,11 @@ either way, and `onStartReached` is not fired while overscrolled.
 
 ## How it is tested
 
-The core runs a seeded fuzz test with 18 operation types (prepend, append, trims, resizes, anchor
+The core runs a seeded fuzz test with 19 operation types (prepend, append, trims, resizes, anchor
 removal, width changes, touches and more) for both `align: 'end'` and `align: 'start'`. After every
-operation, the anchor must stay within 0.5 px of where it was. A run of 1.2 million operations made
-921,706 drift checks with 0 failures. End-to-end scenarios run in Chromium, WebKit and Firefox.
+operation, the anchor must stay within 0.5 px of where it was. CI runs 10,000 operations per
+configuration. A one-off offline sweep over 20 seeds ran 1.2 million operations and made 921,706
+drift checks with 0 failures. End-to-end scenarios run in Chromium, WebKit and Firefox.
 
 ## Related
 

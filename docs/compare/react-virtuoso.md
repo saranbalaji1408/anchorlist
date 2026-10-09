@@ -43,12 +43,14 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 
 anchorlist enforces gzip size budgets in CI with size-limit:
 
-| Entry | Budget | Measured |
-| --- | --- | --- |
-| `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | 4.5 kB | 4,494 B |
-| `@anchorlist/core` everything | 6.5 kB | 5,537 B |
-| `@anchorlist/react` alone | 1.3 kB | |
-| React chat path (core + react) | 5.8 kB | |
+| Entry | Size (min + gzip) |
+| --- | --- |
+| `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.49 kB |
+| `@anchorlist/core` everything | ≤ 6.5 kB budget, currently 5.54 kB |
+| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.01 kB |
+| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.35 kB |
+
+The budgets are hard limits: CI fails if an entry grows past its budget.
 
 A size comparison against react-virtuoso, measured with the same tool and settings, will be
 published with the v0.2 benchmark.
@@ -71,7 +73,7 @@ published with the v0.2 benchmark.
 
 | react-virtuoso | anchorlist |
 | --- | --- |
-| `data` + `itemContent` | `items` + `renderItem` (React API being finalised) |
+| `data` + `itemContent` | `items` + `renderItem` |
 | `computeItemKey` | `getKey` (required) |
 | `firstItemIndex` | Not needed; prepend by passing a new array |
 | `initialTopMostItemIndex={last}` | `align="end"` |
@@ -79,6 +81,6 @@ published with the v0.2 benchmark.
 | `startReached` / `endReached` | `onStartReached` / `onEndReached` plus `hasMoreStart` / `hasMoreEnd` |
 | `atBottomStateChange` | `onAtEdgeChange` |
 | `scrollToIndex` | `scrollToKey` / `scrollToIndex` / `scrollToEdge` |
-| `components.Header` / `Footer` | `header` / `footer` (React API being finalised) |
+| `components.Header` / `Footer` | `header` / `footer` |
 
 See [React chat virtual list](/guide/chat-virtual-list) and the [API reference](/api/).

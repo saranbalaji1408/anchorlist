@@ -14,13 +14,13 @@ Two things are hard in a feed and handled for you:
 - **New posts arriving at the top while the user reads further down.** The post being read stays
   in place, without a "scroll jump" when the new items are inserted above it.
 
-<!-- react-api:start (assumed React API, see "React API used on this page" below) -->
-
 ## Infinite load
 
 ```tsx
 import { useState } from 'react'
 import { AnchorList } from 'anchorlist'
+
+const renderPost = (post) => <PostCard post={post} />
 
 export function Feed({ firstPage, fetchPage }) {
   const [posts, setPosts] = useState(firstPage.items)
@@ -45,7 +45,7 @@ export function Feed({ firstPage, fetchPage }) {
       hasMoreEnd={cursor != null}
       onEndReached={loadMore}
       footer={loading ? <Spinner /> : null}
-      renderItem={(post) => <PostCard post={post} />}
+      renderItem={renderPost}
     />
   )
 }
@@ -71,34 +71,45 @@ pill.
 
 ## Restore the scroll position
 
-When the user leaves the feed and comes back, save the position and pass it back:
+When the user leaves the feed and comes back, save the position on unmount and pass it back:
 
 ```tsx
-const saved = useRef<Snapshot>()
+import { useLayoutEffect, useRef } from 'react'
+import { AnchorList, type AnchorListHandle, type Snapshot } from 'anchorlist'
 
-<AnchorList
-  ref={list}
-  initialSnapshot={saved.current}
-  // ...
-/>
+// Outlives the component. history.state or sessionStorage work too.
+let savedPosition: Snapshot | undefined = undefined
 
-// before unmount, or when navigating away:
-saved.current = list.current?.getSnapshot()
+export function Feed({ posts }) {
+  const list = useRef<AnchorListHandle>(null)
+
+  // Save in a layout-effect cleanup: it runs while list.current is still set.
+  // In a passive (useEffect) cleanup the handle has already been cleared.
+  useLayoutEffect(
+    () => () => {
+      savedPosition = list.current?.getSnapshot()
+    },
+    [],
+  )
+
+  return (
+    <AnchorList
+      ref={list}
+      initialSnapshot={savedPosition}
+      items={posts}
+      getKey={(post) => post.id}
+      renderItem={renderPost}
+    />
+  )
+}
 ```
+
+You can also read `list.current.getSnapshot()` in an event handler, for example in the click
+handler of a link, before the state change that unmounts the list.
 
 A snapshot is `{ key, index, delta, pinned }`, plain serializable data. You can keep it in
 `history.state` or `sessionStorage`. It is restored exactly once the anchored row has been
 measured. If that key is gone, the item now at the same index is used.
-
-::: details React API used on this page
-These names are not final until `@anchorlist/react` is published:
-`AnchorList`, `items`, `getKey(item)`, `renderItem(item)`, `footer`, `style`, `ref` with an
-`AnchorListHandle` exposing `getSnapshot` and `scrollToEdge`. The rest (`gap`, `hasMoreEnd`,
-`onEndReached`, `follow`, `initialSnapshot`, `endThreshold`) are [core options](/api/#options)
-passed through unchanged. `Snapshot` is a core type.
-:::
-
-<!-- react-api:end -->
 
 ## Long feeds and memory
 

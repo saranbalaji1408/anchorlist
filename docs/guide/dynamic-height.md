@@ -16,13 +16,14 @@ corrected before paint, without visible movement.
 measured, the measured average is used. The estimate is refreshed at idle whenever the average
 drifts by more than 10%.
 
-<!-- react-api:start (assumed React API, see "React API used on this page" below) -->
-
 ```tsx
+// Module scope keeps the function stable, so mounted rows don't re-render.
+const renderRow = (row) => <Row row={row} /> // any height, can change at any time
+
 <AnchorList
   items={rows}
   getKey={(row) => row.id}
-  renderItem={(row) => <Row row={row} />} // any height, can change at any time
+  renderItem={renderRow}
 />
 ```
 
@@ -34,19 +35,11 @@ heights:
   items={rows}
   getKey={(row) => row.id}
   estimateSize={(index) => (rows[index].kind === 'image' ? 320 : 64)}
-  renderItem={(row) => <Row row={row} />}
+  renderItem={renderRow}
 />
 ```
 
 `estimateSize` takes an **index**, like the core option.
-
-::: details React API used on this page
-These names are not final until `@anchorlist/react` is published:
-`AnchorList`, `items`, `getKey(item)`, `renderItem(item)`. `estimateSize(index)` is a
-[core option](/api/#options) passed through unchanged.
-:::
-
-<!-- react-api:end -->
 
 ## What gets measured
 

@@ -29,7 +29,7 @@ features:
     details: Rows are measured in the DOM as they render. Images loading, text re-wrapping and width changes are corrected before paint.
     link: /guide/dynamic-height
   - title: Small and tested
-    details: Hard gzip size budgets in CI, zero runtime dependencies in core, a 1.2M-operation fuzz test and scenarios in Chromium, WebKit and Firefox.
+    details: Hard gzip size budgets in CI, zero runtime dependencies in core, a seeded anchoring fuzz test (10k operations per configuration in CI) and scenarios in Chromium, WebKit and Firefox.
     link: /api/
 ---
 

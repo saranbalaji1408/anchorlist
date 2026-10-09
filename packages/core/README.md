@@ -1,7 +1,7 @@
 # @anchorlist/core
 
 A framework-agnostic virtual list engine with stable scroll anchoring. It has zero dependencies and
-is about 4.5 kB gzip.
+its list entry stays within a 4.5 kB gzip budget.
 
 - **Pin to either edge:** use `align: 'end'` for chat (newest at the bottom) or `'start'` for feeds.
 - **Key-anchored and DOM-measured:** prepends, trims, resizes and anchor removal never move what the
