@@ -1,7 +1,8 @@
 import { createVirtualizer, elementScroller } from '@anchorlist/core'
 import type { ElementScrollerOptions, Plan, Virtualizer, VirtualizerOptions } from '@anchorlist/core'
-import { useLayoutEffect, useReducer, useState } from 'react'
+import { useReducer, useState } from 'react'
 import { flushSync } from 'react-dom'
+import { useLayoutEffect } from './effect'
 
 const increment = (n: number): number => n + 1
 const noop = (): void => {}
