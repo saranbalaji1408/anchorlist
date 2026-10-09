@@ -1,0 +1,70 @@
+{
+  "name": "@anchorlist/react",
+  "version": "0.0.0",
+  "description": "React virtual list with stable scroll anchoring: virtualized chat lists without scroll jump, infinite feeds, dynamic heights, masonry and grid.",
+  "keywords": [
+    "virtual list",
+    "virtualized list",
+    "virtual scroll",
+    "virtual scroller",
+    "windowing",
+    "infinite scroll",
+    "reverse infinite scroll",
+    "chat",
+    "chat list",
+    "scroll anchoring",
+    "dynamic height",
+    "variable height",
+    "masonry",
+    "grid",
+    "typescript",
+    "react",
+    "react virtual list",
+    "react hooks"
+  ],
+  "homepage": "https://saranbalaji1408.github.io/anchorlist/",
+  "bugs": {
+    "url": "https://github.com/saranbalaji1408/anchorlist/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saranbalaji1408/anchorlist.git",
+    "directory": "packages/react"
+  },
+  "license": "UNLICENSED",
+  "author": "saranbalaji1408",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@anchorlist/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19.0.0",
+    "react-dom": "^18.2.0 || ^19.0.0"
+  }
+}

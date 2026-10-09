@@ -1,0 +1,21 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.DS_Store
+*.log
+.env
+.env.*
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# Lighthouse CI
+.lighthouseci/

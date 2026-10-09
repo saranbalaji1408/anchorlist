@@ -1,0 +1,32 @@
+[
+  {
+    "name": "@anchorlist/core (list entry)",
+    "path": "packages/core/dist/index.js",
+    "import": "{ VERSION }",
+    "limit": "4.5 kB",
+    "gzip": true
+  },
+  {
+    "name": "@anchorlist/core (all)",
+    "path": "packages/core/dist/index.js",
+    "import": "*",
+    "limit": "6.5 kB",
+    "gzip": true
+  },
+  {
+    "name": "@anchorlist/react (react and core external)",
+    "path": "packages/react/dist/index.js",
+    "import": "*",
+    "ignore": ["react", "react-dom", "@anchorlist/core"],
+    "limit": "1.3 kB",
+    "gzip": true
+  },
+  {
+    "name": "React chat path (core + react)",
+    "path": "packages/react/dist/index.js",
+    "import": "*",
+    "ignore": ["react", "react-dom"],
+    "limit": "5.8 kB",
+    "gzip": true
+  }
+]

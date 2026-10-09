@@ -1,0 +1,9 @@
+packages:
+  - packages/*
+  - fixtures/*
+  - scenarios
+  - bench
+  - docs
+
+onlyBuiltDependencies:
+  - esbuild

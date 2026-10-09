@@ -1,0 +1,10 @@
+{
+  "name": "@anchorlist/bench",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "bench": "echo \"bench: no benchmarks yet\""
+  }
+}

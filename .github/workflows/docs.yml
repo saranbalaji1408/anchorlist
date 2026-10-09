@@ -1,0 +1,79 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'packages/*/package.json'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Nothing deploys until the repository variable DOCS_ENABLED is set to 'true'.
+    if: vars.DOCS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history for lastUpdated timestamps
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Write IndexNow key file
+        if: vars.INDEXNOW_KEY != ''
+        run: printf '%s' "$INDEXNOW_KEY" > "docs/public/$INDEXNOW_KEY.txt"
+        env:
+          INDEXNOW_KEY: ${{ vars.INDEXNOW_KEY }}
+      - run: pnpm docs:build
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/.vitepress/dist
+
+  deploy:
+    needs: build
+    if: vars.DOCS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+  indexnow:
+    needs: deploy
+    if: vars.DOCS_ENABLED == 'true' && vars.INDEXNOW_KEY != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping IndexNow with sitemap URLs
+        env:
+          INDEXNOW_KEY: ${{ vars.INDEXNOW_KEY }}
+          SITE: https://saranbalaji1408.github.io/anchorlist/
+        run: |
+          set -euo pipefail
+          urls=$(curl -fsSL "${SITE}sitemap.xml" | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g' | jq -R . | jq -s .)
+          payload=$(jq -n \
+            --arg host "saranbalaji1408.github.io" \
+            --arg key "$INDEXNOW_KEY" \
+            --arg keyLocation "${SITE}${INDEXNOW_KEY}.txt" \
+            --argjson urlList "$urls" \
+            '{host: $host, key: $key, keyLocation: $keyLocation, urlList: $urlList}')
+          curl -fsS -X POST https://api.indexnow.org/indexnow \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            -d "$payload" -w '\nHTTP %{http_code}\n'
