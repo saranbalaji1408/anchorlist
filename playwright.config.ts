@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const PORT = 4173
+// Overridable so parallel worktrees don't reuse each other's preview server via reuseExistingServer.
+const PORT = Number(process.env.E2E_PORT ?? 4173)
 const isCI = !!process.env.CI
 const BASE = `http://localhost:${PORT}/`
 const browsers = [
