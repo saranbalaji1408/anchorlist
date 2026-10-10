@@ -177,4 +177,12 @@ export default [
     limit: '1.8 kB',
     gzip: true,
   },
+  {
+    name: 'Svelte chat path (core + compiled svelte)',
+    path: 'packages/svelte/dist/.size/index.js',
+    import: '{ AnchorList }',
+    ignore: ['svelte'],
+    limit: '6.3 kB',
+    gzip: true,
+  },
 ]
