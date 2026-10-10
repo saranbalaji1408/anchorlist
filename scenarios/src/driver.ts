@@ -58,6 +58,8 @@ export interface ListState {
    * copy with `data-testid="stuck"` and `aria-hidden`, outside the list). Replaces the pill.
    */
   stickyItems: boolean
+  /** Sets `aria-busy` on the list. */
+  busy: boolean
 }
 
 /** Mount-time options. */

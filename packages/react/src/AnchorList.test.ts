@@ -30,7 +30,7 @@ describe('AnchorList (render phase)', () => {
     expect(html).toContain('class="sc"')
     expect(html).toContain('overflow-y:auto;overflow-anchor:none')
     expect(html).toContain('pill:-1')
-    expect(html).toMatch(/<header>top<\/header><div role="list" style="display:flex;flex-direction:column;gap:4px"><\/div><footer>bottom<\/footer>/)
+    expect(html).toMatch(/<header>top<\/header><div role="list" style="display:flex;flex-direction:column;gap:4px;position:relative"><\/div><footer>bottom<\/footer>/)
     expect(html).not.toContain('data-key')
   })
 

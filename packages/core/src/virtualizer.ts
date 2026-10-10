@@ -27,6 +27,12 @@ export interface Snapshot {
   readonly delta: number
   /** True when the list was pinned to its `align` edge. */
   readonly pinned: boolean
+  /**
+   * Measured sizes by key, from `takeSnapshot` (`@anchorlist/core/snapshot`).
+   * Not read by the engine: adapters use them as size estimates on restore, so
+   * the restored rows land without estimate corrections.
+   */
+  readonly sizes?: ReadonlyArray<readonly [Key, number]>
 }
 
 /**
@@ -88,6 +94,12 @@ export interface VirtualizerOptions {
   onAtEdgeChange?: (atEdge: boolean) => void
   /** Scroll position to restore on mount. Read at creation only. */
   initialSnapshot?: Snapshot
+  /**
+   * Viewport size to assume before the list is attached, so that server
+   * rendering and hydration render rows. Not read by the engine: adapters pass
+   * it to `initialPlan()`. Vertical lists use `height`.
+   */
+  initialRect?: { readonly width: number; readonly height: number }
   /** Maximum number of cached sizes; the least recently measured are evicted. Default unlimited. Read at creation only. */
   maxCachedSizes?: number
 }

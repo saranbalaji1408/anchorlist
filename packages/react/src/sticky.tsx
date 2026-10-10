@@ -1,7 +1,9 @@
 import type { VisibleRange } from '@anchorlist/core'
 import { stickyState } from '@anchorlist/core/sticky'
-import { useRef, useState, type ReactElement, type ReactNode } from 'react'
-import { useLayoutEffect } from './effect'
+import { useEffect, useLayoutEffect as useLayout, useRef, useState, type ReactElement, type ReactNode } from 'react'
+
+/** No layout effects without a DOM (React 18 warns about them during server rendering). */
+const useLayoutEffect: typeof useLayout = typeof document < 'u' ? useLayout : useEffect
 
 /** Props of {@link StickyItem}. */
 export interface StickyItemProps<T> {

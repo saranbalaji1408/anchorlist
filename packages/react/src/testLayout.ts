@@ -4,7 +4,8 @@
  *
  * - The scroll container (`#sc`) is `viewport` px tall and 400 px wide.
  * - The list (`[role="list"]`) holds its rows (`[role="listitem"]`) stacked
- *   without gaps between its padding, which the engine writes.
+ *   without gaps between its padding, which the engine writes. A row with
+ *   `position: absolute` is out of flow, at its `top` from the list start.
  * - A row is `size(key)` px tall (default 50). Header and footer are ignored.
  * - `scrollTop` is clamped to `[0, scrollHeight - viewport]`, like a browser.
  */
@@ -44,7 +45,9 @@ export function installLayout(): TestLayout {
   const isScroller = (el: Element): boolean => el.id === 'sc'
   const list = (sc: Element): HTMLElement | null => sc.querySelector('[role="list"]')
   const rowSize = (el: Element): number => layout.sizes.get(el.getAttribute('data-key') ?? '') ?? 50
-  const rowsOf = (l: HTMLElement): Element[] => Array.from(l.children)
+  const absolute = (el: Element): boolean => (el as HTMLElement).style.position === 'absolute'
+  /** Rows in flow. */
+  const rowsOf = (l: HTMLElement): Element[] => Array.from(l.children).filter((r) => !absolute(r))
   const content = (sc: Element): number => {
     const l = list(sc)
     if (!l) return 0
@@ -76,6 +79,8 @@ export function installLayout(): TestLayout {
       if (!sc || !l) return rect(0, 0)
       const top = -offset(sc)
       if (this === l) return rect(top, content(sc))
+      for (const r of Array.from(l.children))
+        if (absolute(r) && (r === this || r.contains(this))) return rect(top + px((r as HTMLElement).style.top), rowSize(r))
       let y = top + px(l.style.paddingTop)
       for (const r of rowsOf(l)) {
         if (r === this || r.contains(this)) return rect(y, rowSize(r))

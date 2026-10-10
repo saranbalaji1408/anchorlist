@@ -60,6 +60,7 @@ const DEFAULTS: ListState = {
   hasMoreEnd: false,
   followMine: false,
   stickyItems: false,
+  busy: false,
 }
 
 let events: Events = { startReached: 0, endReached: 0, atEdge: [] }
@@ -90,6 +91,7 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
     paddingEnd: s.paddingEnd,
     hasMoreStart: s.hasMoreStart,
     hasMoreEnd: s.hasMoreEnd,
+    busy: s.busy,
     ...callbacks,
     style: { height: s.height, width: s.width, border: 'none' },
     scrollerProps: { id: SCROLLER_ID },
