@@ -762,7 +762,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       // A page (window scroller) may already be scrolled away from the start
       // edge: stay there. A target whose key is never found (the EDGE object)
       // re-captures the anchor at the viewport once items exist.
-      if (eff() && !atEnd && mode === EDGE) mode = { t: 2, k: EDGE as never } as TargetMode
+      if (eff() && !atEnd && mode === EDGE) mode = { t: 2, k: EDGE } as never
       lock()
       cycle(false)
     },
