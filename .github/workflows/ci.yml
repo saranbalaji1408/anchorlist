@@ -28,6 +28,9 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+        env:
+          # The plan's engine gate: 10k seeded fuzz operations per configuration.
+          FUZZ_ITERATIONS: 10000
       - run: pnpm test:react18
       - run: pnpm size
 
