@@ -1,0 +1,23 @@
+{
+  "name": "@anchorlist/fixture-vue",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Vue fixture for the shared scenarios, served at /vue/ by the React fixture's preview server.",
+  "scripts": {
+    "dev": "vite",
+    "build:dev": "vite build --mode development",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@anchorlist/core": "workspace:*",
+    "@anchorlist/vue": "workspace:*",
+    "vue": "^3.5.43"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "vite": "^8.3.4",
+    "vue-tsc": "^3.3.12"
+  }
+}
