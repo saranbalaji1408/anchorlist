@@ -80,6 +80,8 @@ export interface MountConfig extends Partial<ListState> {
   layout?: 'vertical' | 'horizontal' | 'rtl' | 'window'
   /** For `layout: 'window'`: the height of a fixed bar at the top of the window, passed as `scrollMargin`. */
   scrollMargin?: number
+  /** Lay items out in lanes (`@anchorlist/core/lanes`), positioned absolutely. Item heights are their sizes. */
+  lanes?: { kind: 'grid' | 'masonry'; lanes: number; gap?: number }
 }
 
 /** How a state update is applied. */

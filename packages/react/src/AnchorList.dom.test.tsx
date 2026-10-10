@@ -2,7 +2,9 @@ import { act, createRef, StrictMode, version, type ReactNode, type Ref } from 'r
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { elementScroller, HORIZONTAL, type ElementScrollerOptions, type Scroller } from '@anchorlist/core'
+import { grid, masonry } from '@anchorlist/core/lanes'
 import { horizontal } from './horizontal'
+import { LanesList } from './lanes'
 import { AnchorList, type AnchorListHandle, type AnchorListProps } from './index'
 import { installLayout, type TestLayout } from './testLayout'
 
@@ -234,5 +236,38 @@ describe('axis and scroller', () => {
     await render(<List items={make(20, 'i')} scroller={horizontal(base)} header={<header>h</header>} gap={8} />)
     expect(list.style.flexDirection).toBe('row')
     expect(list.style.gap).toBe('8px')
+  })
+})
+
+describe('LanesList', () => {
+  it('syncs the lanes before each commit, wraps the scroller and positions items absolutely', async () => {
+    const lanes = masonry({ lanes: 2, gap: 4 })
+    const sync = vi.spyOn(lanes, 'sync')
+    const commit = vi.fn()
+    // The first sync happens before the list attaches (and commits).
+    const wrap = lanes.scroller.bind(lanes)
+    vi.spyOn(lanes, 'scroller').mockImplementation((s) => {
+      commit(sync.mock.calls.length)
+      return wrap(s)
+    })
+    await render(<LanesList<Item> getKey={getKey} renderItem={renderItem} scrollerProps={{ id: 'sc' }} items={make(30, 'i')} lanes={lanes} />)
+    expect(commit.mock.calls[0]![0]).toBeGreaterThan(0)
+    expect(sync.mock.calls[sync.mock.calls.length - 1]![0].count).toBe(30)
+    const list = scroller().querySelector<HTMLElement>('[role="list"]')!
+    expect(list.style.position).toBe('relative')
+    expect(parseFloat(list.style.gap)).toBe(0)
+    const row = scroller().querySelector<HTMLElement>('[data-key="i1"]')!
+    expect(row.style.position).toBe('absolute')
+    expect(row.style.width).toBe('calc((100% - 4px) / 2)')
+  })
+
+  it('wraps a custom scroller and forwards the handle', async () => {
+    const lanes = grid({ lanes: 4 })
+    const base = vi.fn(elementScroller)
+    const handle = createRef<AnchorListHandle>()
+    await render(<LanesList<Item> ref={handle} getKey={getKey} renderItem={renderItem} scrollerProps={{ id: 'sc' }} items={make(400, 'i')} lanes={lanes} scroller={base} />)
+    expect(base).toHaveBeenCalledTimes(1)
+    expect(handle.current!.indexOf('i3')).toBe(3)
+    expect(keys()[0]).toBe('i0')
   })
 })
