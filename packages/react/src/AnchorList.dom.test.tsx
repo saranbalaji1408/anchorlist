@@ -1,6 +1,7 @@
 import { act, createRef, StrictMode, version, type ReactNode, type Ref } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { elementScroller, HORIZONTAL, type ElementScrollerOptions, type Scroller } from '@anchorlist/core'
 import { AnchorList, type AnchorListHandle, type AnchorListProps } from './index'
 import { installLayout, type TestLayout } from './testLayout'
 
@@ -194,5 +195,33 @@ describe('imperative handle', () => {
     })
     expect(pill()).toBe('i40')
     expect(ref.current!.getVisibleRange()).toMatchObject({ startKey: 'i40', endKey: 'i51' })
+  })
+})
+
+describe('axis and scroller', () => {
+  it('passes the horizontal axis and the elements to a custom scroller factory', async () => {
+    const created: ElementScrollerOptions[] = []
+    const factory = (e: ElementScrollerOptions): Scroller<Element> => {
+      created.push(e)
+      return elementScroller(e)
+    }
+    await render(<List items={make(20, 'i')} horizontal scroller={factory} />)
+    expect(created).toHaveLength(1)
+    const [e] = created
+    expect(e!.element).toBe(scroller())
+    expect(e!.list).toBe(scroller().querySelector('[role="list"]'))
+    expect(e!.content).toBe(e!.list.parentElement)
+    expect(e!.axis).toBe(HORIZONTAL)
+    // With a custom scroller the container gets no overflow style.
+    expect(scroller().style.overflowX).toBe('')
+    expect(scroller().style.overflowY).toBe('')
+  })
+
+  it('lays out horizontally: a scrolling row with header, list and footer side by side', async () => {
+    await render(<List items={make(20, 'i')} horizontal header={<header>h</header>} />)
+    expect(scroller().style.overflowX).toBe('auto')
+    const list = scroller().querySelector<HTMLElement>('[role="list"]')!
+    expect(list.style.flexDirection).toBe('row')
+    expect(list.parentElement!.style.display).toBe('flex')
   })
 })

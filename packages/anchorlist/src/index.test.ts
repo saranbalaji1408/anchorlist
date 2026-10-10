@@ -43,3 +43,10 @@ describe('anchorlist re-exports', () => {
     expect(typeof snapshot.snapshotEstimate).toBe('function')
   })
 })
+
+describe('anchorlist subpaths', () => {
+  it('re-exports the window and right-to-left scrollers', async () => {
+    expect((await import('./window')).windowScroller).toBe((await import('@anchorlist/core/window')).windowScroller)
+    expect((await import('./rtl')).rtlScroller).toBe((await import('@anchorlist/core/rtl')).rtlScroller)
+  })
+})

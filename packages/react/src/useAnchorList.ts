@@ -1,5 +1,5 @@
 import { createVirtualizer, elementScroller } from '@anchorlist/core'
-import type { ElementScrollerOptions, Plan, Virtualizer, VirtualizerOptions } from '@anchorlist/core'
+import type { ElementScrollerOptions, Plan, Scroller, Virtualizer, VirtualizerOptions } from '@anchorlist/core'
 import { useReducer, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useLayoutEffect } from './effect'
@@ -32,13 +32,18 @@ interface Instance {
  * @param options - Virtualizer options for this render. `align`,
  *   `initialSnapshot` and `maxCachedSizes` are read on the first render only.
  * @param elements - Returns the scroll container, the list and the optional
- *   content wrapper once they are mounted (for example from refs). Called in
- *   layout effects until it returns a value.
+ *   content wrapper (and axis) once they are mounted (for example from refs).
+ *   Called in layout effects until it returns a value.
+ * @param scroller - Creates the scroller from `elements` when attaching.
+ *   Default `elementScroller`; pass `windowScroller` from
+ *   `@anchorlist/core/window` or `rtlScroller` from `@anchorlist/core/rtl`.
+ *   Read when attaching.
  * @returns The virtualizer and the plan to render.
  */
 export function useAnchorList(
   options: VirtualizerOptions,
   elements: () => ElementScrollerOptions | null | undefined,
+  scroller: (elements: ElementScrollerOptions) => Scroller<Element> = elementScroller,
 ): readonly [Virtualizer, Plan] {
   const [, force] = useReducer(increment, 0)
   const [s] = useState((): Instance => {
@@ -53,7 +58,7 @@ export function useAnchorList(
     if (!s.a) {
       const e = elements()
       if (e) {
-        s.v.attach(elementScroller(e))
+        s.v.attach(scroller(e))
         s.a = true
       }
     }
