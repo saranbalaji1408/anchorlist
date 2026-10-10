@@ -1,4 +1,5 @@
 import { AnchorList, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
+import { animateToKey } from 'anchorlist/animate'
 import { StickyItem } from 'anchorlist/sticky'
 import { StrictMode, startTransition, useLayoutEffect, useState, useSyncExternalStore, version, type ReactNode, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
@@ -192,6 +193,7 @@ export function installDriver(container: HTMLElement): void {
     renders: () => ({ ...renders }),
     rendersWithoutScroller: () => [...withoutScroller],
     frameworkVersion: () => version,
+    animateToKey: (key, o) => animateToKey(handle(), handle().element, key, o),
     resetCounters() {
       renders = {}
       withoutScroller = []

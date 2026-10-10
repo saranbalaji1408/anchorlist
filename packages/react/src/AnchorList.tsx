@@ -16,8 +16,10 @@ import {
 import { useAnchorList } from './useAnchorList'
 
 /**
- * Imperative handle of {@link AnchorList}, available through `ref`. These are
- * the virtualizer methods of `@anchorlist/core`; see its API reference.
+ * Imperative handle of {@link AnchorList}, available through `ref`: the
+ * virtualizer methods of `@anchorlist/core` (see its API reference) and the
+ * scroll container `element` (for example for `animateToKey` from
+ * `@anchorlist/core/animate`).
  */
 export type AnchorListHandle = Pick<
   Virtualizer,
@@ -31,7 +33,10 @@ export type AnchorListHandle = Pick<
   | 'getTotalSize'
   | 'indexOf'
   | 'subscribe'
->
+> & {
+  /** The scroll container. */
+  readonly element: HTMLDivElement
+}
 
 /**
  * Props of {@link AnchorList}. Every `@anchorlist/core` option except `count`
@@ -113,7 +118,7 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
     { ...props, count: items.length, getKey: (i) => getKey(items[i]!) },
     () => ({ element: element.current!, list: list.current!, content: content.current! }),
   )
-  useImperativeHandle(ref, () => v, [v])
+  useImperativeHandle(ref, () => ({ ...v, element: element.current! }), [v])
   const row = (i: number, style = ROW): ReactElement => {
     const item = items[i]!
     const k = getKey(item)

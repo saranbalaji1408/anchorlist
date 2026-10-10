@@ -45,6 +45,10 @@
       "types": "./dist/sticky.d.ts",
       "import": "./dist/sticky.js"
     },
+    "./animate": {
+      "types": "./dist/animate.d.ts",
+      "import": "./dist/animate.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

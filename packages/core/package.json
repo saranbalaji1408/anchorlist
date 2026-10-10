@@ -42,6 +42,14 @@
       "types": "./dist/sticky.d.ts",
       "import": "./dist/sticky.js"
     },
+    "./snapshot": {
+      "types": "./dist/snapshot.d.ts",
+      "import": "./dist/snapshot.js"
+    },
+    "./animate": {
+      "types": "./dist/animate.d.ts",
+      "import": "./dist/animate.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

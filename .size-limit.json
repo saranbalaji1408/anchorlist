@@ -43,5 +43,19 @@
     "ignore": ["react", "react-dom"],
     "limit": "0.8 kB",
     "gzip": true
+  },
+  {
+    "name": "@anchorlist/core/animate",
+    "path": "packages/core/dist/animate.js",
+    "import": "*",
+    "limit": "0.8 kB",
+    "gzip": true
+  },
+  {
+    "name": "@anchorlist/core/snapshot",
+    "path": "packages/core/dist/snapshot.js",
+    "import": "*",
+    "limit": "0.5 kB",
+    "gzip": true
   }
 ]

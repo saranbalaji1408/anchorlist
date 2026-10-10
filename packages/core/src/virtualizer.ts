@@ -49,7 +49,7 @@ export interface VirtualizerOptions {
    * Size estimate for an unmeasured item. Default: 48, replaced at idle by the
    * average measured size when that drifts by more than 10%.
    */
-  estimateSize?: (index: number) => number
+  estimateSize?: ((index: number) => number) | undefined
   /**
    * The edge the list is pinned to. `'end'` for chat (newest at the bottom),
    * `'start'` for feeds. Anchoring uses the anchor item's edge on this side and

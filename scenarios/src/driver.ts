@@ -109,6 +109,8 @@ export interface Driver extends Dom {
   resetCounters(): void
   /** Version of the framework the fixture runs on (for example React `18.3.1`). */
   frameworkVersion(): string
+  /** Smooth scroll with `animateToKey` (`@anchorlist/core/animate`). Resolves `true` once landed. */
+  animateToKey(key: string, options?: { align?: 'start' | 'center' | 'end'; offset?: number; duration?: number }): Promise<boolean>
 }
 
 declare global {
