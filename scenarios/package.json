@@ -2,7 +2,7 @@
   "name": "@anchorlist/scenarios",
   "version": "0.0.0",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "description": "Framework-neutral end-to-end scenarios for anchorlist, run against every framework fixture."
 }

@@ -67,4 +67,4 @@ pnpm build && pnpm test
 
 ## Licence
 
-TODO(licence): licence to be decided before the first public release.
+[MIT](https://github.com/saranbalaji1408/anchorlist/blob/main/LICENSE)

@@ -32,7 +32,7 @@
     "url": "git+https://github.com/saranbalaji1408/anchorlist.git",
     "directory": "packages/anchorlist"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": "saranbalaji1408",
   "type": "module",
   "sideEffects": false,

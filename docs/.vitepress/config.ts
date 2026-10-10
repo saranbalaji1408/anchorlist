@@ -58,6 +58,7 @@ function structuredData(pageData: PageData, url: string): HeadConfig[] {
       url: SITE_URL,
       codeRepository: REPO_URL,
       programmingLanguage: 'TypeScript',
+      license: 'https://opensource.org/licenses/MIT',
       runtimePlatform: 'browser',
       version: pkg.version,
       keywords:
@@ -186,6 +187,6 @@ export default defineConfig({
     socialLinks: [{ icon: 'github', link: REPO_URL }],
     editLink: { pattern: `${REPO_URL}/edit/main/docs/:path`, text: 'Edit this page on GitHub' },
     search: { provider: 'local' },
-    footer: { message: 'v0.1. Licence to be announced.' },
+    footer: { message: 'Released under the MIT Licence.' },
   },
 })
