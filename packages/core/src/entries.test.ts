@@ -5,7 +5,8 @@ const { readFileSync } = (await import('node:fs' as string)) as { readFileSync(p
 const source = (file: string): string => readFileSync(new URL(file, import.meta.url), 'utf8')
 const imports = (file: string): string[] => [...source(file).matchAll(/from '(\.[^']+)'/g)].map((m) => m[1]!)
 
-describe('entries (tree-shaking)', () => {
+// A cheap import lint; the list-entry size-limit budget is the real tree-shaking guard.
+describe('entries (imports)', () => {
   it('keeps the opt-in entries out of the main entry and the list engine', () => {
     for (const file of ['./index.ts', './virtualizer.ts', './scroller.ts', './adapter.ts'])
       for (const entry of ['./animate', './sticky', './snapshot']) expect(imports(file), `${file} imports ${entry}`).not.toContain(entry)

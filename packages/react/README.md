@@ -43,3 +43,8 @@ const renderMessage = (m: Message) => <Bubble message={m} />
   scope or `useCallback`) and keep item objects immutable to get that benefit.
 - **Headless:** `useAnchorList(options, elements)` returns `[virtualizer, plan]` for custom markup.
 - StrictMode and concurrent rendering (`startTransition`) are supported.
+- **Troubleshooting slow development renders with huge lists:** React 19 development builds in
+  Chromium diff changed props for the Performance panel's component track, which is O(n) for an
+  `items` array of 100k entries on every render. Production builds and other browsers do not do
+  this.
+- Sticky items, the kept focused row and `initialRect` are vertical-only for now.

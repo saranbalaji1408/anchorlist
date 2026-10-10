@@ -135,17 +135,20 @@ function stickyState(
 ```
 
 Sticky items (for example group headers) stay in normal flow. The adapter renders an
-`aria-hidden` copy of item `index` in the sticky overlay, shifted along the main axis by
+`aria-hidden`, `inert` copy (so it is neither read nor focusable) of item `index` in the sticky overlay, shifted along the main axis by
 `offset`, and calls `stickyState` again on every `scroll` event and after every commit:
 
 - `index` is the last sticky item whose row starts at or before the viewport start (scanning back
-  from `range.startIndex`; a row that is not mounted is above the viewport), or -1.
+  from `range.startIndex`; a row that is not mounted is above the viewport), or -1. The scan is
+  remembered per `isSticky` function, so keep one function per item list (a new one when the items
+  change) and scrolling costs only the newly passed indices.
 - `offset` (≤ 0) is how far the next sticky item pushes the copy out:
   `min(0, nextStart - size)`, where `size` is the copy's size.
 - Rows are found through the `data-index` attribute the engine writes, so the copy must not carry
   one. Screen readers read each header once, in its row.
 
 React: `StickyItem` from `@anchorlist/react/sticky`, returned from `AnchorList`'s `sticky` prop.
+It shifts the copy with `translateY`: vertical lists only for now.
 
 ## createVirtualizer
 
@@ -368,7 +371,11 @@ deterministic, so the server render and the hydration render produce the same ro
 the engine takes over (writing spacers and the offset, and restoring `initialSnapshot` if any).
 
 - Without `initialRect`, nothing changes: no rows before `attach()`.
-- The server markup has no spacers, so before hydration the rows sit at the top of the scroller.
+- The server markup has no spacers and no scroll offset, so before hydration the rows sit at the
+  top of the scroller: for `align: 'end'` the newest rows are top-aligned until hydration.
+- With `initialSnapshot`, the server still renders the `align` edge (both renders agree, so there
+  is no mismatch); the position is restored on `attach()`, so the content moves at hydration.
+- It reads `initialRect.height` only: vertical lists.
 - Adapters use an isomorphic layout effect (a passive effect where there is no DOM), so server
   rendering never runs layout effects.
 
@@ -382,13 +389,17 @@ while it is outside `plan`:
 - else `{ index, start }`: its index in `plan.options` (looked up by key when the list changed
   since the last commit; O(n) only then) and its start in list space (padding included).
 
-The adapter renders it with `position: absolute; top: start; width: 100%` inside the list (which
-is `position: relative`), before the planned rows when `index < plan.start` and after them
+The adapter renders it with `position: absolute; top: start; width: 100%` inside the list (the
+scroll container is `position: relative`), before the planned rows when `index < plan.start` and after them
 otherwise, in the same keyed child list, so the framework never moves its node. It stays registered
 with `measureElement`, so it keeps `data-index` / `aria-posinset`. The adapter tracks the focused key
 from `focusin` (the row's `data-index`) and clears it on `focusout` unless the window lost focus.
 
 Lists should also set `aria-busy` on the list element while loading (React: `busy`).
+
+The kept row is positioned in content space, so its containing block must be the scroll
+container (`position: relative` on it, nothing positioned in between). `top` makes it vertical-only
+for now.
 
 ### Smooth scrolling
 
@@ -410,8 +421,10 @@ function animateToKey(
 - Frames write the offset like a user scroll, so the engine keeps the visible rows anchored while
   rows mount on the way.
 - `wheel`, `touchstart`, `pointerdown` or `keydown` on the element, `signal`, or a newer animation
-  on the same element cancel it (resolves `false`). An unknown key resolves `false`; a key removed on
-  the way resolves `false`.
+  on the same element cancel it (resolves `false`). An unknown key, a key removed on the way, or a
+  container detached on the way (the list unmounted) resolve `false`.
+- `element` must be the scroll container itself. `axis` selects `scrollLeft` for horizontal lists,
+  but RTL offsets are not normalised yet.
 - With `prefers-reduced-motion: reduce` or `duration <= 0` it jumps (`scrollToKey`) at once.
 
 ## Data structures

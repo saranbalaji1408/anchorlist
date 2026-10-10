@@ -317,8 +317,8 @@ Size-driven choices:
   are committed when the touch ends and is idle. The visual position is correct throughout, but very
   large transforms are untested on real devices.
 - **Sticky items are overlay copies.** Rows cannot be `position: sticky` (the engine measures
-  painted positions), so the stuck header is an `aria-hidden` copy. Clicks on it reach the copy's
-  own handlers; it is not focusable for assistive technology.
+  painted positions), so the stuck header is an `aria-hidden`, `inert` copy: never focusable, and
+  clicks on it reach whatever is under it, not the copy's own handlers.
 - **Kept (focused) rows** are positioned from the last committed model; after a change they may be
   off by the change until the next render. They are off-screen by definition.
 - **Smooth scrolling writes the offset like a user**, so it can pin at the `align` edge on the way
