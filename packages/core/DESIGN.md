@@ -25,12 +25,33 @@ createVirtualizer ──► KeyMap (key → slot, edge diff)
        │          ──► SizeCache (sizes by key, LRU, stale)
        ▼
     Scroller  ◄── elementScroller (DOM, VERTICAL | HORIZONTAL axis)
+              ◄── windowScroller (/window: the page scrolls; wraps elementScroller)
+              ◄── rtlScroller (/rtl: right-to-left; wraps elementScroller)
               ◄── simulatedScroller (Node, deterministic)
 ```
 
 The engine is 1-D. Every main-axis DOM property lives behind an `Axis` object used only by
-`elementScroller`. Horizontal scrolling is a different `Axis`; RTL normalisation is not implemented
-yet.
+`elementScroller`. Horizontal scrolling is a different `Axis`.
+
+The window and right-to-left scrollers live in subpath entries so the list entry does not pay for
+them. Each spreads an `elementScroller` and overrides only what differs:
+
+- **`windowScroller`** uses the document element for offsets and sizes (it scrolls the window in
+  standards mode, and its client size is the viewport). It measures against the window instead of
+  a container rect, and adds `scroll` and `resize` listeners on `window` to the container's input
+  listeners. Content space is the document, so the engine's edges are the document's edges and
+  page content around the list behaves like a header and footer. `scrollMargin` moves the viewport
+  start: viewport, scroll size and measurements all shift by it, so `offset + viewport` still
+  reaches the same end.
+- **`rtlScroller`** mirrors the axis: positions are measured from the container's right edge, the
+  spacers are `paddingRight` / `paddingLeft`, and the transform is negated. `scrollLeft` is
+  normalised to `sign × (scrollLeft − zero)`: `negative` (the standard) has sign −1 and zero 0,
+  `reverse` sign 1 and zero 0, and `default` sign −1 and zero `scrollWidth − clientWidth`. The
+  convention is detected once per call with a throwaway 2 px element: a positive initial
+  `scrollLeft` is `default`; otherwise writing 1 sticks only in `reverse`.
+
+`tsdown` emits the shared scroller code as an unhashed `scroller.js` chunk. The subpath budgets
+mark it external, so they measure only what each entry adds to the list entry.
 
 ## Coordinates
 
@@ -224,6 +245,8 @@ The cache maps key → measured size and keeps the running sum for the average.
 | `keyMap.test.ts` | Property test over random edge, middle, swap and replace edits. After each edit, validate plus rebuild must give exact indices, and only departed keys may be reported removed. O(k) and O(1) call counts. |
 | `sizeCache.test.ts` | Average, stale marking, LRU, and a property test against a reference. |
 | `scroller.test.ts` | `isTouchWebKit`, both axes, `elementScroller` against fake elements, the simulator layout and event order. |
+| `window.test.ts` | `windowScroller` against a fake document element and window: offsets, sizes, measurements with and without `scrollMargin`, horizontal, and the listeners it adds and removes. |
+| `rtl.test.ts` | `rtlConvention` for all three conventions; `rtlScroller` offset, overscroll, measurement, spacer and transform mirroring per convention, and the left-to-right fallback. |
 | `virtualizer.test.ts` | Behaviour for both aligns, including: follow; anchor removal; `scrollToKey` lock and cancel; edges and edge triggers; overscroll and touch deferral; cross-axis remeasure; gap and padding; estimate refresh; rebuild; aria; snapshots; user movement before the `scroll` event; state without callbacks; whole-pixel per-change and absolute bounds (rounding and truncating engines); clear and replace; holding the rows after a gap; `getSnapshot` without a scroller; duplicate keys; `maxCachedSizes` below the mounted count. |
 | `engine.fuzz.test.ts` | 20 operation types, seeded. 5 variants × 2 aligns: plain, gap + padding, touch WebKit with random touches, whole pixels with rounding, and whole pixels with truncation. `FUZZ_ITERATIONS` (local default 1500; CI runs 10,000 per configuration), `FUZZ_SEED`, `FUZZ_LOG`, `FUZZ_TRACE`. |
 | `engine.perf.test.ts` | Opt-in 100k bench (`pnpm --filter @anchorlist/core bench`). Asserts mount < 250 ms, streaming p50 < 50 µs, 50-item prepend p50 < 1 ms, heap growth < 2 MiB over 100 prepend/trim cycles. |
@@ -287,6 +310,8 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | `@anchorlist/core/animate` | 742 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
 | `@anchorlist/core/ssr` | 368 B | 400 B |
+| `@anchorlist/core/window` (shared scroller chunk external) | 360 B | 600 B |
+| `@anchorlist/core/rtl` (shared scroller chunk external) | 567 B | 600 B |
 
 The list entry has 2 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
 features therefore live outside `createVirtualizer`: adapter helpers in the main entry
@@ -329,6 +354,9 @@ Size-driven choices:
   off by the change until the next render. They are off-screen by definition.
 - **Smooth scrolling writes the offset like a user**, so it can pin at the `align` edge on the way
   there, as a user scroll would.
-- **Not in v0.2:** window scroller, RTL, lanes. When they land, the v0.2 helpers need axis and
-  scroller awareness: the kept row (`top`, `width`), `StickyItem` (`translateY`), `initialPlan`
-  (`height`), and `animateToKey` (raw `scrollLeft` in RTL; a window scroller has no container element).
+- **Window scroller.** The engine starts at its `align` edge on mount, which for a window list is
+  the top (or bottom) of the document, so a page restored to a scrolled position by the browser
+  jumps there on mount. Pass `initialSnapshot` to restore a list position instead.
+- **RTL direction changes** are not observed: the direction is read when `rtlScroller` is created.
+- **Integration of v0.2 helpers with v0.3 scrollers** is described in the sections above.
+- **Not yet:** lanes.

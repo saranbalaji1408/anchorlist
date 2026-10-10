@@ -227,9 +227,29 @@ interface Scroller<E> {
 ```
 
 - `elementScroller({ element, list, content?, axis? })`: the DOM implementation. `axis` is `VERTICAL`
-  (default) or `HORIZONTAL` (left-to-right; RTL is not normalised in v0.1). It listens to `scroll`,
-  `touchstart`, `touchend`, `touchcancel` and `wheel` (passive), and observes the scroll container,
-  content wrapper, list and rows with one `ResizeObserver`.
+  (default) or `HORIZONTAL` (left-to-right; use `rtlScroller` for right-to-left). It listens to
+  `scroll`, `touchstart`, `touchend`, `touchcancel` and `wheel` (passive), and observes the scroll
+  container, content wrapper, list and rows with one `ResizeObserver`.
+- `windowScroller({ list, content?, axis?, scrollMargin? })` from `@anchorlist/core/window`: the
+  page scrolls instead of a container. The scroll range is the whole document, so page content
+  before and after the list acts like a header and footer (`content` should still wrap the list's
+  own header and footer). `scrollMargin` (px, default 0) is the size of fixed UI covering the start
+  of the window, like CSS `scroll-padding`: the viewport starts after it, so anchoring,
+  `scrollToKey` alignment and the visible range ignore what it covers. It listens to `scroll` and
+  `resize` on `window` and to input events on the document element. It accepts
+  `ElementScrollerOptions` (`element` is ignored), so it can be used wherever an `elementScroller`
+  factory is expected. Budget: 0.6 kB gzip on top of the list entry.
+- `rtlScroller({ element, list, content? })` from `@anchorlist/core/rtl`: a horizontal scroller for
+  a container with `direction: rtl`. The start edge is the right edge, rows run leftwards and the
+  normalised offset grows leftwards. `scrollLeft` is normalised for all three browser conventions
+  (`negative`, the standard in current browsers; `reverse`; and `default`, with the maximum at the
+  start), detected once per call with a throwaway element (`rtlConvention()`). The list's spacers
+  are `paddingRight` (before) and `paddingLeft` (after). A left-to-right container gets a plain
+  horizontal `elementScroller`. The direction is read when the scroller is created, so re-attach
+  after changing it. Budget: 0.6 kB gzip on top of the list entry.
+
+Both subpath scrollers reuse `elementScroller` through a shared chunk, so they add only their own
+code to an app that already imports the list entry.
 - `simulatedScroller(options?)`: a deterministic, DOM-free layout for tests and benchmarks. It models
   a header, rows with a gap and a footer, and a manual clock (`tick()`, `advance(ms)`). It uses the
   browser's event order: offset clamps queue `scroll`, size changes queue `resize`, and `tick()`
