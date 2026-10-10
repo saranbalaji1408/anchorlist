@@ -157,7 +157,7 @@ describe('masonry', () => {
     expect(els[3]!.style.top).toBe('110px')
     expect(els[3]!.style.insetInlineStart).toBe('calc((100% - 10px) / 2 * 0 + 0px)')
     // The list holds the longest lane (a + d = 150) plus the engine's size after the last mounted item.
-    expect(spacers.at(-1)).toEqual([0, 157])
+    expect(spacers[spacers.length - 1]).toEqual([0, 157])
     expect(lanes.range({ start: 1, end: 2 }, 4)).toEqual({ start: 1, end: 2 })
   })
 
@@ -208,7 +208,7 @@ describe('grid', () => {
     sc.measure(els[2]!)
     sc.setSpacers(0, 0)
     expect(els[3]!.style.insetInlineStart).toBe('75px')
-    expect(spacers.at(-1)).toEqual([0, 105])
+    expect(spacers[spacers.length - 1]).toEqual([0, 105])
     // Ranges widen to whole rows.
     expect(lanes.range({ start: 4, end: 4 }, 5)).toEqual({ start: 3, end: 4 })
     expect(lanes.range({ start: 1, end: 3 }, 5)).toEqual({ start: 0, end: 4 })
@@ -222,7 +222,7 @@ describe('grid', () => {
     const stray: El = { size: 30, start: 4, style: {} }
     expect(sc.measure(stray)).toEqual({ start: 4, size: 30 })
     sc.setSpacers(10, 20)
-    expect(spacers.at(-1)).toEqual([10, 20])
+    expect(spacers[spacers.length - 1]).toEqual([10, 20])
     // 300 items measured, then replaced: the old sizes are dropped.
     let keys = Array.from({ length: 300 }, (_, i) => `a${i}`)
     lanes.sync({ count: 300, getKey: (i) => keys[i]! })

@@ -285,7 +285,12 @@ export function masonry(options: LanesOptions): Lanes {
       }
       // Lane ends before `done`: the last item of each lane, scanning back.
       ends.fill(-1)
-      for (let j = done - 1, left = n; j >= 0 && left; j--) if (ends[lane[j]!]! < 0) (ends[lane[j]!] = end[j]!), left--
+      for (let j = done - 1, left = n; j >= 0 && left; j--) {
+        if (ends[lane[j]!]! < 0) {
+          ends[lane[j]!] = end[j]!
+          left--
+        }
+      }
       for (let l = 0; l < n; l++) if (ends[l]! < 0) ends[l] = 0
       for (let i = done; i <= to; i++) {
         let l = 0
