@@ -91,12 +91,10 @@ test.describe('scrolling', () => {
   })
 })
 
-test.describe('known core issues', () => {
+test.describe('user movement', () => {
   // A commit that lands after a user scroll but before its `scroll` event is
-  // dispatched restores the old anchor delta and reverts the scroll (the
-  // engine only detects user movement in its scroll handler). Tracked for
-  // @anchorlist/core; remove `fixme` once the commit loop checks the offset.
-  test.fixme('keeps a user scroll that lands just before an unrelated re-render', async ({ d, page }) => {
+  // dispatched must keep the scroll.
+  test('keeps a user scroll that lands just before an unrelated re-render', async ({ d, page }) => {
     await d.mount({ items: makeItems(80, 'm', rng(3)) })
     await d.scrollBy(-2000)
     const anchor = await d.rowAt(300)
