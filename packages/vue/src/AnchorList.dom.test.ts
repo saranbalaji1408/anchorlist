@@ -167,6 +167,15 @@ describe('key-only rows', () => {
     expect(scroller().querySelector('[data-key="i99"]')!.getAttribute('data-index')).toBe('116')
   })
 
+  it('passes the engine a key snapshot of the rendered items when the list shrinks', async () => {
+    await render({ items: make(100, 'i'), align: 'end' })
+    // The commit reads keys of the old list; a live getKey would read past the new end.
+    await render({ items: make(100, 'i').slice(0, 10), align: 'end' })
+    expect(keys()).toEqual(make(10, 'i').map(getKey))
+    await render({ items: [], align: 'end' })
+    expect(keys()).toEqual([])
+  })
+
   it('re-renders a row when its item changes', async () => {
     const items = make(100, 'i')
     await render({ items })

@@ -138,8 +138,11 @@ for (const k of (
  */
 export const AnchorList: <T>(
   props: AnchorListProps<T> & PublicProps,
-  ctx?: Pick<SetupContext<never[], SlotsType<AnchorListSlots<T>>>, 'attrs' | 'slots' | 'emit' | 'expose'>,
-) => VNode = defineComponent(
+  ctx?: Omit<SetupContext<never[], SlotsType<AnchorListSlots<T>>>, 'expose'>,
+) => VNode & {
+  /** Types for template tooling (the shape `vue-tsc` uses for generic components). */
+  __ctx?: { props: AnchorListProps<T>; slots: AnchorListSlots<T>; expose(exposed: AnchorListHandle): void; attrs: Record<string, unknown>; emit: unknown }
+} = defineComponent(
   (props: AnchorListProps<unknown>, { slots, expose }) => {
     let element: HTMLElement | undefined
     let content: HTMLElement
@@ -148,7 +151,11 @@ export const AnchorList: <T>(
     const setContent = (e: unknown): unknown => (content = e as HTMLElement)
     const setList = (e: unknown): unknown => (list = e as HTMLElement)
     const [v, plan] = useAnchorList(
-      () => ({ ...props, count: props.items.length, getKey: (i) => props.getKey(props.items[i]) }),
+      () => {
+        // A snapshot: the engine calls getKey for the list as it was when planned.
+        const { items, getKey } = props
+        return { ...props, count: items.length, getKey: (i) => getKey(items[i]) }
+      },
       () => element && { element, list, content },
     )
     expose(v)
