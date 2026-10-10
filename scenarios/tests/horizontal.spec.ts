@@ -86,6 +86,22 @@ for (const layout of ['horizontal', 'rtl'] as Layout[]) {
       })
     })
 
+    test('lays out a header, gaps and padding along the axis and keeps a row still when the header grows', async ({ d, page }) => {
+      const a = axis(page)
+      const items = makeItems(100, 'm', rng(47), 40, 200)
+      await d.mount({ items, align: 'start', layout, width: WIDTH, height: HEIGHT, header: 120, gap: 8, paddingStart: 10 })
+      // The header comes first along the axis, then the padding.
+      expect(Math.abs((await a.start('m0')) - 130)).toBeLessThanOrEqual(TOLERANCE)
+      expect(Math.abs((await a.start('m1')) - (await a.end('m0')) - 8)).toBeLessThanOrEqual(TOLERANCE)
+      await a.scrollBy(1500)
+      await d.frames(2)
+      const anchor = await rowFrom(page, WIDTH / 2)
+      await stillOnAxis(page, anchor, async () => {
+        await d.update({ header: 300 })
+        await d.frames(4)
+      })
+    })
+
     test('scrolls to a key at the start and at the end', async ({ d, page }) => {
       const a = axis(page)
       await d.mount({ items: makeItems(300, 'm', rng(46), 40, 200), align: 'start', layout, width: WIDTH, height: HEIGHT })
