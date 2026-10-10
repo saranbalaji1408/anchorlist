@@ -57,5 +57,12 @@
     "import": "*",
     "limit": "0.5 kB",
     "gzip": true
+  },
+  {
+    "name": "@anchorlist/core/ssr",
+    "path": "packages/core/dist/ssr.js",
+    "import": "*",
+    "limit": "0.4 kB",
+    "gzip": true
   }
 ]

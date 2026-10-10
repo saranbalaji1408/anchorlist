@@ -9,11 +9,11 @@ const imports = (file: string): string[] => [...source(file).matchAll(/from '(\.
 describe('entries (imports)', () => {
   it('keeps the opt-in entries out of the main entry and the list engine', () => {
     for (const file of ['./index.ts', './virtualizer.ts', './scroller.ts', './adapter.ts'])
-      for (const entry of ['./animate', './sticky', './snapshot']) expect(imports(file), `${file} imports ${entry}`).not.toContain(entry)
+      for (const entry of ['./animate', './sticky', './snapshot', './ssr']) expect(imports(file), `${file} imports ${entry}`).not.toContain(entry)
   })
 
   it('gives the opt-in entries no runtime imports, so the build shares no chunk with the main entry', () => {
-    for (const file of ['./animate.ts', './sticky.ts', './snapshot.ts'])
+    for (const file of ['./animate.ts', './sticky.ts', './snapshot.ts', './ssr.ts'])
       expect(source(file).match(/^import (?!type )/gm), file).toBeNull()
   })
 })

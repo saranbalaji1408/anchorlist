@@ -50,6 +50,10 @@
       "types": "./dist/animate.d.ts",
       "import": "./dist/animate.js"
     },
+    "./ssr": {
+      "types": "./dist/ssr.d.ts",
+      "import": "./dist/ssr.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

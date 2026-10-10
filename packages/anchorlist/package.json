@@ -53,6 +53,10 @@
       "types": "./dist/snapshot.d.ts",
       "import": "./dist/snapshot.js"
     },
+    "./ssr": {
+      "types": "./dist/ssr.d.ts",
+      "import": "./dist/ssr.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

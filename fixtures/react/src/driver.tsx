@@ -1,6 +1,7 @@
 import { AnchorList, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
 import { animateToKey } from 'anchorlist/animate'
 import { snapshotEstimate, takeSnapshot } from 'anchorlist/snapshot'
+import { initialPlan } from 'anchorlist/ssr'
 import { StickyItem } from 'anchorlist/sticky'
 import { StrictMode, startTransition, useLayoutEffect, useState, useSyncExternalStore, version, type ReactNode, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
@@ -113,7 +114,7 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
     ...(config.initialSnapshot?.sizes
       ? { estimateSize: snapshotEstimate(config.initialSnapshot, (i) => items[i]!.id, s.estimate === null ? undefined : () => s.estimate!) }
       : {}),
-    ...(config.initialRect ? { initialRect: config.initialRect } : {}),
+    ...(config.initialRect ? { initialRect: config.initialRect, initialPlan } : {}),
   }
   return (
     <main>

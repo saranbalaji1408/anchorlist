@@ -26,13 +26,13 @@ const renderMessage = (m: Message) => <Bubble message={m} />
 - **Props:** `items`, `getKey(item)`, `renderItem(item)`, `header`, `footer`, `sticky(range)`,
   `className`, `style`, `rowClassName`, `scrollerProps`, `busy` (`aria-busy`), plus every core
   option (`align`, `gap`, `overscan`, `follow`, `hasMoreStart`, `onEndReached`, `initialSnapshot`,
-  `initialRect`, ...).
+  `initialRect`, `initialPlan`, ...).
 - **Ref:** `scrollToKey`, `scrollToIndex`, `scrollToEdge`, `isAtEdge`, `getSnapshot`,
   `getVisibleRange`, `getItemRect`, `getTotalSize`, `indexOf`, `subscribe`, and the scroll
   container as `element`.
 - **Focus:** the row containing focus stays mounted while scrolled out of view.
-- **Server rendering:** with `initialRect`, the server and hydration renders include the rows that
-  fill it.
+- **Server rendering:** pass `initialRect` and `initialPlan` (from `@anchorlist/core/ssr`); the
+  server and hydration renders then include the rows that fill it, from `initialSnapshot` if set.
 - **Sticky items** (group headers): `StickyItem` from `@anchorlist/react/sticky`, returned from
   `sticky`:
   `sticky={(range) => <StickyItem range={range} items={rows} isSticky={isHeader} renderItem={renderRow} />}`.

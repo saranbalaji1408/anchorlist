@@ -1,28 +1,5 @@
 import type { Key } from './types'
-import type { Plan, Virtualizer, VirtualizerOptions } from './virtualizer'
-
-/**
- * `v.plan(options)`, except before the list is attached when
- * `options.initialRect` is set: then the rows that fill `initialRect.height`
- * by `estimateSize` (default 48 px) from the `align` edge. The server render
- * and the hydration render therefore produce the same rows, and the engine
- * takes over on `attach()`. An `initialSnapshot` is restored from there, so
- * the server HTML shows the `align` edge until hydration.
- *
- * Adapters call this instead of `v.plan()` in their render phase. Without
- * `initialRect` it is exactly `v.plan()`, so rows never mount before the
- * scroll container exists. Vertical lists only for now (reads `height`).
- */
-export function initialPlan(v: Virtualizer, options: VirtualizerOptions): Plan {
-  const p = v.plan(options)
-  const n = options.count
-  const back = options.align === 'end'
-  let k = 0
-  // A plan is only empty before attach or for an empty list (then nothing is added).
-  if (p.end < p.start)
-    for (let px = 0; px < (options.initialRect?.height ?? 0) && k < n; k++) px += options.estimateSize?.(back ? n - 1 - k : k) ?? 48
-  return k ? (back ? { start: n - k, end: n - 1, options } : { start: 0, end: k - 1, options }) : p
-}
+import type { Plan, Virtualizer } from './virtualizer'
 
 /** A row kept mounted outside the planned range, from {@link keptRow}. */
 export interface KeptRow {

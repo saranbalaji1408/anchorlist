@@ -1,4 +1,4 @@
-import { createVirtualizer, elementScroller, initialPlan } from '@anchorlist/core'
+import { createVirtualizer, elementScroller } from '@anchorlist/core'
 import type { ElementScrollerOptions, Plan, Virtualizer, VirtualizerOptions } from '@anchorlist/core'
 import { useReducer, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -46,8 +46,8 @@ export function useAnchorList(
     s.v = createVirtualizer(options, { render: (sync) => (sync ? flushSync(s.f) : s.f()) })
     return s
   })
-  // With `initialRect`, rows render before attach (server and hydration renders).
-  const plan = initialPlan(s.v, options)
+  // `initialPlan` (server rendering) also plans the renders before attach.
+  const plan = options.initialPlan ? options.initialPlan(s.v, options) : s.v.plan(options)
   useLayoutEffect(() => {
     s.f = force
     if (!s.a) {

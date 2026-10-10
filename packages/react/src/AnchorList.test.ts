@@ -1,4 +1,5 @@
 import { createElement, type ReactNode } from 'react'
+import { initialPlan } from '@anchorlist/core/ssr'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { AnchorList, useAnchorList } from './index'
@@ -32,6 +33,20 @@ describe('AnchorList (render phase)', () => {
     expect(html).toContain('pill:-1')
     expect(html).toMatch(/<header>top<\/header><div role="list" style="display:flex;flex-direction:column;gap:4px"><\/div><footer>bottom<\/footer>/)
     expect(html).not.toContain('data-key')
+  })
+
+  it('renders the rows that fill initialRect with initialPlan (server rendering)', () => {
+    const props = { items, getKey: (m: { id: string }) => m.id, renderItem, estimateSize: () => 100, initialRect: { width: 300, height: 500 } }
+    const keysIn = (html: string): string[] => [...html.matchAll(/data-key="([^"]+)"/g)].map((m) => m[1]!)
+    // initialRect alone renders nothing: initialPlan opts in.
+    expect(keysIn(renderToStaticMarkup(createElement(AnchorList<{ id: string }>, props)))).toEqual([])
+    const html = renderToStaticMarkup(createElement(AnchorList<{ id: string }>, { ...props, initialPlan }))
+    expect(keysIn(html)).toEqual(['m0', 'm1', 'm2', 'm3', 'm4'])
+    const end = renderToStaticMarkup(createElement(AnchorList<{ id: string }>, { ...props, initialPlan, align: 'end' }))
+    expect(keysIn(end)).toEqual(['m45', 'm46', 'm47', 'm48', 'm49'])
+    const snap = { key: 'm20', index: 20, delta: 0, pinned: false }
+    const restored = renderToStaticMarkup(createElement(AnchorList<{ id: string }>, { ...props, initialPlan, initialSnapshot: snap }))
+    expect(keysIn(restored)).toEqual(['m20', 'm21', 'm22', 'm23', 'm24'])
   })
 
   it('lets the scroller style extend the defaults', () => {

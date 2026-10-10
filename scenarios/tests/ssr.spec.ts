@@ -30,6 +30,24 @@ test.describe('server rendering and hydration', () => {
     })
   }
 
+  test('with initialSnapshot the server HTML starts at the snapshot item, and hydration restores it exactly', async ({ d }) => {
+    const items = makeItems(500, 'm', rng(95), 40, 80)
+    await d.mount({ items, align: 'end' })
+    await d.scrollToKey('m200')
+    await d.frames(3)
+    await d.scrollBy(-25)
+    const snap = await d.getSnapshot()
+    const anchor = String(snap.key)
+    const before = await d.rowRect(anchor)
+    await d.unmount()
+    const keys = await d.serverRender({ items, align: 'end', estimate: 60, initialRect: { width: 400, height: 600 }, initialSnapshot: snap })
+    expect(keys[0]).toBe(anchor)
+    expect(keys.length).toBe(10)
+    await d.hydrate()
+    await d.frames(2)
+    expect(Math.abs((await d.rowRect(anchor)).top - before.top)).toBeLessThanOrEqual(1)
+  })
+
   test('without initialRect the server HTML has no rows', async ({ d }) => {
     expect(await d.serverRender({ items: makeItems(50, 'm', rng(93)) })).toEqual([])
     await d.hydrate()

@@ -15,7 +15,7 @@ export type {
 } from './virtualizer'
 export { elementScroller, HORIZONTAL, isTouchWebKit, VERTICAL } from './scroller'
 export type { Axis, Box, ElementScrollerOptions, Scroller, ScrollerEvent } from './scroller'
-export { initialPlan, keptRow } from './adapter'
+export { keptRow } from './adapter'
 export type { KeptRow } from './adapter'
 export { simulatedScroller } from './simulatedScroller'
 export type { SimulatedElement, SimulatedScroller, SimulatedScrollerOptions } from './simulatedScroller'

@@ -43,9 +43,10 @@ export type AnchorListHandle = Pick<
  * and `getKey` is accepted and passed through unchanged (`align`, `overscan`,
  * `gap`, `paddingStart`, `paddingEnd`, `hasMoreStart`, `hasMoreEnd`,
  * `onStartReached`, `onEndReached`, `follow`, `onRangeChange`,
- * `onAtEdgeChange`, `initialSnapshot`, `initialRect`, ...). `align`,
- * `initialSnapshot` and `maxCachedSizes` are read on mount only. With
- * `initialRect`, server and hydration renders include the rows that fill it.
+ * `onAtEdgeChange`, `initialSnapshot`, `initialRect`, `initialPlan`, ...).
+ * `align`, `initialSnapshot` and `maxCachedSizes` are read on mount only. With
+ * `initialRect` and `initialPlan` (from `@anchorlist/core/ssr`), server and
+ * hydration renders include the rows that fill it.
  */
 export interface AnchorListProps<T> extends Omit<VirtualizerOptions, 'count' | 'getKey'> {
   /** The items, as an immutable snapshot: pass a new array instead of mutating it. */
@@ -149,7 +150,9 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
           aria-busy={props.busy}
           style={{ display: 'flex', flexDirection: 'column', gap: props.gap }}
           // Focus that leaves the window stays in the row: keep it.
-          onBlur={() => void (document.hasFocus() && (focused.current = null))}
+          onBlur={() => {
+            if (document.hasFocus()) focused.current = null
+          }}
         >
           {rows}
         </div>

@@ -59,8 +59,8 @@ Requirements:
    never mutates the engine, so concurrent or discarded renders are safe. Before `attach()` it returns
    an empty range. Rows are therefore never mounted in the same commit as the scroll container, and
    row components can rely on the container existing. Adapters call
-   [`initialPlan(v, options)`](#server-rendering) instead, which is `plan()` except that it renders
-   rows before `attach()` when `initialRect` is set (server rendering).
+   `options.initialPlan(v, options)` instead when that option is set
+   ([server rendering](#server-rendering)); it renders rows before `attach()`.
 3. **Commit before paint.** After every DOM commit that rendered a plan, call `commit(plan)` with that
    plan object, synchronously, before the browser paints (React `useLayoutEffect`, Vue
    `flush: 'post'` / `onUpdated`, Svelte 5 `$effect` + `flushSync`). Do not call it from
@@ -177,6 +177,7 @@ interface VirtualizerHost { render(sync: boolean): void }
 | `onAtEdgeChange` | `(atEdge: boolean) => void` | none | `isAtEdge(align)` changed (also fires once after mount). |
 | `initialSnapshot` | `Snapshot` | none | Restore a position on mount. Creation only. |
 | `initialRect` | `{ width, height }` | none | Viewport assumed before `attach()`, for server rendering. Read by `initialPlan()`, not by the engine. |
+| `initialPlan` | `(v, options) => Plan` | none | Adapters plan with it instead of `plan()`. Pass `initialPlan` from `@anchorlist/core/ssr` for server rendering. Not read by the engine. |
 | `maxCachedSizes` | `number` | unlimited | Size-cache limit (least recently measured are evicted; mounted rows never are, even when this is smaller than the mounted count). Creation only. |
 
 Callbacks run synchronously inside the engine's loop, after the offset is final for that pass.
@@ -364,17 +365,22 @@ At 100k items this takes about 5–9 ms. See DESIGN.md.
 
 ### Server rendering
 
-`initialPlan(v, options)` (main entry, not in the list entry) returns `v.plan(options)`, except
-while the plan is empty before `attach()` and `options.initialRect` is set: then it returns the
-rows that fill `initialRect.height` by `estimateSize` (default 48 px) from the `align` edge. It is
-deterministic, so the server render and the hydration render produce the same rows. On `attach()`
-the engine takes over (writing spacers and the offset, and restoring `initialSnapshot` if any).
+Server rendering is opt-in, so lists that do not use it carry none of its code: pass
+`initialPlan` from `@anchorlist/core/ssr` (separate entry) as the `initialPlan` option, together
+with `initialRect`. Adapters plan with `options.initialPlan(v, options)` when it is set.
+
+`initialPlan(v, options)` returns `v.plan(options)`, except while the plan is empty before
+`attach()`: then it returns the rows that fill `initialRect.height` by `estimateSize` (default
+48 px), forwards from the `initialSnapshot` item when it is still at its index (same key at
+`snapshot.index`, not pinned), else from the `align` edge. It is deterministic, so the server
+render and the hydration render produce the same rows. On `attach()` the engine takes over
+(writing spacers and the offset, and restoring `initialSnapshot` exactly).
 
 - Without `initialRect`, nothing changes: no rows before `attach()`.
 - The server markup has no spacers and no scroll offset, so before hydration the rows sit at the
   top of the scroller: for `align: 'end'` the newest rows are top-aligned until hydration.
-- With `initialSnapshot`, the server still renders the `align` edge (both renders agree, so there
-  is no mismatch); the position is restored on `attach()`, so the content moves at hydration.
+- With `initialSnapshot`, the server HTML starts at the snapshot item (top-aligned, without its
+  `delta`), so hydration moves the content by at most the snapshot's `delta`.
 - It reads `initialRect.height` only: vertical lists.
 - Adapters use an isomorphic layout effect (a passive effect where there is no DOM), so server
   rendering never runs layout effects.

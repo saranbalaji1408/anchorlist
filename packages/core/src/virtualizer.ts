@@ -96,10 +96,16 @@ export interface VirtualizerOptions {
   initialSnapshot?: Snapshot
   /**
    * Viewport size to assume before the list is attached, so that server
-   * rendering and hydration render rows. Not read by the engine: adapters pass
-   * it to `initialPlan()`. Vertical lists use `height`.
+   * rendering and hydration render rows. Not read by the engine: used by
+   * `initialPlan` (`@anchorlist/core/ssr`). Vertical lists use `height`.
    */
   initialRect?: { readonly width: number; readonly height: number }
+  /**
+   * Plans the renders before attach. Not read by the engine: adapters call it
+   * instead of `plan()` when set. Pass `initialPlan` from
+   * `@anchorlist/core/ssr` with `initialRect` for server rendering.
+   */
+  initialPlan?: (v: Virtualizer, options: VirtualizerOptions) => Plan
   /** Maximum number of cached sizes; the least recently measured are evicted. Default unlimited. Read at creation only. */
   maxCachedSizes?: number
 }
