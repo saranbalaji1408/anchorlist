@@ -109,23 +109,25 @@ handler of a link, before the state change that unmounts the list.
 
 A snapshot is `{ key, index, delta, pinned }`, plain serializable data. You can keep it in
 `history.state` or `sessionStorage`. It is restored exactly once the anchored row has been
-measured. If that key is gone, the item now at the same index is used.
+measured. If that key no longer exists, the list starts at the top.
 
 ## Long feeds and memory
 
 Rendering cost depends on the viewport, not on the list length. Only the rows in the viewport plus
 `overscan` (default 400 px on each side) are mounted. To bound memory in very long sessions, trim
 items from the far end of the array. The engine treats a trim like a prepend: the visible post
-does not move. `maxCachedSizes` caps how many measured sizes are kept.
+does not move. `maxCachedSizes` caps how many measured sizes are kept; mounted rows are never evicted.
 
 The engine's 100k-item micro-benchmark on Apple M2, Node 24 and a simulated scroller, recorded in
 the core design notes:
 
 | Operation (100k items) | Result |
 | --- | --- |
-| Mount to the first settled frame | 32–36 ms |
-| Scroll frame (37 px per frame) | p50 14–16 µs, p95 44–48 µs |
-| 50-item prepend while anchored | p50 70–90 µs, p95 207–239 µs |
+| Mount to the first settled frame | 20–27 ms |
+| Streaming update (plan + commit + resize callback) | p50 6.9–7.1 µs, p95 12–13 µs |
+| Scroll frame (37 px per frame) | p50 ≈ 11 µs, p95 19–21 µs |
+| 50-item prepend while anchored | p50 43–46 µs, p95 69–71 µs |
+| Idle key validation and estimate refresh | 9–9.3 ms |
 
 These numbers are for the engine with a minimal host. React adds its own render cost. A
 head-to-head benchmark against other libraries is planned for v0.2.

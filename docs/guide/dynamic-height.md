@@ -71,7 +71,8 @@ Any mix of sizes works in one list: one-line messages, tall images, date separat
 notices. The engine stores sizes in a Fenwick tree, so offset lookups are O(log n) at any list
 length. Prepends, appends and trims cost O(k log n) for k changed items. A streaming update (the
 last message grows while tokens arrive) is O(1) in the list size. In the 100k-item
-micro-benchmark that update measured p50 9.5–11.6 µs (Apple M2, Node 24, simulated scroller).
+micro-benchmark that update measured p50 6.9–7.1 µs and p95 12–13 µs (Apple M2, Node 24,
+simulated scroller).
 
 ## Limits in v0.1
 

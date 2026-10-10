@@ -20,8 +20,15 @@ With anchorlist you get all of this from one option: `align: 'end'`.
 The viewport is anchored to a **message key**, not to a pixel offset or an index. On every change
 the engine measures the rendered rows in the DOM and puts the anchor message back where it was
 before the browser paints. Prepends, trims, row resizes, width changes and removing the anchored
-message itself all leave the message you are reading in place. The engine's fuzz test checks this
-to within 0.5 px after every random operation (see [How it is tested](#how-it-is-tested)).
+message itself all leave the message you are reading in place. If the anchored message is
+deleted, the messages after it stay still (or, if none survive, the ones before it). If the whole
+conversation is replaced, for example when switching chats, the list starts over at the bottom.
+
+Browsers store scroll offsets in whole pixels at DPR 1, so most corrections can't be exact.
+At DPR 1, each painted change moves content by at most 0.5 px (at most 1 px only when the error was
+already above 0.5 px), and content is never more than 1 px from its intended position. Errors don't
+build up. This holds both on engines that round offsets (Chromium, Firefox) and on engines that
+truncate them (WebKit). With sub-pixel offsets (DPR 2 and above) the steps halve.
 
 ## Basic chat list
 
@@ -154,7 +161,8 @@ growing bubble grows upwards, as users expect in a chat.
 
 Writing `scrollTop` during iOS momentum scrolling stops the fling. During a touch, and while the
 list is rubber-banding past an edge, anchorlist holds corrections as a `transform` on the content
-wrapper. It commits them to the scroll offset when scrolling ends. The visual position is the same
+wrapper. It commits them to the scroll offset 120 ms after the last scroll event, or as soon as
+the rubber-band ends. The visual position is the same
 either way, and `onStartReached` is not fired while overscrolled.
 
 ## Layout rules
@@ -165,11 +173,14 @@ either way, and `onStartReached` is not fired while overscrolled.
 
 ## How it is tested
 
-The core runs a seeded fuzz test with 19 operation types (prepend, append, trims, resizes, anchor
-removal, width changes, touches and more) for both `align: 'end'` and `align: 'start'`. After every
-operation, the anchor must stay within 0.5 px of where it was. CI runs 10,000 operations per
-configuration. A one-off offline sweep over 20 seeds ran 1.2 million operations and made 921,706
-drift checks with 0 failures. End-to-end scenarios run in Chromium, WebKit and Firefox.
+The core runs a seeded fuzz test with 20 operation types (prepend, append, trims, middle edits,
+anchor deletion, item, header, width and viewport resizes, user scrolls, `scrollToKey`, touches and
+more) in 10 configurations: 5 variants (plain, gap + padding, touch WebKit, whole pixels with
+rounding, whole pixels with truncation) for each `align`. After every operation the anchor must
+move at most 1 px and end at most 1 px from its intended position. A deleted anchor's neighbours
+must hold, and a pinned list must still be at its edge. CI runs 10,000 operations per
+configuration. An offline sweep over 10 seeds ran 1M operations and 856,362 checks with 0 failures.
+The strict 0.5 px-per-paint bound is checked by unit tests. End-to-end scenarios run in Chromium, WebKit and Firefox.
 
 ## Related
 

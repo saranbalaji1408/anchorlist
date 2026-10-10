@@ -60,7 +60,7 @@ mounted row.
 | | |
 | --- | --- |
 | Pin to the end (chat) or the start (feed) | `align: 'end' \| 'start'` |
-| Prepend / trim without scroll jump | Anchored to an item key, measured in the DOM, with fallbacks if the anchor is removed |
+| Prepend / trim / remove without scroll jump | Anchored to an item key and measured in the DOM. If the anchored item is removed, the rows after it hold |
 | Follow new items at the pinned edge | Default when pinned; `follow` policy for "jump on my own message" |
 | Dynamic heights | Rows measured as they render; `estimateSize` optional |
 | Width / keyboard resizes | Re-measured and restored before paint |
@@ -69,7 +69,7 @@ mounted row.
 | iOS Safari momentum and rubber-band | Corrections deferred through a transform, the fling is not interrupted |
 | Restore position | `getSnapshot()` / `initialSnapshot` |
 | Accessibility | `aria-posinset` / `aria-setsize` written on rows |
-| Size | Hard gzip budgets in CI: React chat path (core + react) ≤ 5.8 kB, currently 5.35 kB; `@anchorlist/react` alone ≤ 1.3 kB, currently 1.01 kB |
+| Size | Hard gzip budgets in CI: React chat path (core + react) ≤ 5.8 kB, currently 5.37 kB; `@anchorlist/react` alone ≤ 1.3 kB, currently 1.01 kB |
 | Dependencies | Zero runtime dependencies in core; React is a peer dependency |
 
 ## How it compares

@@ -80,7 +80,8 @@ function Feed({ posts, hasMore, loadMore }) {
 ## Rules that keep scrolling stable
 
 - **Give every item a unique, stable key.** The viewport is anchored to a key, not an index, so
-  keys must not change when items move.
+  keys must not change when items move. Duplicate keys are not supported: they make every change
+  cost a full O(n) rebuild.
 - **Replace arrays instead of mutating them.** Use `setMessages((m) => [...older, ...m])`, not
   `messages.unshift(...)`. The engine compares the previous and next list to detect prepends and
   trims.
