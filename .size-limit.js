@@ -104,4 +104,11 @@ export default [
     limit: '0.3 kB',
     gzip: true,
   },
+  {
+    name: '@anchorlist/core/lanes',
+    path: 'packages/core/dist/lanes.js',
+    import: '{ grid, masonry }',
+    limit: '1.5 kB',
+    gzip: true,
+  },
 ]

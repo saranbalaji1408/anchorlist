@@ -69,6 +69,10 @@
     "./horizontal": {
       "types": "./dist/horizontal.d.ts",
       "import": "./dist/horizontal.js"
+    },
+    "./lanes": {
+      "types": "./dist/lanes.d.ts",
+      "import": "./dist/lanes.js"
     }
   },
   "main": "./dist/index.js",

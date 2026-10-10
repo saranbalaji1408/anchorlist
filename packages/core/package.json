@@ -62,6 +62,10 @@
     "./rtl": {
       "types": "./dist/rtl.d.ts",
       "import": "./dist/rtl.js"
+    },
+    "./lanes": {
+      "types": "./dist/lanes.d.ts",
+      "import": "./dist/lanes.js"
     }
   },
   "main": "./dist/index.js",
