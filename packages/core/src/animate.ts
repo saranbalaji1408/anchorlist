@@ -30,8 +30,8 @@ const running = new WeakMap<object, () => void>()
  * Each frame scrolls like a user would, so the engine keeps the content
  * anchored while rows mount. User input on the container (`wheel`,
  * `touchstart`, `pointerdown`, `keydown`), `signal`, or a new animation on
- * the same container cancels it. With `prefers-reduced-motion: reduce` it
- * jumps at once.
+ * the same container cancels it, and so does detaching the container (the
+ * list unmounted). With `prefers-reduced-motion: reduce` it jumps at once.
  *
  * @returns Resolves `true` once landed, `false` if the key is unknown or the
  *   animation was cancelled.
@@ -65,7 +65,9 @@ export function animateToKey(
     const frame = (now: number): void => {
       const r = v.getItemRect(key)
       const t = Math.min(1, (now - start) / duration)
-      if (!r || t >= 1) return finish(!!r && land())
+      // A removed key or an unmounted list (detached container) ends it unlanded.
+      if (!r || !element.isConnected) return finish(false)
+      if (t >= 1) return finish(land())
       const viewport = element[axis.client]
       const target = Math.min(Math.max(r.start + offset + (r.size - viewport) * ALIGN[align], 0), element[axis.scrollSize] - viewport)
       const e = easing(t)

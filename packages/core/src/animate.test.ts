@@ -28,6 +28,7 @@ function element(h: Harness): HTMLElement & { fire(type: string): void } {
     removeEventListener(type: string, fn: () => void) {
       listeners.get(type)?.delete(fn)
     },
+    isConnected: true,
     fire(type: string) {
       listeners.get(type)?.forEach((fn) => fn())
     },
@@ -138,6 +139,19 @@ describe('animateToKey', () => {
     await expect(animateToKey(h.v, element(h), h.keys[10]!, { duration: 0 })).resolves.toBe(true)
     await h.settle()
     expect(h.visualStart(h.keys[10]!)).toBeCloseTo(0, 0)
+  })
+
+  it('resolves false and stops writing when the container is detached (the list unmounted)', async () => {
+    const h = mount({ keys: keysOf(3000), size, viewport: VIEWPORT })
+    await h.settle()
+    const el = element(h)
+    const done = animateToKey(h.v, el, h.keys[2000]!)
+    await run(h, 3)
+    ;(el as unknown as { isConnected: boolean }).isConnected = false
+    const at = h.sim.offset()
+    await run(h)
+    await expect(done).resolves.toBe(false)
+    expect(h.sim.offset()).toBe(at)
   })
 
   it('resolves false when the key is removed on the way', async () => {
