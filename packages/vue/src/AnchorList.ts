@@ -74,7 +74,7 @@ const ROW: StyleValue = { display: 'flow-root' }
 const STICKY: StyleValue = { position: 'sticky', top: 0, height: 0, zIndex: 1 }
 
 /** One row. Its props never include the index, so prepends and trims skip it. */
-const Row = defineComponent({
+const Row = /*#__PURE__*/ defineComponent({
   props: ['v', 'k', 'item', 's', 'c'],
   setup(p) {
     let el: Element | null = null
@@ -86,7 +86,7 @@ const Row = defineComponent({
   },
 })
 
-const Sticky = defineComponent({
+const Sticky = /*#__PURE__*/ defineComponent({
   props: ['v', 's'],
   setup(p) {
     const v = p.v as Virtualizer
@@ -96,17 +96,21 @@ const Sticky = defineComponent({
   },
 })
 
-const PROPS: ComponentPropsOptions = {
-  hasMoreStart: Boolean,
-  hasMoreEnd: Boolean,
-  // Absent means "follow if pinned", not false.
-  follow: { type: [Boolean, Function], default: undefined },
-}
-for (const k of (
-  'items getKey rowClass estimateSize align overscan gap paddingStart paddingEnd startThreshold endThreshold ' +
-  'onStartReached onEndReached atEdgeThreshold onRangeChange onAtEdgeChange initialSnapshot maxCachedSizes'
-).split(' '))
-  PROPS[k] = null
+// A pure IIFE, so the bundle stays tree-shakable (`useAnchorList` alone drops it).
+const PROPS: ComponentPropsOptions = /*#__PURE__*/ (() => {
+  const props: ComponentPropsOptions = {
+    hasMoreStart: Boolean,
+    hasMoreEnd: Boolean,
+    // Absent means "follow if pinned", not false.
+    follow: { type: [Boolean, Function], default: undefined },
+  }
+  for (const k of (
+    'items getKey rowClass estimateSize align overscan gap paddingStart paddingEnd startThreshold endThreshold ' +
+    'onStartReached onEndReached atEdgeThreshold onRangeChange onAtEdgeChange initialSnapshot maxCachedSizes'
+  ).split(' '))
+    props[k] = null
+  return props
+})()
 
 /**
  * Virtual list with stable scroll anchoring. It renders only the rows near the
@@ -142,7 +146,7 @@ export const AnchorList: <T>(
 ) => VNode & {
   /** Types for template tooling (the shape `vue-tsc` uses for generic components). */
   __ctx?: { props: AnchorListProps<T>; slots: AnchorListSlots<T>; expose(exposed: AnchorListHandle): void; attrs: Record<string, unknown>; emit: unknown }
-} = defineComponent(
+} = /*#__PURE__*/ defineComponent(
   (props: AnchorListProps<unknown>, { slots, expose }) => {
     let element: HTMLElement | undefined
     let content: HTMLElement

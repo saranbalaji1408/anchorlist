@@ -128,4 +128,20 @@ export default [
     limit: '1.3 kB',
     gzip: true,
   },
+  {
+    name: '@anchorlist/vue useAnchorList only (vue and core external)',
+    path: 'packages/vue/dist/index.js',
+    import: '{ useAnchorList }',
+    ignore: ['vue', '@anchorlist/core'],
+    limit: '0.5 kB',
+    gzip: true,
+  },
+  {
+    name: 'Vue chat path (core + vue)',
+    path: 'packages/vue/dist/index.js',
+    import: '{ AnchorList }',
+    ignore: ['vue'],
+    limit: '5.8 kB',
+    gzip: true,
+  },
 ]
