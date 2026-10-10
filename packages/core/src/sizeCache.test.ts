@@ -13,7 +13,7 @@ describe('SizeCache', () => {
     expect(cache.average()).toBe(125)
     cache.delete('a')
     expect(cache.get('a')).toBeUndefined()
-    expect(cache.size).toBe(1)
+    expect(cache.get('b')).toBe(50)
     expect(cache.average()).toBe(50)
   })
 
@@ -39,7 +39,6 @@ describe('SizeCache', () => {
     expect(cache.get('b')).toBeUndefined()
     expect(cache.get('a')).toBe(1)
     expect(cache.get('c')).toBe(3)
-    expect(cache.size).toBe(2)
   })
 
   it('keeps the average consistent with the stored entries (property)', () => {
@@ -62,7 +61,7 @@ describe('SizeCache', () => {
               ref.delete(key)
             }
           }
-          expect(cache.size).toBe(ref.size)
+          for (let k = 0; k <= 20; k++) expect(cache.get(`k${k}`)).toBe(ref.get(`k${k}`))
           const values = [...ref.values()]
           const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : undefined
           if (avg === undefined) expect(cache.average()).toBeUndefined()

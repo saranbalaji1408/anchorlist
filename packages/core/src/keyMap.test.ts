@@ -83,7 +83,7 @@ describe('KeyMap', () => {
           const { removed, diff } = step(map, keys, after)
           // Lazy validation: a middle change the edge diff cannot see is caught here and rebuilt.
           if (!map.validate(0, after.length - 1, (i) => after[i]!)) {
-            expect(diff.rebuild).toBe(false)
+            expect(diff.rebuild).toBeUndefined()
             map.apply({ ...NO_CHANGE, rebuild: true }, after.length, (i) => after[i]!, (i) => keys[i]!, () => {})
           }
           const gone = new Set(after)
@@ -111,16 +111,16 @@ describe('KeyMap', () => {
 
     calls = 0
     const prepended = ['a', 'b', 'c', ...keys]
-    expect(map.diff(103, counted(prepended))).toEqual({ trimStart: 0, trimEnd: 0, prepend: 3, append: 0, rebuild: false })
+    expect(map.diff(103, counted(prepended))).toEqual({ trimStart: 0, trimEnd: 0, prepend: 3, append: 0 })
     expect(calls).toBeLessThanOrEqual(6)
 
     calls = 0
     const slid = [...keys.slice(5), 'x', 'y']
-    expect(map.diff(97, counted(slid))).toEqual({ trimStart: 5, trimEnd: 0, prepend: 0, append: 2, rebuild: false })
+    expect(map.diff(97, counted(slid))).toEqual({ trimStart: 5, trimEnd: 0, prepend: 0, append: 2 })
     expect(calls).toBeLessThanOrEqual(5)
 
     const trimPrepend = ['p', ...keys.slice(0, 90)]
-    expect(map.diff(91, (i) => trimPrepend[i]!)).toEqual({ trimStart: 0, trimEnd: 10, prepend: 1, append: 0, rebuild: false })
+    expect(map.diff(91, (i) => trimPrepend[i]!)).toEqual({ trimStart: 0, trimEnd: 10, prepend: 1, append: 0 })
 
     const middle = [...keys.slice(0, 50), 'm', ...keys.slice(50)]
     expect(map.diff(101, (i) => middle[i]!).rebuild).toBe(true)

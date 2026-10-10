@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { keysOf, mount } from './test/harness'
+import { createVirtualizer } from './virtualizer'
 import type { Key } from './types'
 
 const sized = (key: Key): number => 40 + (Number(String(key).replace(/\D/g, '')) % 7) * 10
@@ -355,5 +356,173 @@ describe('snapshot', () => {
     await b.settle()
     expect(b.visualEnd(snapshot.key!)).toBeCloseTo(snapshot.delta, 5)
     expect(b.v.isAtEdge()).toBe(false)
+  })
+})
+
+describe('user movement before the scroll event', () => {
+  const frac = (k: Key): number => 30 + (Number(String(k).replace(/\D/g, '')) % 5) * 11.3
+  for (const align of ['start', 'end'] as const) {
+    it(`keeps a user scroll that a re-render commits before its scroll event (align ${align})`, async () => {
+      const h = mount({ keys: keysOf(200, 'k', 100), size: frac, viewport: 400, options: { align } })
+      await h.settle()
+      h.sim.userScroll(1000)
+      await h.settle()
+      const anchor = h.v.getSnapshot().key!
+      const before = h.visualStart(anchor)!
+      // Scroll by 40 px, then an unrelated update renders and commits before the event.
+      h.sim.userScroll(h.sim.offset() + 40)
+      h.setKeys([...h.keys])
+      expect(h.visualStart(anchor)).toBeCloseTo(before - 40, 5)
+      await h.settle()
+      expect(h.visualStart(anchor)).toBeCloseTo(before - 40, 5)
+      // Same ordering with a prepend in the update: both are applied.
+      h.sim.userScroll(h.sim.offset() - 25)
+      h.setKeys([...keysOf(5, 'k', 95), ...h.keys])
+      await h.settle()
+      expect(h.visualStart(anchor)).toBeCloseTo(before - 15, 5)
+    })
+  }
+
+  it('stops following when the user scrolled away from the pinned edge before an append', async () => {
+    const h = mount({ keys: keysOf(100), size: () => 50, viewport: 400, options: { align: 'end' } })
+    await h.settle()
+    h.sim.userScroll(h.sim.offset() - 60)
+    h.setKeys([...h.keys, 'new'])
+    await h.settle()
+    expect(h.visualEnd('k99')).toBeCloseTo(460, 5)
+    expect(h.v.isAtEdge()).toBe(false)
+  })
+})
+
+describe('without callbacks', () => {
+  it('updates the visible range and the at-edge state, and notifies only on change', async () => {
+    const h = mount({ keys: keysOf(100), size: () => 50, viewport: 500 })
+    await h.settle()
+    expect(h.v.getVisibleRange()).toEqual({ startIndex: 0, endIndex: 9, startKey: 'k0', endKey: 'k9' })
+    const listener = vi.fn()
+    h.v.subscribe(listener)
+    h.setKeys([...h.keys])
+    await h.settle()
+    expect(listener).not.toHaveBeenCalled()
+    h.sim.userScroll(125)
+    await h.settle()
+    expect(h.v.getVisibleRange()).toEqual({ startIndex: 2, endIndex: 12, startKey: 'k2', endKey: 'k12' })
+    expect(listener).toHaveBeenCalledTimes(1)
+    h.setKeys([...h.keys])
+    await h.settle()
+    expect(listener).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('whole-pixel offsets', () => {
+  for (const quantize of ['round', 'trunc'] as const) {
+    it(`moves content at most 0.5 px per change and stays within 1 px (${quantize === 'round' ? 'rounding' : 'truncating'} engine)`, async () => {
+      const h = mount({ keys: keysOf(300, 'k', 100), size: (k) => 20.3 + (Number(String(k).slice(1)) % 7) * 7.7, viewport: 400, quantize })
+      await h.settle()
+      h.sim.userScroll(2000)
+      await h.settle()
+      const anchor = h.v.getSnapshot()
+      let last = h.visualStart(anchor.key!)!
+      for (let i = 0; i < 60; i++) {
+        // One painted change at a time: a fractional resize above the anchor.
+        h.resize(h.keys[h.v.indexOf(anchor.key!) - 1 - (i % 5)]!, 10.4 + ((i * 7.3) % 40))
+        await h.settle()
+        const now = h.visualStart(anchor.key!)!
+        expect(Math.abs(now - last)).toBeLessThanOrEqual(0.5 + 1e-9)
+        expect(Math.abs(now - anchor.delta)).toBeLessThanOrEqual(1 + 1e-9)
+        last = now
+      }
+    })
+  }
+})
+
+describe('clear and replace', () => {
+  it('starts over at the align edge after a clear while scrolled up', async () => {
+    const h = mount({ keys: keysOf(100), size: () => 50, viewport: 400, options: { align: 'end' } })
+    await h.settle()
+    h.sim.userScroll(1000)
+    await h.settle()
+    h.setKeys([])
+    await h.settle()
+    h.setKeys(keysOf(100, 'r'))
+    await h.settle()
+    expect(h.v.isAtEdge()).toBe(true)
+    expect(h.visualEnd('r99')).toBeCloseTo(400, 5)
+  })
+
+  it('starts over at the align edge after a full replacement while scrolled up', async () => {
+    for (const align of ['start', 'end'] as const) {
+      const h = mount({ keys: keysOf(100), size: () => 50, viewport: 400, options: { align } })
+      await h.settle()
+      h.sim.userScroll(2000)
+      await h.settle()
+      h.setKeys(keysOf(100, 'r'))
+      await h.settle()
+      expect(h.v.isAtEdge(), align).toBe(true)
+      expect(h.v.getSnapshot().pinned).toBe(true)
+    }
+  })
+})
+
+describe('anchor and fallbacks removed', () => {
+  for (const align of ['start', 'end'] as const) {
+    it(`keeps the rows after the gap still (align ${align})`, async () => {
+      const h = mount({ keys: keysOf(200), size: (k) => 30 + (Number(String(k).slice(1)) % 4) * 10, viewport: 400, options: { align } })
+      await h.settle()
+      h.sim.userScroll(3000)
+      await h.settle()
+      const anchor = h.v.getSnapshot().key!
+      const i = h.v.indexOf(anchor)
+      // Remove the anchor and 4 rows on each side (all near fallbacks).
+      const gone = new Set(h.keys.slice(i - 4, i + 5))
+      const after = h.keys[i + 5]!
+      const before = h.keys[i - 5]!
+      // Rows after the gap stay still, for both aligns.
+      const held = after
+      void before
+      const edge = (k: Key): number => (align === 'end' ? h.visualEnd(k)! : h.visualStart(k)!)
+      const was = edge(held)
+      h.setKeys(h.keys.filter((k) => !gone.has(k)))
+      await h.settle()
+      expect(edge(held)).toBeCloseTo(was, 5)
+      expect(h.v.isAtEdge()).toBe(false)
+    })
+  }
+})
+
+describe('robustness', () => {
+  it('getSnapshot works before attach and after destroy', async () => {
+    const h = mount({ keys: keysOf(50), size: () => 50, viewport: 400, options: { align: 'end' } })
+    await h.settle()
+    const fresh = createVirtualizer({ count: 3, getKey: (i) => `x${i}` }, { render: () => {} })
+    fresh.commit(fresh.plan())
+    fresh.measureElement({ size: 10 }, 'x1')
+    expect(fresh.getSnapshot()).toMatchObject({ key: 'x0', pinned: true })
+    h.v.destroy()
+    expect(() => h.v.getSnapshot()).not.toThrow()
+  })
+
+  it('does not rebuild on every commit when keys are duplicated', async () => {
+    const keys = keysOf(2000)
+    keys[5] = keys[4]!
+    let calls = 0
+    const h = mount({ keys, size: () => 50, viewport: 400 })
+    await h.settle()
+    const getKey = (i: number): Key => {
+      calls++
+      return keys[i]!
+    }
+    h.setOptions({})
+    calls = 0
+    for (let i = 0; i < 10; i++) h.v.commit(h.v.plan({ count: keys.length, getKey }))
+    expect(calls).toBeLessThan(1000)
+  })
+
+  it('never evicts mounted rows when maxCachedSizes is smaller than the mounted count', async () => {
+    const h = mount({ keys: keysOf(100), size: () => 50, viewport: 400, options: { maxCachedSizes: 3 } })
+    await h.settle()
+    h.sim.userScroll(40)
+    await h.settle()
+    for (const key of h.mounted.keys()) expect(h.v.getItemRect(key)!.measured, String(key)).toBe(true)
   })
 })

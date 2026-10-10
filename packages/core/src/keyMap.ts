@@ -16,8 +16,8 @@ export interface KeyDiff {
   readonly prepend: number
   /** Items added after the survivors. */
   readonly append: number
-  /** True when the change is not an edge change and the map must be rebuilt. */
-  readonly rebuild: boolean
+  /** Present (true) when the change is not an edge change and the map must be rebuilt. */
+  readonly rebuild?: true
 }
 
 /** The diff for an unchanged list. Shared, so the streaming path allocates nothing. */
@@ -26,7 +26,6 @@ export const NO_CHANGE: KeyDiff = {
   trimEnd: 0,
   prepend: 0,
   append: 0,
-  rebuild: false,
 }
 
 /**
@@ -57,7 +56,7 @@ export interface KeyMap {
     oldKey: (index: number) => Key,
     removed: (key: Key) => void,
   ): void
-  /** True when `getKey(i)` is stored at index `i` for every `i` in `[from, to]`. */
+  /** True when `getKey(i)` is stored at index `i` for every `i` in `[from, to]` (`from >= 0`). */
   validate(from: number, to: number, getKey: (index: number) => Key): boolean
 }
 
@@ -66,7 +65,7 @@ export const REBUILD: KeyDiff = { ...NO_CHANGE, rebuild: true }
 
 /** Creates an empty {@link KeyMap}. */
 export function createKeyMap(): KeyMap {
-  let slots = new Map<Key, number>()
+  const slots = new Map<Key, number>()
   let base = 0
   let n = 0
 
@@ -76,7 +75,6 @@ export function createKeyMap(): KeyMap {
     trimEnd,
     prepend,
     append,
-    rebuild: false,
   })
 
   return {
@@ -85,7 +83,8 @@ export function createKeyMap(): KeyMap {
     },
     indexOf,
     diff(count, getKey) {
-      if (!n || !count) return n ? edges(n, 0, 0, 0) : count ? edges(0, 0, 0, count) : NO_CHANGE
+      // A first load (nothing stored) falls through to REBUILD, which is O(n) anyway.
+      if (!count) return n ? edges(n, 0, 0, 0) : NO_CHANGE
       let p = 0
       let a = indexOf(getKey(0))
       while (a < 0 && ++p < count) a = indexOf(getKey(p))
@@ -97,10 +96,10 @@ export function createKeyMap(): KeyMap {
       return a || p || q || b !== n - 1 ? edges(a, n - 1 - b, p, q) : NO_CHANGE
     },
     apply(diff, count, getKey, oldKey, removed) {
-      const gone: Key[] = []
+      let gone: Key[] = []
       if (diff.rebuild) {
-        slots.forEach((_, key) => gone.push(key))
-        slots = new Map()
+        gone = [...slots.keys()]
+        slots.clear()
         diff = edges(0, 0, 0, count)
         n = 0
       } else {
@@ -118,7 +117,7 @@ export function createKeyMap(): KeyMap {
       gone.forEach((key) => slots.has(key) || removed(key))
     },
     validate(from, to, getKey) {
-      for (let i = Math.max(0, from); i <= to && i < n; i++) if (slots.get(getKey(i)) !== base + i) return false
+      for (let i = from; i <= to && i < n; i++) if (slots.get(getKey(i)) !== base + i) return false
       return true
     },
   }

@@ -20,6 +20,11 @@ export interface SimulatedScrollerOptions {
   footer?: number
   /** Simulate touch WebKit. Default false. */
   touchWebKit?: boolean
+  /**
+   * Store whole-pixel offsets like browsers at DPR 1: `'round'` (Chromium,
+   * Firefox) or `'trunc'` (WebKit). Default: fractional offsets.
+   */
+  quantize?: 'round' | 'trunc'
 }
 
 /**
@@ -46,8 +51,6 @@ export interface SimulatedScroller extends Scroller<SimulatedElement> {
   setOverscroll(px: number): void
   /** Starts or ends a touch. */
   touch(active: boolean): void
-  /** Dispatches `'scrollend'`. */
-  scrollEnd(): void
   /** Delivers queued scroll and resize events, runs frame callbacks, then advances the clock by 16 ms. */
   tick(): void
   /** Advances the clock, running due timeouts in order. */
@@ -87,10 +90,17 @@ export function simulatedScroller(options: SimulatedScrollerOptions = {}): Simul
     rows.forEach((r, i) => (s += r.size + (i ? gap : 0)))
     return s
   }
-  const scrollSize = (): number => Math.max(viewport, header + listSize() + footer)
+  // Browsers report a whole-pixel scroll size along with whole-pixel offsets.
+  const scrollSize = (): number => {
+    const s = Math.max(viewport, header + listSize() + footer)
+    return options.quantize ? Math.round(s) : s
+  }
   const max = (): number => scrollSize() - viewport
+  const q = options.quantize ? Math[options.quantize] : (v: number): number => v
+  /** Clamps to [0, max] and quantises like the browser would. */
+  const fit = (v: number): number => q(Math.min(Math.max(v, 0), max()))
   const reclamp = (): void => {
-    const c = Math.min(Math.max(raw, 0), max())
+    const c = fit(raw)
     if (c !== raw) {
       raw = c
       scrollQueued = true
@@ -111,7 +121,7 @@ export function simulatedScroller(options: SimulatedScrollerOptions = {}): Simul
     offset: () => raw + over,
     setOffset(v) {
       const prev = raw
-      raw = Math.min(Math.max(v, 0), max())
+      raw = fit(v)
       over = 0
       if (raw !== prev) scrollQueued = true
     },
@@ -181,7 +191,7 @@ export function simulatedScroller(options: SimulatedScrollerOptions = {}): Simul
     userScroll(offset) {
       emit('input')
       const prev = raw
-      raw = Math.min(Math.max(offset, 0), max())
+      raw = fit(offset)
       if (raw !== prev) scrollQueued = true
     },
     setOverscroll(px) {
@@ -191,7 +201,6 @@ export function simulatedScroller(options: SimulatedScrollerOptions = {}): Simul
     touch(active) {
       emit(active ? 'touchstart' : 'touchend')
     },
-    scrollEnd: () => emit('scrollend'),
     tick() {
       for (let guard = 0; guard < 10 && (scrollQueued || resizeQueued); guard++) {
         if (scrollQueued) {

@@ -2,16 +2,15 @@ import type { Key } from './types'
 
 /** Measured sizes by key, so measurements survive prepends and trims. */
 export interface SizeCache {
-  /** Number of cached sizes. */
-  readonly size: number
   /** Cached size of `key`, or `undefined`. O(1), no reordering. */
   get(key: Key): number | undefined
   /**
    * Stores a measured size, clears its stale mark and makes it the most
-   * recent entry. Beyond `max`, evicts the least recently measured entry
-   * (mounted rows are re-measured on every pass, so they stay recent).
+   * recent entry. Beyond `max(max, floor)` entries, evicts the least recently
+   * measured one. The virtualizer passes the mounted row count as `floor` and
+   * re-measures mounted rows on every pass, so they are never evicted.
    */
-  set(key: Key, size: number): void
+  set(key: Key, size: number, floor?: number): void
   /** Removes `key` (the item left the list). */
   delete(key: Key): void
   /** Marks every entry stale (the cross axis changed). Values stay usable as estimates. */
@@ -40,21 +39,18 @@ export function createSizeCache(max: number = Infinity): SizeCache {
   }
 
   return {
-    get size() {
-      return sizes.size
-    },
     get: (key) => sizes.get(key),
-    set(key, size) {
+    set(key, size, floor = 0) {
       remove(key)
       sizes.set(key, size)
       sum += size
-      if (sizes.size > max) remove(sizes.keys().next().value as Key)
+      if (sizes.size > Math.max(max, floor)) remove(sizes.keys().next().value as Key)
     },
     delete: remove,
     markStale() {
       stale = new Set(sizes.keys())
     },
     isFresh: (key) => sizes.has(key) && !stale.has(key),
-    average: () => (sizes.size > 0 ? sum / sizes.size : undefined),
+    average: () => (sizes.size ? sum / sizes.size : undefined),
   }
 }

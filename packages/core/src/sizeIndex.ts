@@ -9,7 +9,7 @@ export interface SizeIndex {
   readonly count: number
   /** Size of item `index`, or 0 when out of bounds. O(1). */
   size(index: number): number
-  /** Sets the size of item `index` (negative sizes are stored as 0). O(log n). */
+  /** Sets the size of item `index`, `0 <= index < count` (negative sizes are stored as 0). O(log n). */
   setSize(index: number, size: number): void
   /** Start offset of item `index`, for `0 <= index <= count`. O(log n). */
   offsetOf(index: number): number
@@ -82,9 +82,6 @@ export function createSizeIndex(): SizeIndex {
       if (j <= cap) tree[j]! += tree[i]!
     }
   }
-  const ensure = (front: number, back: number): void => {
-    if (base < front || base + n + back > cap) alloc(front, back)
-  }
 
   const index: SizeIndex = {
     get count() {
@@ -92,9 +89,7 @@ export function createSizeIndex(): SizeIndex {
     },
     // Slots outside the items hold 0.
     size: (i) => sizes[base + i] ?? 0,
-    setSize(i, size) {
-      if (i >= 0 && i < n) put(base + i, size)
-    },
+    setSize: (i, size) => put(base + i, size),
     offsetOf(i) {
       let s = padStart + i * gap
       for (let j = base + i; j > 0; j -= j & -j) s += tree[j]!
@@ -116,14 +111,14 @@ export function createSizeIndex(): SizeIndex {
     },
     total: () => padStart + padEnd + (n ? sum + (n - 1) * gap : 0),
     prepend(k, sizeAt) {
-      ensure(k, 0)
+      if (base < k) alloc(k, 0)
       base -= k
       n += k
       for (let i = 0; i < k; i++) put(base + i, sizeAt(i))
     },
     append(k, sizeAt) {
       if (!n) return index.reset(k, sizeAt)
-      ensure(0, k)
+      if (base + n + k > cap) alloc(0, k)
       for (let i = 0; i < k; i++) put(base + n + i, sizeAt(n + i))
       n += k
     },

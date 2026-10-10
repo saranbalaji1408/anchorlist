@@ -14,8 +14,6 @@ export type ScrollerEvent =
   | 'touchend'
   /** A touch was cancelled (same as `touchend`). */
   | 'touchcancel'
-  /** Scrolling (including momentum) finished. */
-  | 'scrollend'
   /** Direct user input. Cancels a pending `scrollToKey` lock. */
   | 'input'
   /** Same as `input`. */
@@ -143,7 +141,7 @@ export interface ElementScrollerOptions {
   axis?: Axis
 }
 
-/** True on touch WebKit: iPhone, iPod, and iPad (which may report a Mac user agent). */
+/** True on touch WebKit: iPhone, iPod and iPad, including iPadOS reporting a Mac user agent with touch points. */
 export function isTouchWebKit(nav?: { userAgent: string; maxTouchPoints?: number }): boolean {
   const ua = nav ? nav.userAgent : ''
   return /iP(hone|od|ad)/.test(ua) || (/Mac/.test(ua) && nav!.maxTouchPoints! > 1)
@@ -156,7 +154,6 @@ export function elementScroller({ element: el, list, content = list, axis: ax = 
   // Borders are not compensated: give the scroller and the list no border on the main axis.
   const origin = (): number => el.getBoundingClientRect()[ax.start]
   const offset = (): number => el[ax.offset]
-  const max = (): number => el[ax.scrollSize] - el[ax.client]
 
   return {
     offset,
@@ -166,7 +163,7 @@ export function elementScroller({ element: el, list, content = list, axis: ax = 
     viewport: () => el[ax.client],
     crossSize: () => el[ax.cross],
     scrollSize: () => el[ax.scrollSize],
-    overscrolled: () => Math.min(offset(), 0) || Math.max(offset() - max(), 0),
+    overscrolled: () => Math.min(offset(), 0) || Math.max(offset() + el[ax.client] - el[ax.scrollSize], 0),
     measure(e) {
       const r = e.getBoundingClientRect()
       return { start: r[ax.start] - origin(), size: r[ax.size] }
@@ -180,15 +177,19 @@ export function elementScroller({ element: el, list, content = list, axis: ax = 
       content.style.transform = px ? `${ax.translate}(${px}px)` : ''
     },
     setIndex(e, i, n) {
-      e.setAttribute('data-index', '' + i)
-      e.setAttribute('aria-posinset', '' + (i + 1))
-      e.setAttribute('aria-setsize', '' + n)
+      // setAttribute stringifies numbers.
+      e.setAttribute('data-index', i as never)
+      e.setAttribute('aria-posinset', (i + 1) as never)
+      e.setAttribute('aria-setsize', n as never)
     },
-    observe: (e) => ro?.observe(e),
-    unobserve: (e) => ro?.unobserve(e),
+    // The virtualizer observes rows only while listening.
+    observe: (e) => ro!.observe(e),
+    unobserve: (e) => ro!.unobserve(e),
     listen(handler) {
-      // A user scroll by any means (keys, scrollbar) also cancels a lock through `scroll`.
-      const types = 'scroll touchstart touchend touchcancel scrollend wheel'.split(' ')
+      // A user scroll by any means also cancels a scrollToKey lock, through `scroll`.
+      // Deferred corrections commit 120 ms after the last scroll, so `scrollend` is not needed.
+      // `wheel` cancels a scrollToKey lock even at a boundary, where it does not scroll.
+      const types = 'scroll touchstart touchend touchcancel wheel'.split(' ')
       const fn = (e: Event): void => handler(e.type as ScrollerEvent)
       types.forEach((t) => el.addEventListener(t, fn, { passive: true }))
       ro = new ResizeObserver(() => handler('resize'))

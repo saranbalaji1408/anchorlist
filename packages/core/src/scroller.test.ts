@@ -17,7 +17,7 @@ const fakeElement = (rect: { top: number; left?: number; height?: number }) => {
     attrs,
     listeners,
     getBoundingClientRect: () => ({ top: rect.top, left: rect.left ?? 0, height: rect.height ?? 0, width: 0 }),
-    setAttribute: (name: string, value: string) => void (attrs[name] = value),
+    setAttribute: (name: string, value: unknown) => void (attrs[name] = String(value)),
     addEventListener: (type: string, fn: (e: { type: string }) => void) => void listeners.set(type, fn),
     removeEventListener: (type: string) => void listeners.delete(type),
   }
@@ -30,6 +30,7 @@ describe('isTouchWebKit', () => {
     expect(isTouchWebKit({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15', maxTouchPoints: 5 })).toBe(true)
     expect(isTouchWebKit({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15', maxTouchPoints: 0 })).toBe(false)
     expect(isTouchWebKit({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64) Chrome/120' })).toBe(false)
+    expect(isTouchWebKit({ userAgent: 'Mozilla/5.0 (Linux; Android 14) Chrome/120 Mobile', maxTouchPoints: 5 })).toBe(false)
     expect(isTouchWebKit(undefined)).toBe(false)
   })
 })
@@ -106,6 +107,7 @@ describe('elementScroller', () => {
     const events: ScrollerEvent[] = []
     const off = sc.listen((e) => events.push(e))
     expect(observed).toEqual([el, content, list])
+    expect([...el.listeners.keys()]).toEqual(['scroll', 'touchstart', 'touchend', 'touchcancel', 'wheel'])
     for (const type of ['scroll', 'touchstart', 'touchcancel', 'wheel']) el.listeners.get(type)!({ type })
     expect(events).toEqual(['scroll', 'touchstart', 'touchcancel', 'wheel'])
     off()

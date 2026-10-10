@@ -21,9 +21,9 @@ export interface FollowContext {
 export interface Snapshot {
   /** Anchor item key, or `null` for an empty list. */
   readonly key: Key | null
-  /** Anchor item index, used when the key no longer exists. */
+  /** Anchor item index at the time (informational; -1 for an empty list). */
   readonly index: number
-  /** Position of the anchor's `align` edge relative to the viewport start, in px. */
+  /** Intended position of the anchor's `align` edge relative to the viewport start, in px. */
   readonly delta: number
   /** True when the list was pinned to its `align` edge. */
   readonly pinned: boolean
@@ -163,7 +163,11 @@ export interface Virtualizer {
   scrollToKey(key: Key, options?: ScrollToOptions): boolean
   /** {@link Virtualizer.scrollToKey} by index. Returns false when out of range. */
   scrollToIndex(index: number, options?: ScrollToOptions): boolean
-  /** Scrolls to an edge (default: `align`) and pins there unless `hasMore` is set for that edge. */
+  /**
+   * Scrolls to an edge (default: `align`). At the `align` edge with no `hasMore`
+   * there, the list becomes pinned; any other edge becomes an item anchor once
+   * the frame settles.
+   */
   scrollToEdge(edge?: Edge): void
   /** True when within `atEdgeThreshold` of `edge` (default: `align`). */
   isAtEdge(edge?: Edge): boolean
@@ -193,9 +197,7 @@ interface EdgeMode {
 /** Anchored to an item's `align` edge, `d` px from the viewport start. */
 interface ItemMode extends Point {
   t: 1
-  /** Index, for recapture when the key and every fallback are gone. */
-  i: number
-  /** Fallbacks: after, before, after, before. */
+  /** Fallbacks, set only by a change that may remove the anchor: later rows first. */
   f: Point[]
 }
 /** Scrolling to an item; locked until sizes settle. */
@@ -204,13 +206,12 @@ interface TargetMode {
   k: Key
   a: ItemAlign
   o: number
-  /** Start time. */
+  /** Start time, set by the first lock frame. */
   s: number
   /** Consecutive frames without a resize. */
   q: number
 }
 type Mode = EdgeMode | ItemMode | TargetMode
-
 
 /**
  * Corrections at or below this many px are not written. The anchor keeps its
@@ -250,7 +251,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   const EDGE: EdgeMode = { t: 0, e: align }
 
   const snap = options.initialSnapshot
-  let mode: Mode = snap && snap.key !== null && !snap.pinned ? { t: 1, k: snap.key, d: snap.delta, i: snap.index, f: [] } : EDGE
+  let mode: Mode = snap && snap.key !== null && !snap.pinned ? { t: 1, k: snap.key, d: snap.delta, f: [] } : EDGE
 
   let sc: Scroller | null = null
   let committed: Range = EMPTY
@@ -264,8 +265,16 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   let lastScrollAt = -Infinity
   /** Effective offset after our last write or event; a scroll event that lands here is ours. */
   let lastEff = 0
-  /** Scroll size after the last restore, to recognise offset clamps when content shrinks. */
-  let lastSize = 0
+  /**
+   * Actual minus intended effective offset after the last restore: the
+   * whole-pixel rounding remainder (or a skipped correction). Captures use the
+   * intended offset, so the remainder never builds up across anchors.
+   */
+  let err = 0
+  /** err at the last settled (painted) frame, carried by item-anchor writes. */
+  let carry = 0
+  /** Keys are duplicated: lazy validation is off until the list changes. */
+  let dup = false
   let passes = 0
   let resized = false
   /** Key of the edge item when `onStartReached` / `onEndReached` last fired, while inside the zone. */
@@ -276,17 +285,22 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   let estimate = 48
   let needBackground = false
 
-  const later = (slot: number, fn?: () => void, ms?: number): void => {
+  /** Only called with a scroller attached. */
+  const later = (slot: number, fn: () => void, ms?: number): void => {
     timers[slot]?.()
-    timers[slot] = fn && sc ? (ms ? sc.timeout(fn, ms) : sc.frame(fn)) : undefined
+    timers[slot] = ms ? sc!.timeout(fn, ms) : sc!.frame(fn)
   }
   const clamp = (v: number, lo: number, hi: number): number => Math.min(Math.max(v, lo), hi)
   /** The `hasMore` option of the pinned edge. */
   const more = atEnd ? 'hasMoreEnd' : 'hasMoreStart'
   const eff = (): number => (sc ? sc.offset() + pending : 0)
-  const maxScroll = (): number => (sc ? Math.max(0, sc.scrollSize() - viewport) : 0)
-  const sizeFor = (o: VirtualizerOptions, i: number): number =>
-    cache.get(o.getKey(i)) ?? o.estimateSize?.(i) ?? estimate
+  // Negative when the content is shorter than the viewport (writes then clamp to 0).
+  const maxScroll = (): number => (sc ? sc.scrollSize() - viewport : 0)
+  /** Size of item `i` for `o`: cached, else estimated. */
+  const sizeFor =
+    (o: VirtualizerOptions) =>
+    (i: number): number =>
+      cache.get(o.getKey(i)) ?? o.estimateSize?.(i) ?? estimate
 
   /** Items intersecting the viewport grown by `over` px on each side, at the current offset. */
   const range = (over: number): Range => {
@@ -297,36 +311,56 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   const rangeNow = (): Range => range(opts.overscan ?? 400)
 
   /** Content-space start and size of item `i`: from the DOM when mounted, else from the index. */
-  const box = (i: number): [number, number] => {
-    const row = rows.get(opts.getKey(i))
+  const box = (i: number, model?: 1): [number, number] => {
+    const row = sc && !model && rows.get(opts.getKey(i))
     if (!row) return [listStart + idx.offsetOf(i), idx.size(i)]
     const b = sc!.measure(row)
     return [b.start + eff(), b.size]
   }
-  const edgeOf = (i: number): number => {
-    const [s, z] = box(i)
+  const edgeOf = (i: number, model?: 1): number => {
+    const [s, z] = box(i, model)
     return atEnd ? s + z : s
   }
 
   // ------------------------------------------------------------------ anchor
 
-  /** Anchors the first item reaching into the viewport, with two fallbacks on each side. */
-  const capture = (): ItemMode | null => {
+  /**
+   * Anchors the first item reaching into the viewport, relative to the
+   * intended offset. With `model`, from model positions only (the DOM may
+   * already show uncommitted changes).
+   */
+  const capture = (model?: 1): ItemMode | null => {
     const n = idx.count
-    const e = eff()
+    const e = eff() - err
     // Without a scroller nothing is mounted, so this uses model positions.
     if (!n) return null
     let i = idx.findIndexAtOffset(e - listStart)
     while (i < n - 1 && listStart + idx.offsetOf(i) + idx.size(i) <= e) i++
-    const point = (j: number): Point => ({ k: opts.getKey(j), d: edgeOf(j) - e })
-    return { t: 1, i, f: [i + 1, i - 1, i + 2, i - 2].filter((j) => j >= 0 && j < n).map(point), ...point(i) }
+    return { t: 1, k: opts.getKey(i), d: edgeOf(i, model) - e, f: [] }
+  }
+
+  /**
+   * Before a change that may remove the anchor: fallback points at distances
+   * 1, 2, 4, ... up to the list edge, after the anchor first, then before it,
+   * from the model layout before the change. Rows on one side of a removed run
+   * move together, so holding any surviving later point keeps every row after
+   * the gap still (for both aligns). `key` returns keys in the index's current order.
+   */
+  const fallbacks = (key: (i: number) => Key): void => {
+    const m = mode
+    const n = idx.count
+    const e = eff() - err
+    if (m.t === 1 && keys.indexOf(m.k) >= 0)
+      for (const dir of [1, -1])
+        for (let s = 1, j; s < 2 * n; s *= 2)
+          m.f.push({ k: key((j = clamp(keys.indexOf(m.k) + dir * s, 0, n - 1))), d: listStart + idx.offsetOf(j) + (atEnd ? idx.size(j) : 0) - e })
   }
   const recapture = (): void => {
     mode = capture() ?? mode
   }
-  /** Moves every point of an item anchor by `by` px. */
+  /** Moves an item anchor by `by` px (fallbacks only exist between a removal and its restore). */
   const shift = (m: Mode, by: number): void => {
-    if (m.t === 1) [m, ...m.f].forEach((p) => (p.d += by))
+    if (m.t === 1) m.d += by
   }
 
   // ------------------------------------------------------------- scrolling
@@ -335,16 +369,26 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   const defer = (): boolean =>
     sc!.overscrolled() !== 0 || (sc!.touchWebKit && (touching || sc!.now() - lastScrollAt < IDLE_MS))
 
+  /**
+   * Writes a whole-pixel offset and clears any pending transform. Engines
+   * store whole pixels at DPR 1 and some truncate, so rounding first makes
+   * every engine land within 0.5 px. The read-back remainder goes into err.
+   */
   const write = (v: number): void => {
     if (pending) sc!.translate((pending = 0))
-    sc!.setOffset(v)
-    lastEff = eff()
+    sc!.setOffset(Math.round(v))
   }
   const commitPending = (force: boolean): void => {
     // Only reachable with a scroller (events and timers stop on destroy).
     if (pending && !touching) {
-      if (force || !defer()) write(sc!.offset() + pending)
-      else scheduleIdle()
+      if (force || !defer()) {
+        // Our own write: it only changes the effective offset by rounding, which
+        // goes into lastEff (user movement stays visible) and err.
+        let e = eff()
+        write(sc!.offset() + pending)
+        lastEff += e = eff() - e
+        carry = clamp((err += e), -0.5, 0.5)
+      } else scheduleIdle()
     }
   }
   const scheduleIdle = (): void => later(0, () => commitPending(false), IDLE_MS)
@@ -352,18 +396,60 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   /** Moves the effective offset, deferring into a transform when a write would interrupt the user. */
   const scrollTo = (desired: number): void => {
     const target = clamp(desired, 0, maxScroll())
-    if (Math.abs(target - eff()) <= EPSILON) return
-    if (!defer()) return write(target)
-    pending = target - sc!.offset()
-    sc!.translate(-pending)
-    scheduleIdle()
+    // An item anchor carries the remainder of the last painted frame (up to half
+    // a pixel), so a change moves content by at most 0.5 px from where it is
+    // (more only to keep the error within 1 px). Targets and edges are exact,
+    // and so is a clamped position.
+    const t = clamp(desired + carry, 0, maxScroll())
+    // A whole-pixel write of the same value is a no-op; a transform is only
+    // written for a correction above EPSILON.
+    if (!defer()) write(t)
+    else if (Math.abs(t - eff()) > EPSILON) {
+      pending = t - sc!.offset()
+      sc!.translate(-pending)
+      scheduleIdle()
+    }
     lastEff = eff()
+    // A clamped target becomes the intended position, so it is adopted.
+    err = lastEff - target
   }
+
+
+  /**
+   * Adopts user movement: the offset changed since our last write or
+   * observation. Runs at the start of every commit and pass, not only on
+   * `scroll`, because a re-render can commit before the scroll event arrives.
+   * Content that shrank under our offset is the browser's clamp, not the
+   * user. An item anchor moves with the user, so a change committed
+   * at the same time (a prepend) is still compensated; it is re-captured after
+   * the next restore. Other modes re-anchor from the model, because the DOM
+   * may already show the new rows.
+   */
+  const adopt = (): boolean => {
+    const max = maxScroll()
+    const d = eff() - lastEff
+    // A clamp (our last offset is past the new end and the offset sits on it)
+    // moves the actual offset but not the intended one: it goes into err.
+    const user = Math.abs(d) > EPSILON && !(sc!.offset() >= max - 1 && lastEff - pending > max)
+    lastEff = eff()
+    if (!user) err += d
+    else {
+      // The actual position is the user's: the remainder is dropped.
+      const e = err
+      err = carry = 0
+      // At the align edge: pin (settle turns it back into an anchor when hasMore is set there).
+      if (api.isAtEdge()) mode = EDGE
+      else if (mode.t === 1) shift(mode, -e - d)
+      else mode = capture(1) ?? mode
+    }
+    return user
+  }
+
+
 
   const restore = (): void => {
     const m = mode
     if (!m.t) return scrollTo(m.e === 'end' ? Infinity : 0)
-    const n = idx.count
     if (m.t === 2) {
       const j = keys.indexOf(m.k)
       if (j < 0) return recapture()
@@ -371,18 +457,19 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       // Item start, centre or end at the viewport start, centre or end.
       return scrollTo(s + m.o + (z - viewport) * ALIGN[m.a])
     }
-    if (!n) return
-    // First surviving point: the key, then the fallbacks, then the item now at the anchor index.
+    // Nothing to anchor to while empty (a clear, or attach before the first commit).
+    if (!idx.count) return
+    // First surviving point: the anchor, then its fallbacks. None: the list was
+    // cleared or replaced, so start over at the `align` edge like a fresh mount.
     let p: Point = m
     let j = keys.indexOf(m.k)
     for (const q of m.f) if (j < 0) j = keys.indexOf((p = q).k)
     if (j < 0) {
-      j = clamp(m.i, 0, n - 1)
-      p = m
+      mode = EDGE
+      return restore()
     }
-    const d = p.d
-    if (opts.getKey(j) !== m.k) mode = { t: 1, k: opts.getKey(j), d, i: j, f: [] }
-    scrollTo(edgeOf(j) - d)
+    if (p !== m) mode = { t: 1, k: p.k, d: p.d, f: [] }
+    scrollTo(edgeOf(j) - p.d)
   }
 
   // ------------------------------------------------------------------- cycle
@@ -396,7 +483,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
         idx.setSize(i, s)
         resized = needBackground = true
       }
-      cache.set(key, s)
+      // Mounted rows are never evicted, whatever maxCachedSizes says.
+      cache.set(key, s, rows.size)
     })
 
   /** Edge trigger: fires when `near` and `more`, once per edge item; re-arms when no longer near. */
@@ -414,11 +502,15 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     const sk = n ? o.getKey(s) : null
     const ek = n ? o.getKey(e) : null
     let changed = s !== visible.startIndex || e !== visible.endIndex || sk !== visible.startKey || ek !== visible.endKey
-    if (changed) o.onRangeChange?.((visible = { startIndex: s, endIndex: e, startKey: sk, endKey: ek }))
+    if (changed) {
+      visible = { startIndex: s, endIndex: e, startKey: sk, endKey: ek }
+      o.onRangeChange?.(visible)
+    }
     const at = api.isAtEdge()
     if (at !== atEdgeState) {
       changed = true
-      o.onAtEdgeChange?.((atEdgeState = at))
+      atEdgeState = at
+      o.onAtEdgeChange?.(at)
     }
     if (n && !sc!.overscrolled()) {
       startLatch = reach(v < (o.startThreshold ?? 300), o.hasMoreStart, o.getKey(0), startLatch, o.onStartReached)
@@ -434,6 +526,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
    */
   const cycle = (sync: boolean): void => {
     if (!sc) return
+    adopt()
     measureRows()
     const { start, end } = committed
     const total = idx.total()
@@ -441,23 +534,18 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     else sc.setSpacers(idx.offsetOf(start), total - idx.offsetOf(end) - idx.size(end))
     listStart = sc.listStart() + eff()
     restore()
-    lastSize = sc.scrollSize()
     const r = rangeNow()
     if ((r.start !== start || r.end !== end) && passes++ < MAX_PASSES) return host.render(sync)
     passes = 0
     const m = mode
     // Settle: re-anchor on the measured layout (so fallback deltas never go
-    // stale), and turn an edge mode that is not a pin into an anchor. The same
-    // anchor keeps its intended delta when it is off by a skipped correction
-    // (at most EPSILON), so those cannot add up. A larger difference means the
-    // position was unreachable (clamped): adopt it, so a later change that
-    // makes room does not catch up with a visible jump.
-    const c = (m.t ? m.t < 2 : m !== EDGE || opts[more]) && capture()
-    if (c) {
-      if (m.t === 1 && c.k === m.k && Math.abs(m.d - c.d) <= EPSILON) shift(c, m.d - c.d)
-      mode = c
-    }
-    lastEff = eff()
+    // stale), and turn an edge mode that is not a pin into an anchor. Captures
+    // are relative to the intended offset, so a whole-pixel remainder or a
+    // skipped correction (each at most 0.5 px) never builds up, and a clamped
+    // (unreachable) position is adopted, so a later change that makes room
+    // does not catch up with a visible jump.
+    if (m.t ? m.t < 2 : m !== EDGE || opts[more]) recapture()
+    carry = clamp(err, -0.5, 0.5)
     notify()
     if (needBackground) background()
   }
@@ -473,24 +561,29 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     return (typeof f === 'function' ? f({ atEdge: at, added, count: o.count }) : (f ?? at)) && !o[more]
   }
 
-  const rebuild = (o: VirtualizerOptions): void => {
-    keys.apply(REBUILD, o.count, o.getKey, o.getKey, (k) => cache.delete(k))
-    idx.reset(o.count, (i) => sizeFor(o, i))
+  /** Rebuilds keys and sizes for `o`; with `fb`, first takes fallbacks in the current order. */
+  const rebuild = (o: VirtualizerOptions, fb = 1): void => {
+    if (fb) fallbacks(o.getKey)
+    keys.apply(REBUILD, o.count, o.getKey, o.getKey, cache.delete)
+    idx.reset(o.count, sizeFor(o))
+    // Still invalid after a rebuild: duplicated keys.
+    dup = !keys.validate(0, o.count - 1, o.getKey)
   }
 
   const applyDiff = (d: KeyDiff, o: VirtualizerOptions): void => {
     if (d === NO_CHANGE) return
+    dup = false
     const f = follows(d, o)
     if (f) mode = EDGE
     else if (f === false && mode === EDGE) recapture()
-    if (d.rebuild) return rebuild(o)
-    keys.apply(d, o.count, o.getKey, opts.getKey, (k) => cache.delete(k))
-    const est = (i: number): number => sizeFor(o, i)
+    fallbacks(opts.getKey)
+    if (d.rebuild) return rebuild(o, 0)
+    keys.apply(d, o.count, o.getKey, opts.getKey, cache.delete)
+    const est = sizeFor(o)
     idx.trimStart(d.trimStart)
     idx.trimEnd(d.trimEnd)
     idx.prepend(d.prepend, est)
     idx.append(d.append, est)
-    if (mode.t === 1) mode.i += d.prepend - d.trimStart
   }
 
   /**
@@ -503,7 +596,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     const last = o.count - 1
     const f = follows(d, o)
     const span = Math.max(0, committed.end - committed.start)
-    let start = committed.start + (d.rebuild ? 0 : d.prepend - d.trimStart)
+    // A rebuild has prepend = trimStart = 0.
+    let start = committed.start + d.prepend - d.trimStart
     if (f ?? mode === EDGE) start = atEnd ? last - span : 0
     start = clamp(start, 0, last)
     return { start, end: clamp(start + span, start, last) }
@@ -518,7 +612,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       if (m.t !== 2) return
       m.q = resized ? 0 : m.q + 1
       resized = false
-      if (m.q >= TARGET_FRAMES || sc!.now() - m.s >= TARGET_MAX_MS) recapture()
+      if (m.q >= TARGET_FRAMES || sc!.now() - (m.s ||= sc!.now()) >= TARGET_MAX_MS) recapture()
       else lock()
     })
 
@@ -529,12 +623,13 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       () => {
         needBackground = false
         const o = opts
-        let dirty = !keys.validate(0, keys.count - 1, o.getKey)
+        let dirty = !dup && !keys.validate(0, keys.count - 1, o.getKey)
         if (dirty) rebuild(o)
         const avg = cache.average()
         if (!o.estimateSize && avg && Math.abs(avg - estimate) > estimate / 10) {
           estimate = avg
-          for (let i = 0; i < idx.count; i++) if (cache.get(opts.getKey(i)) === undefined) idx.setSize(i, avg)
+          // Unmeasured items take the new estimate (O(n)).
+          idx.reset(idx.count, sizeFor(o))
           dirty = true
         }
         if (dirty) cycle(false)
@@ -545,6 +640,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   const onEvent = (type: ScrollerEvent): void => {
     const s = sc
     if (!s) return
+    // Any event counts as activity for touch WebKit deferral (momentum may follow).
+    lastScrollAt = s.now()
     const scroll = type === 'scroll'
     if (scroll || type === 'resize') {
       // Browsers clamp the offset during layout and fire `scroll` before the
@@ -553,43 +650,36 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       // content that shrank, is such a clamp, not the user.
       const vp = s.viewport()
       const cr = s.crossSize()
-      const size = s.scrollSize()
-      const same = vp === viewport && !(size < lastSize && s.offset() >= size - vp - 1)
       if (cr !== cross) cache.markStale()
       // Keep the pinned edge fixed: for `end`, content moves with the viewport end.
       if (atEnd) shift(mode, vp - viewport)
-      resized ||= !scroll || !same
+      // The offset change that comes with a viewport change is the browser's clamp.
+      if (vp !== viewport) lastEff = eff()
+      resized ||= !scroll || vp !== viewport
       cross = cr
       viewport = vp
       if (scroll) {
-        // Detect user movement before a deferred correction is committed.
-        const moved = same && Math.abs(eff() - lastEff) > EPSILON
-        lastScrollAt = s.now()
+        // The DOM is still the committed one: re-anchor where the user is now.
+        if (adopt() && mode.t === 1) recapture()
         commitPending(false)
-        if (moved) {
-          if (api.isAtEdge() && !opts[more]) mode = EDGE
-          else recapture()
-        }
       }
       return cycle(scroll)
     }
-    if (type === 'scrollend') return commitPending(true)
-    if (type.startsWith('touch')) {
-      // touchstart, touchend or touchcancel. Momentum may follow a touch end.
-      lastScrollAt = s.now()
-      if (!(touching = type === 'touchstart')) return scheduleIdle()
-    }
+    // touchstart, touchend or touchcancel.
+    if (type.startsWith('touch') && !(touching = type === 'touchstart')) return scheduleIdle()
     // Any other event is direct input: it cancels a scrollToKey lock.
     if (mode.t === 2) recapture()
   }
 
-
   /** Imperative scroll: position now, then run the loop in a microtask (safe inside a host render or effect). */
-  const kick = (): void => {
-    if (!sc) return
-    restore()
-    lock()
-    queueMicrotask(() => cycle(true))
+  const kick = (m: Mode): true => {
+    mode = m
+    if (sc) {
+      restore()
+      lock()
+      queueMicrotask(() => cycle(true))
+    }
+    return true
   }
 
   // --------------------------------------------------------------------- api
@@ -607,15 +697,19 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     commit(range) {
       const o = range.options
       idx.setLayout(o.gap, o.paddingStart, o.paddingEnd)
+      // Old state is still current here, so captures and trims see the old keys,
+      // and user movement is adopted before the follow decision.
+      if (sc) adopt()
       const d = keys.diff(o.count, o.getKey)
-      // Old state is still current here, so captures and trims see the old keys.
       applyDiff(d, o)
       opts = o
       committed = range
-      // Lazy validation: rendered keys must match, otherwise rebuild.
-      if (!keys.validate(committed.start, committed.end, o.getKey)) rebuild(o)
+      // Lazy validation: rendered keys must match, otherwise rebuild. If they
+      // still do not match, keys are duplicated: stop rebuilding on every commit
+      // until the list changes again.
+      if (!dup && !keys.validate(range.start, range.end, o.getKey)) rebuild(o)
       needBackground = true
-        const total = o.hasMoreStart || o.hasMoreEnd ? -1 : o.count
+      const total = o.hasMoreStart || o.hasMoreEnd ? -1 : o.count
       rows.forEach((el, key) => keys.indexOf(key) < 0 || sc?.setIndex(el, keys.indexOf(key), total))
       cycle(false)
     },
@@ -628,16 +722,13 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       timers[3] = sc.listen(onEvent)
       rows.forEach((el) => sc!.observe(el))
       lastEff = eff()
-        if (mode.t === 2) {
-        mode.s = sc.now()
         lock()
-      }
       cycle(false)
     },
 
     measureElement(el, key) {
       const prev = rows.get(key)
-      if (prev === el) return
+      // Registering the same element again just re-observes it.
       if (prev) sc?.unobserve(prev)
       rows.delete(key)
       if (el) {
@@ -647,17 +738,14 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     },
 
     destroy() {
-      timers.splice(0).forEach((t) => t?.())
+      timers.splice(0).forEach((t) => t!())
       sc?.translate((pending = 0))
       sc = null
     },
 
     scrollToKey(key, o = {}) {
-      if (keys.indexOf(key) < 0) return false
-      mode = { t: 2, k: key, a: o.align ?? 'start', o: o.offset ?? 0, s: sc ? sc.now() : 0, q: 0 }
       // Jump to the estimate now so a blank frame never paints; commits refine it.
-      kick()
-      return true
+      return keys.indexOf(key) >= 0 && kick({ t: 2, k: key, a: o.align ?? 'start', o: o.offset ?? 0, s: 0, q: 0 })
     },
 
     scrollToIndex(index, o) {
@@ -665,8 +753,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     },
 
     scrollToEdge(edge = align) {
-      mode = edge === align ? EDGE : { t: 0, e: edge }
-      kick()
+      kick(edge === align ? EDGE : { t: 0, e: edge })
     },
 
     isAtEdge(edge = align) {
@@ -686,7 +773,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
 
     getSnapshot() {
       const m = mode.t === 1 ? mode : capture()
-      return { key: m ? m.k : null, index: m ? m.i : 0, delta: m ? m.d : 0, pinned: mode === EDGE }
+      return { key: m?.k ?? null, index: keys.indexOf(m?.k as Key), delta: m?.d ?? 0, pinned: mode === EDGE }
     },
 
     subscribe(listener) {
