@@ -87,7 +87,7 @@ export function installLayout(): TestLayout {
 
   const OriginalRO = globalThis.ResizeObserver
   globalThis.ResizeObserver = class {
-    constructor(_cb: ResizeObserverCallback) {
+    constructor() {
       live++
     }
     observe(): void {}
