@@ -1,0 +1,23 @@
+[
+  {
+    "name": "anchorlist",
+    "path": "node_modules/anchorlist/dist/index.js",
+    "import": "{ AnchorList }",
+    "ignore": ["react", "react-dom"],
+    "gzip": true
+  },
+  {
+    "name": "@tanstack/react-virtual",
+    "path": "node_modules/@tanstack/react-virtual/dist/esm/index.js",
+    "import": "{ useVirtualizer }",
+    "ignore": ["react", "react-dom"],
+    "gzip": true
+  },
+  {
+    "name": "react-virtuoso",
+    "path": "node_modules/react-virtuoso/dist/index.mjs",
+    "import": "{ Virtuoso }",
+    "ignore": ["react", "react-dom"],
+    "gzip": true
+  }
+]
