@@ -34,6 +34,8 @@ function LanesListImpl<T>(props: LanesListProps<T>, ref: ForwardedRef<AnchorList
         paddingStart={0}
         paddingEnd={0}
         estimateSize={converted.estimateSize!}
+        // AnchorList leaves overflow to a custom scroller; the default one scrolls the container.
+        style={props.scroller ? props.style : { overflowY: 'auto', ...props.style }}
         scroller={(e) => {
           // Items are positioned absolutely inside the list.
           e.list.style.position = 'relative'

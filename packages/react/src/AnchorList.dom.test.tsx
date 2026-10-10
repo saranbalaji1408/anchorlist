@@ -255,6 +255,7 @@ describe('LanesList', () => {
     expect(sync.mock.calls[sync.mock.calls.length - 1]![0].count).toBe(30)
     const list = scroller().querySelector<HTMLElement>('[role="list"]')!
     expect(list.style.position).toBe('relative')
+    expect(scroller().style.overflowY).toBe('auto')
     expect(parseFloat(list.style.gap)).toBe(0)
     const row = scroller().querySelector<HTMLElement>('[data-key="i1"]')!
     expect(row.style.position).toBe('absolute')
