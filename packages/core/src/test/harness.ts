@@ -10,6 +10,8 @@ export interface HarnessOptions extends SimulatedScrollerOptions {
   size: (key: Key) => number
   /** Extra virtualizer options. */
   options?: Partial<VirtualizerOptions>
+  /** Scroll offset before attaching (a page that is already scrolled). */
+  offset?: number
 }
 
 /** A virtualizer mounted on a simulated scroller, rendered by a minimal synchronous host. */
@@ -137,6 +139,7 @@ export function mount(o: HarnessOptions): Harness {
   h.v = createVirtualizer(options(o.keys), host)
   // First render: no scroller yet, so nothing is mounted.
   renderOnce()
+  if (o.offset) sim.setOffset(o.offset)
   h.v.attach(sim)
   host.render()
   return h

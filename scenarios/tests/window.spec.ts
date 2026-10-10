@@ -84,6 +84,34 @@ for (const margin of [0, MARGIN]) {
       expect(Math.abs((await a.end('m300')) - (await a.viewport()))).toBeLessThanOrEqual(1)
     })
 
+    test('keeps an already scrolled page where it is when the list mounts (align start)', async ({ d, page }) => {
+      const a = axis(page)
+      // Page content above and below the list; the page is scrolled before the list mounts.
+      const scrollTo = async (y: number): Promise<number> =>
+        page.evaluate((y) => {
+          for (const where of ['afterbegin', 'beforeend'] as const) {
+            document.body.insertAdjacentHTML(where, '<div class="page-filler" style="height:3000px"></div>')
+          }
+          window.scrollTo(0, y)
+          return window.scrollY
+        }, y)
+      expect(await scrollTo(1500)).toBe(1500)
+      await d.mount({ items: makeItems(500, 'm', rng(57), 40, 160), align: 'start', layout: 'window', scrollMargin: margin })
+      await d.frames(3)
+      // The list is below the viewport: nothing moves.
+      expect(await page.evaluate(() => window.scrollY)).toBe(1500)
+      expect(await d.isMounted('m0')).toBe(true)
+      expect(await d.getSnapshot()).toMatchObject({ pinned: false })
+      // Scrolling into the list renders and anchors as usual.
+      await a.scrollBy(3000)
+      await d.frames(2)
+      const anchor = await rowFrom(page, 1)
+      await stillOnAxis(page, anchor, async () => {
+        await d.update({ items: [...makeItems(10, 'p', rng(58), 40, 160), ...makeItems(500, 'm', rng(57), 40, 160)] })
+        await d.frames(3)
+      })
+    })
+
     test('pins to the bottom of the page and follows appends (align end)', async ({ d, page }) => {
       const a = axis(page)
       const items = makeItems(300, 'm', rng(55), 40, 160)

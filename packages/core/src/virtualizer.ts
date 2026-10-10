@@ -225,9 +225,9 @@ interface TargetMode {
   a: ItemAlign
   o: number
   /** Start time, set by the first lock frame. */
-  s: number
-  /** Consecutive frames without a resize. */
-  q: number
+  s?: number
+  /** Consecutive frames without a resize (unset counts as 0). */
+  q?: number
 }
 type Mode = EdgeMode | ItemMode | TargetMode
 
@@ -246,7 +246,6 @@ const TARGET_MAX_MS = 500
 const MAX_PASSES = 8
 
 const EMPTY: Range = { start: 0, end: -1 }
-const ALIGN = { start: 0, center: 0.5, end: 1 }
 const NO_VISIBLE: VisibleRange = { startIndex: 0, endIndex: -1, startKey: null, endKey: null }
 
 /**
@@ -485,7 +484,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       if (j < 0) return recapture()
       const [s, z] = box(j)
       // Item start, centre or end at the viewport start, centre or end.
-      return scrollTo(s + m.o + (z - viewport) * ALIGN[m.a])
+      // 'start', 'center', 'end' → 0, 0.5, 1.
+      return scrollTo(s + m.o + (z - viewport) * ('sce'.indexOf(m.a[0]!) / 2))
     }
     // Nothing to anchor to while empty (a clear, or attach before the first commit).
     if (!idx.count) return
@@ -640,7 +640,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     later(2, () => {
       const m = mode
       if (m.t !== 2) return
-      m.q = resized ? 0 : m.q + 1
+      m.q = resized ? 0 : -~m.q!
       resized = false
       if (m.q >= TARGET_FRAMES || sc!.now() - (m.s ||= sc!.now()) >= TARGET_MAX_MS) recapture()
       else lock()
@@ -759,7 +759,11 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       timers[3] = sc.listen(onEvent)
       rows.forEach((el) => sc!.observe(el))
       lastEff = eff()
-        lock()
+      // A page (window scroller) may already be scrolled away from the start
+      // edge: stay there. A target whose key is never found (the EDGE object)
+      // re-captures the anchor at the viewport once items exist.
+      if (eff() && !atEnd && mode === EDGE) mode = { t: 2, k: EDGE as never } as TargetMode
+      lock()
       cycle(false)
     },
 
@@ -782,7 +786,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
 
     scrollToKey(key, o = {}) {
       // Jump to the estimate now so a blank frame never paints; commits refine it.
-      return keys.indexOf(key) >= 0 && kick({ t: 2, k: key, a: o.align ?? 'start', o: o.offset ?? 0, s: 0, q: 0 })
+      return keys.indexOf(key) >= 0 && kick({ t: 2, k: key, a: o.align ?? 'start', o: o.offset ?? 0 })
     },
 
     scrollToIndex(index, o) {
