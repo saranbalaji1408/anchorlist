@@ -109,6 +109,16 @@ describe('mount', () => {
     expect(list.style.paddingTop).toBe(before)
   })
 
+  it('treats undefined options and snippets as unset', async () => {
+    const unset = { follow: undefined, gap: undefined, overscan: undefined, estimateSize: undefined, header: undefined, sticky: undefined }
+    await render({ items: make(100, 'i'), align: 'end', ...unset })
+    await render({ items: [...make(100, 'i'), { id: 'n' }], align: 'end', ...unset })
+    // Default follow: still pinned to the end after an append.
+    expect(keys()).toContain('n')
+    expect(instance!.isAtEdge()).toBe(true)
+    expect(scroller().querySelector('[role="list"]')!.parentElement!.children.length).toBe(1)
+  })
+
   it('writes the gap in px and the row class', async () => {
     await render({ items: make(10, 'i'), gap: 8, rowClass: 'row' })
     expect(scroller().querySelector<HTMLElement>('[role="list"]')!.style.gap).toBe('8px')

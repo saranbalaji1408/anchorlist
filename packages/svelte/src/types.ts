@@ -29,9 +29,10 @@ export type AnchorListHandle = Pick<
  * `maxCachedSizes` are read on mount only. Other attributes (`class`, `style`,
  * `id`, `aria-label`, event handlers, ...) go to the scroll container.
  */
-export interface AnchorListProps<T>
-  extends Omit<VirtualizerOptions, 'count' | 'getKey'>,
-    Omit<HTMLAttributes<HTMLDivElement>, keyof VirtualizerOptions | 'children'> {
+/** Core options; `undefined` means the default, so `prop={cond ? x : undefined}` works. */
+type Options = { [K in Exclude<keyof VirtualizerOptions, 'count' | 'getKey'>]?: VirtualizerOptions[K] | undefined }
+
+export interface AnchorListProps<T> extends Options, Omit<HTMLAttributes<HTMLDivElement>, keyof VirtualizerOptions | 'children'> {
   /** The items, as an immutable snapshot: assign a new array instead of mutating it. */
   items: readonly T[]
   /** Unique, stable key of an item. The scroll position is anchored to keys. */
@@ -41,16 +42,16 @@ export interface AnchorListProps<T>
    * row. A row updates when its item changes or when state read in the
    * snippet changes.
    */
-  children?: Snippet<[item: T]>
+  children?: Snippet<[item: T]> | undefined
   /** Rendered above the rows, inside the scroll content. It may change size at any time. */
-  header?: Snippet
+  header?: Snippet | undefined
   /** Rendered below the rows, inside the scroll content. It may change size at any time. */
-  footer?: Snippet
+  footer?: Snippet | undefined
   /**
    * Overlay pinned to the top of the viewport (for example a date pill),
    * rendered from the visible range. It updates only when that range changes.
    */
-  sticky?: Snippet<[range: VisibleRange]>
+  sticky?: Snippet<[range: VisibleRange]> | undefined
   /** Class of each row wrapper. Do not give rows margins; use `gap` instead. */
-  rowClass?: string
+  rowClass?: string | undefined
 }

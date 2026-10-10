@@ -30,7 +30,7 @@
 </script>
 
 <script lang="ts" generics="T">
-  import type { VisibleRange } from '@anchorlist/core'
+  import type { VirtualizerOptions, VisibleRange } from '@anchorlist/core'
   import { createAnchorList } from './createAnchorList.svelte.js'
   import type { AnchorListHandle, AnchorListProps } from './types.js'
 
@@ -45,7 +45,8 @@
       // A snapshot: the engine calls getKey for the list as it was when planned.
       const all = items
       const key = getKey
-      return { ...rest, count: all.length, getKey: (i: number) => key(all[i]!) }
+      // Undefined options mean their defaults in the core.
+      return { ...rest, count: all.length, getKey: (i: number) => key(all[i]!) } as VirtualizerOptions
     },
     () => element && list && content && { element, list, content },
   )
