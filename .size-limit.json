@@ -64,5 +64,21 @@
     "import": "*",
     "limit": "0.4 kB",
     "gzip": true
+  },
+  {
+    "name": "@anchorlist/core/window (shared scroller chunk external)",
+    "path": "packages/core/dist/window.js",
+    "import": "{ windowScroller }",
+    "ignore": ["./scroller.js"],
+    "limit": "0.6 kB",
+    "gzip": true
+  },
+  {
+    "name": "@anchorlist/core/rtl (shared scroller chunk external)",
+    "path": "packages/core/dist/rtl.js",
+    "import": "{ rtlScroller }",
+    "ignore": ["./scroller.js"],
+    "limit": "0.6 kB",
+    "gzip": true
   }
 ]

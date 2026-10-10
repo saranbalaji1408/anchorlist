@@ -54,7 +54,15 @@
       "types": "./dist/ssr.d.ts",
       "import": "./dist/ssr.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./window": {
+      "types": "./dist/window.d.ts",
+      "import": "./dist/window.js"
+    },
+    "./rtl": {
+      "types": "./dist/rtl.d.ts",
+      "import": "./dist/rtl.js"
+    }
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",

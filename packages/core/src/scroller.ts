@@ -91,10 +91,10 @@ export interface Axis {
   readonly start: 'top' | 'left'
   /** `DOMRect` size property. */
   readonly size: 'height' | 'width'
-  /** Padding style at the start edge. */
-  readonly padStart: 'paddingTop' | 'paddingLeft'
-  /** Padding style at the end edge. */
-  readonly padEnd: 'paddingBottom' | 'paddingRight'
+  /** Padding style at the start edge (`paddingRight` for right-to-left). */
+  readonly padStart: 'paddingTop' | 'paddingLeft' | 'paddingRight'
+  /** Padding style at the end edge (`paddingLeft` for right-to-left). */
+  readonly padEnd: 'paddingBottom' | 'paddingRight' | 'paddingLeft'
   /** Transform function for the main axis. */
   readonly translate: 'translateY' | 'translateX'
 }
