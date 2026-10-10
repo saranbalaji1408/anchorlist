@@ -20,3 +20,6 @@ docs/.vitepress/dist/
 # Lighthouse CI
 .lighthouseci/
 .vitest/
+
+# svelte-package
+.svelte-kit/

@@ -10,6 +10,7 @@ export default defineConfig(
     'docs/.vitepress/dist/**',
     'playwright-report/**',
     'test-results/**',
+    '**/.svelte-kit/**',
   ]),
   js.configs.recommended,
   tseslint.configs.recommended,

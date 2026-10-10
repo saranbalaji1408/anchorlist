@@ -169,4 +169,12 @@ export default [
     gzip: true,
     modifyRolldownConfig: chunkPaths,
   },
+  {
+    name: '@anchorlist/svelte (compiled; svelte and core external)',
+    path: 'packages/svelte/dist/.size/index.js',
+    import: '*',
+    ignore: ['svelte', '@anchorlist/core'],
+    limit: '1.8 kB',
+    gzip: true,
+  },
 ]
