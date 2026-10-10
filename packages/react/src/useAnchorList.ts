@@ -5,7 +5,6 @@ import { flushSync } from 'react-dom'
 import { useLayoutEffect } from './effect'
 
 const increment = (n: number): number => n + 1
-const noop = (): void => {}
 
 /** Per-instance state that must survive re-renders but never triggers one. */
 interface Instance {
@@ -41,9 +40,6 @@ export function useAnchorList(
   options: VirtualizerOptions,
   elements: () => ElementScrollerOptions | null | undefined,
 ): readonly [Virtualizer, Plan] {
-  // The core only records the visible range and the at-edge state while these
-  // callbacks exist, and `getVisibleRange()` / `subscribe()` depend on both.
-  options = { onRangeChange: noop, onAtEdgeChange: noop, ...options }
   const [, force] = useReducer(increment, 0)
   const [s] = useState((): Instance => {
     const s: Instance = { f: force, a: false } as Instance
