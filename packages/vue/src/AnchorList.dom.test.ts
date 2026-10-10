@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createApp, defineComponent, h, nextTick, shallowRef, type App, type VNodeChild } from 'vue'
+import { createApp, defineComponent, h, nextTick, shallowRef, version, type App, type VNodeChild } from 'vue'
 import { installLayout, type TestLayout } from '../../react/src/testLayout'
 import { AnchorList, type AnchorListHandle, type AnchorListProps, useAnchorList } from './index'
 
@@ -69,6 +69,13 @@ afterEach(() => {
   container.remove()
   layout.restore()
   vi.restoreAllMocks()
+})
+
+it('runs on the Vue minor under test', () => {
+  // `pnpm test:vue33` runs this file against Vue 3.3; `pnpm test` against the latest.
+  const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env
+  if (env?.EXPECT_VUE_MINOR) expect(version.startsWith(`${env.EXPECT_VUE_MINOR}.`)).toBe(true)
+  else expect(version.startsWith('3.')).toBe(true)
 })
 
 describe('mount', () => {

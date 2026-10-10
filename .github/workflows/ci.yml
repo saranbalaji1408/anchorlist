@@ -32,6 +32,7 @@ jobs:
           # The plan's engine gate: 10k seeded fuzz operations per configuration.
           FUZZ_ITERATIONS: 10000
       - run: pnpm test:react18
+      - run: pnpm test:vue33
       - run: pnpm size
 
   e2e:

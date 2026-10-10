@@ -56,8 +56,11 @@ export function useAnchorList(
       version.value++
       if (syncing) again = true
       else if (sync) {
-        // Vue has no flushSync: run this component's render effect directly,
-        // then commit. Requests made by that commit loop here, before paint.
+        // Vue has no flushSync: run this component's render effect directly
+        // (`instance.update`, an internal verified on Vue 3.3 to 3.6), then
+        // commit. Requests made by that commit loop here, before paint. The
+        // version bump above stays: Vue 3.4+ runs `update` only when dirty.
+        // Vue 3.3 re-runs the queued job once more (a no-op re-plan).
         syncing = true
         try {
           do {
