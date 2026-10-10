@@ -67,8 +67,9 @@ describe('windowScroller', () => {
     expect(sc.listStart()).toBe(300)
     sc.setSpacers(10, 20)
     expect(list.style).toEqual({ paddingTop: '10px', paddingBottom: '20px' })
+    expect(content.style.overflowAnchor).toBe('none')
     sc.translate(-5)
-    expect(content.style.transform).toBe('translateY(-5px)')
+    expect(content.style).toEqual({ overflowAnchor: 'none', transform: 'translateY(-5px)' })
     expect(sc.overscrolled()).toBe(0)
     root.scrollTop = -12
     expect(sc.overscrolled()).toBe(-12)

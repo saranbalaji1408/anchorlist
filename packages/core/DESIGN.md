@@ -354,9 +354,13 @@ Size-driven choices:
   off by the change until the next render. They are off-screen by definition.
 - **Smooth scrolling writes the offset like a user**, so it can pin at the `align` edge on the way
   there, as a user scroll would.
-- **Window scroller.** The engine starts at its `align` edge on mount, which for a window list is
-  the top (or bottom) of the document, so a page restored to a scrolled position by the browser
-  jumps there on mount. Pass `initialSnapshot` to restore a list position instead.
+- **Attaching to a scrolled scroller.** An `align: 'start'` list attached away from offset 0 (a
+  window list on a scrolled page) does not write the start edge: its mode is a target whose key
+  never matches (the `EDGE` object), so the first restore with items re-captures the anchor at the
+  viewport from model positions. A list below the viewport therefore leaves the page still. If the
+  viewport was in page content *after* the still-empty list, the anchor is the item that the
+  list's estimated size puts at the viewport, so that content is not held. `align: 'end'` still
+  pins to the end edge.
 - **RTL direction changes** are not observed: the direction is read when `rtlScroller` is created.
 - **Integration of v0.2 helpers with v0.3 scrollers** is described in the sections above.
 - **Not yet:** lanes.

@@ -33,7 +33,11 @@ export function rtlConvention(): RtlConvention {
  * per call). A left-to-right container gets a plain horizontal
  * `elementScroller`, so this can be used for any horizontal list. The
  * direction is read at creation; create a new scroller (re-attach) when it
- * changes. `axis` is ignored.
+ * changes. `axis` is ignored. The element must scroll horizontally
+ * (`overflow-x: auto`); with React's `AnchorList`, pass
+ * `style={{ overflowX: 'auto' }}` along with `scroller={rtlScroller}`.
+ * `elementScroller` does not mirror: use this scroller for any horizontal
+ * list that can be right-to-left (`dir="rtl"` on it or an ancestor).
  */
 export function rtlScroller(options: ElementScrollerOptions): Scroller<Element> {
   const { element: el, list } = options

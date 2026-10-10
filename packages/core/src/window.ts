@@ -16,6 +16,7 @@ export interface WindowScrollerOptions {
    * example an app bar), like CSS `scroll-padding`. The viewport starts below
    * it: rows are anchored and `scrollToKey` aligns relative to its edge, and
    * the visible range excludes what it covers. Default 0. Read at creation.
+   * The list's own position in the page is measured: do not pass its offset.
    */
   scrollMargin?: number
 }
@@ -25,13 +26,17 @@ export interface WindowScrollerOptions {
  * its own container. Content outside the list (page header, footer) behaves
  * like the list's header and footer: the scroll range is the whole document.
  * Accepts `ElementScrollerOptions` too (`element` is ignored), so it can be
- * passed wherever an `elementScroller` factory is expected.
+ * passed wherever an `elementScroller` factory is expected. Sets
+ * `overflow-anchor: none` on `content`, so the browser's own scroll anchoring
+ * never picks a row.
  */
 export function windowScroller({ list, content = list, axis: ax = VERTICAL, scrollMargin: m = 0 }: WindowScrollerOptions): Scroller<Element> {
   const root = document.documentElement
   // The document element scrolls the window in standards mode; its client size is the viewport.
   const base = elementScroller({ element: root, list, content, axis: ax })
   const at = (e: Element): number => e.getBoundingClientRect()[ax.start] - m
+  // The document keeps browser scroll anchoring; it must not pick rows, which the engine anchors.
+  content.style.overflowAnchor = 'none'
   return {
     ...base,
     viewport: () => root[ax.client] - m,

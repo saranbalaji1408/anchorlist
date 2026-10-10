@@ -80,7 +80,10 @@ export interface AnchorListProps<T> extends Omit<VirtualizerOptions, 'count' | '
    * not a scroll container), or `rtlScroller` from `@anchorlist/core/rtl` for a
    * horizontal list that may be right-to-left. With a custom scroller the
    * container gets no `overflow` style: add `overflowX: 'auto'` for
-   * `rtlScroller`. Read on mount.
+   * `rtlScroller` (`<AnchorList horizontal scroller={rtlScroller}
+   * style={{ overflowX: 'auto' }} />`), otherwise the list does not scroll.
+   * A horizontal list under `dir="rtl"` needs `rtlScroller`: the default
+   * scroller does not mirror. Read on mount.
    */
   scroller?: (elements: ElementScrollerOptions) => Scroller<Element>
   /** Class name of the scroll container. */

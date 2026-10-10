@@ -80,5 +80,16 @@
     "ignore": ["./scroller.js"],
     "limit": "0.6 kB",
     "gzip": true
+  },
+  {
+    "name": "@anchorlist/core (all entries)",
+    "path": ["packages/core/dist/index.js", "packages/core/dist/window.js", "packages/core/dist/rtl.js"],
+    "import": {
+      "packages/core/dist/index.js": "*",
+      "packages/core/dist/window.js": "{ windowScroller }",
+      "packages/core/dist/rtl.js": "{ rtlScroller, rtlConvention }"
+    },
+    "limit": "6.5 kB",
+    "gzip": true
   }
 ]
