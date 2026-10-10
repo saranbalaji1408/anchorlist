@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import * as core from '@anchorlist/core'
 import * as react from '@anchorlist/react'
+import * as coreAnimate from '@anchorlist/core/animate'
+import * as coreSnapshot from '@anchorlist/core/snapshot'
 import * as coreSticky from '@anchorlist/core/sticky'
 import * as reactSticky from '@anchorlist/react/sticky'
+import * as animate from './animate'
 import * as all from './index'
+import * as snapshot from './snapshot'
 import * as sticky from './sticky'
 
 describe('anchorlist re-exports', () => {
@@ -25,5 +29,13 @@ describe('anchorlist re-exports', () => {
     }
     expect(typeof sticky.StickyItem).toBe('function')
     expect(typeof sticky.stickyState).toBe('function')
+  })
+
+  it('re-exports @anchorlist/core/animate and @anchorlist/core/snapshot', () => {
+    expect(animate).toEqual(coreAnimate)
+    expect(snapshot).toEqual(coreSnapshot)
+    expect(typeof animate.animateToKey).toBe('function')
+    expect(typeof snapshot.takeSnapshot).toBe('function')
+    expect(typeof snapshot.snapshotEstimate).toBe('function')
   })
 })

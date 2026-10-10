@@ -1,9 +1,11 @@
 import { AnchorList, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
 import { animateToKey } from 'anchorlist/animate'
+import { snapshotEstimate, takeSnapshot } from 'anchorlist/snapshot'
 import { StickyItem } from 'anchorlist/sticky'
 import { StrictMode, startTransition, useLayoutEffect, useState, useSyncExternalStore, version, type ReactNode, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
-import { createRoot, type Root } from 'react-dom/client'
+import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
+import { renderToString } from 'react-dom/server.browser'
 import { createDom } from '../../../scenarios/src/dom'
 import type { Driver, Events, Item, ListState, MountConfig } from '../../../scenarios/src/driver'
 
@@ -21,7 +23,8 @@ let renders: Record<string, number> = {}
 let withoutScroller: string[] = []
 
 function Bubble({ item }: { item: Item }): ReactNode {
-  const height = useSyncExternalStore(subscribeHeights, () => heights.get(item.id) ?? item.height)
+  const read = (): number | undefined => heights.get(item.id) ?? item.height
+  const height = useSyncExternalStore(subscribeHeights, read, read)
   renders[item.id] = (renders[item.id] ?? 0) + 1
   if (!document.getElementById(SCROLLER_ID)) withoutScroller.push(item.id)
   return (
@@ -80,6 +83,7 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
   const [s, set] = useState(init)
   bridge.set = set
   const { items, align } = s
+  current = items
   const follow = ({ atEdge, added }: FollowContext): boolean =>
     atEdge || (align === 'end' ? items.slice(-added) : items.slice(0, added)).some((m) => m.mine)
   const props: AnchorListProps<Item> = {
@@ -106,6 +110,10 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
     ...(s.overscan === null ? {} : { overscan: s.overscan }),
     ...(s.followMine ? { follow } : {}),
     ...(config.initialSnapshot ? { initialSnapshot: config.initialSnapshot } : {}),
+    ...(config.initialSnapshot?.sizes
+      ? { estimateSize: snapshotEstimate(config.initialSnapshot, (i) => items[i]!.id, s.estimate === null ? undefined : () => s.estimate!) }
+      : {}),
+    ...(config.initialRect ? { initialRect: config.initialRect } : {}),
   }
   return (
     <main>
@@ -130,6 +138,8 @@ function Committed({ s, onCommit }: { s: ListState; onCommit: () => void }): Rea
  * so memoised rows can skip re-rendering.
  */
 const interned = new Map<string, Item>()
+/** The items of the last render. */
+let current: Item[] = []
 const intern = (items: Item[]): Item[] =>
   items.map((m) => {
     const prev = interned.get(m.id)
@@ -152,17 +162,25 @@ export function installDriver(container: HTMLElement): void {
     return list.current
   }
 
+  /** The app element for `config`, after resetting the per-mount state. */
+  const prepare = (config: MountConfig): ReactNode => {
+    root?.unmount()
+    root = null
+    heights.clear()
+    driver.resetCounters()
+    interned.clear()
+    const init: ListState = { ...DEFAULTS, ...config, items: intern(config.items) }
+    const app = <App init={init} config={config} bridge={bridge} list={list} />
+    return config.strict ? <StrictMode>{app}</StrictMode> : app
+  }
+  let server: ReactNode = null
+
   const driver: Driver = {
     ...dom,
     async mount(config) {
-      root?.unmount()
-      heights.clear()
-      driver.resetCounters()
-      interned.clear()
-      const init: ListState = { ...DEFAULTS, ...config, items: intern(config.items) }
-      const app = <App init={init} config={config} bridge={bridge} list={list} />
+      const app = prepare(config)
       root = createRoot(container)
-      root.render(config.strict ? <StrictMode>{app}</StrictMode> : app)
+      root.render(app)
       await dom.frames(2)
     },
     async unmount() {
@@ -194,6 +212,29 @@ export function installDriver(container: HTMLElement): void {
     rendersWithoutScroller: () => [...withoutScroller],
     frameworkVersion: () => version,
     animateToKey: (key, o) => animateToKey(handle(), handle().element, key, o),
+    takeSnapshot() {
+      const items = current
+      return takeSnapshot(handle(), (i) => items[i]!.id, items.length)
+    },
+    async serverRender(config) {
+      server = prepare(config)
+      // A real server has no DOM, where the adapter uses no layout effects. In
+      // this browser-run render React 18 warns about them; that is not an error here.
+      const error = console.error
+      console.error = (...args: unknown[]) => void (/useLayoutEffect does nothing on the server/.test(String(args[0])) || error(...args))
+      try {
+        container.innerHTML = renderToString(server)
+      } finally {
+        console.error = error
+      }
+      return Array.from(container.querySelectorAll<HTMLElement>('[data-key]')).map((e) => e.dataset.key ?? '')
+    },
+    async hydrate() {
+      root = hydrateRoot(container, server, {
+        onRecoverableError: (e) => console.error('recoverable hydration error', e),
+      })
+      await dom.frames(2)
+    },
     resetCounters() {
       renders = {}
       withoutScroller = []

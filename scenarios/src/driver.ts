@@ -27,6 +27,8 @@ export interface SnapshotData {
   index: number
   delta: number
   pinned: boolean
+  /** Measured sizes by key (from `takeSnapshot`). */
+  sizes?: ReadonlyArray<readonly [string | number, number]>
 }
 
 /** Props that can change after mount. */
@@ -68,6 +70,8 @@ export interface MountConfig extends Partial<ListState> {
   /** Wrap the list in the framework's strict / dev checking mode (React StrictMode). */
   strict?: boolean
   initialSnapshot?: SnapshotData
+  /** Viewport size assumed before attach, for server rendering. */
+  initialRect?: { width: number; height: number }
 }
 
 /** How a state update is applied. */
@@ -111,6 +115,15 @@ export interface Driver extends Dom {
   frameworkVersion(): string
   /** Smooth scroll with `animateToKey` (`@anchorlist/core/animate`). Resolves `true` once landed. */
   animateToKey(key: string, options?: { align?: 'start' | 'center' | 'end'; offset?: number; duration?: number }): Promise<boolean>
+  /** `getSnapshot()` with measured sizes (`takeSnapshot` from `@anchorlist/core/snapshot`). */
+  takeSnapshot(): SnapshotData
+  /**
+   * Server-renders a list (to a string, as on a server) into the container
+   * without hydrating it. Returns the row keys in the server HTML.
+   */
+  serverRender(config: MountConfig): Promise<string[]>
+  /** Hydrates the server-rendered list with the same config. Resolves after 2 frames. */
+  hydrate(): Promise<void>
 }
 
 declare global {

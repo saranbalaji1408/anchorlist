@@ -49,6 +49,10 @@
       "types": "./dist/animate.d.ts",
       "import": "./dist/animate.js"
     },
+    "./snapshot": {
+      "types": "./dist/snapshot.d.ts",
+      "import": "./dist/snapshot.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",
