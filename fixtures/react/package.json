@@ -2,16 +2,17 @@
   "name": "@anchorlist/fixture-react",
   "version": "0.0.0",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:dev": "vite build --mode development"
   },
   "dependencies": {
-    "@anchorlist/react": "workspace:*",
+    "anchorlist": "workspace:*",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },

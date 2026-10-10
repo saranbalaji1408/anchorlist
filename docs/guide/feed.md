@@ -1,8 +1,140 @@
 ---
-title: Virtual list for infinite feeds
-description: Render infinite feeds and timelines with a virtual list that loads more items on scroll and keeps the scroll position stable as content above changes.
+title: React infinite scroll feed with a virtualized list
+description: Build a virtualized React infinite scroll feed that loads more items at the end, prepends new posts at the top without moving the viewport, and restores the scroll position.
 ---
 
-# Virtual list for infinite feeds
+# React infinite scroll feed
 
-Coming in v0.1.
+A feed is a list pinned to its **start**: newest at the top, more loaded as the user scrolls
+down. This is anchorlist's default, `align: 'start'`.
+
+Two things are hard in a feed and handled for you:
+
+- **Infinite load at the end**, without a sentinel element or `IntersectionObserver`.
+- **New posts arriving at the top while the user reads further down.** The post being read stays
+  in place, without a "scroll jump" when the new items are inserted above it.
+
+## Infinite load
+
+```tsx
+import { useState } from 'react'
+import { AnchorList } from 'anchorlist'
+
+const renderPost = (post) => <PostCard post={post} />
+
+export function Feed({ firstPage, fetchPage }) {
+  const [posts, setPosts] = useState(firstPage.items)
+  const [cursor, setCursor] = useState(firstPage.next)
+  const [loading, setLoading] = useState(false)
+
+  async function loadMore() {
+    if (loading || !cursor) return
+    setLoading(true)
+    const page = await fetchPage(cursor)
+    setPosts((current) => [...current, ...page.items])
+    setCursor(page.next)
+    setLoading(false)
+  }
+
+  return (
+    <AnchorList
+      style={{ height: '100vh' }}
+      items={posts}
+      getKey={(post) => post.id}
+      gap={12}
+      hasMoreEnd={cursor != null}
+      onEndReached={loadMore}
+      footer={loading ? <Spinner /> : null}
+      renderItem={renderPost}
+    />
+  )
+}
+```
+
+`onEndReached` fires when the viewport comes within `endThreshold` (default 300 px) of the end and
+`hasMoreEnd` is true. It fires again if a page arrived but the viewport is still near the end, so a
+tall screen fills up with short pages.
+
+## New posts at the top
+
+```tsx
+setPosts((current) => [...fresh, ...current])
+```
+
+- **At the top (pinned):** the list follows and shows the new posts.
+- **Scrolled down:** the post being read stays exactly where it is, and the new posts are added
+  above, out of view. Pass `follow={false}` to never follow, or `follow={true}` to always jump to
+  the top.
+
+To show a "N new posts" pill, keep the count in state and call `scrollToEdge('start')` from the
+pill.
+
+## Restore the scroll position
+
+When the user leaves the feed and comes back, save the position on unmount and pass it back:
+
+```tsx
+import { useLayoutEffect, useRef } from 'react'
+import { AnchorList, type AnchorListHandle, type Snapshot } from 'anchorlist'
+
+// Outlives the component. history.state or sessionStorage work too.
+let savedPosition: Snapshot | undefined = undefined
+
+export function Feed({ posts }) {
+  const list = useRef<AnchorListHandle>(null)
+
+  // Save in a layout-effect cleanup: it runs while list.current is still set.
+  // In a passive (useEffect) cleanup the handle has already been cleared.
+  useLayoutEffect(
+    () => () => {
+      savedPosition = list.current?.getSnapshot()
+    },
+    [],
+  )
+
+  return (
+    <AnchorList
+      ref={list}
+      initialSnapshot={savedPosition}
+      items={posts}
+      getKey={(post) => post.id}
+      renderItem={renderPost}
+    />
+  )
+}
+```
+
+You can also read `list.current.getSnapshot()` in an event handler, for example in the click
+handler of a link, before the state change that unmounts the list.
+
+A snapshot is `{ key, index, delta, pinned }`, plain serializable data. You can keep it in
+`history.state` or `sessionStorage`. It is restored exactly once the anchored row has been
+measured. If that key no longer exists, the list starts at the top.
+
+## Long feeds and memory
+
+Rendering cost depends on the viewport, not on the list length. Only the rows in the viewport plus
+`overscan` (default 400 px on each side) are mounted. To bound memory in very long sessions, trim
+items from the far end of the array. The engine treats a trim like a prepend: the visible post
+does not move. `maxCachedSizes` caps how many measured sizes are kept; mounted rows are never evicted.
+
+The engine's 100k-item micro-benchmark on Apple M2, Node 24 and a simulated scroller, recorded in
+the core design notes:
+
+| Operation (100k items) | Result |
+| --- | --- |
+| Mount to the first settled frame | 20–27 ms |
+| Streaming update (plan + commit + resize callback) | p50 6.9–7.1 µs, p95 12–13 µs |
+| Scroll frame (37 px per frame) | p50 ≈ 11 µs, p95 19–21 µs |
+| 50-item prepend while anchored | p50 43–46 µs, p95 69–71 µs |
+| Idle key validation and estimate refresh | 9–9.3 ms |
+
+These numbers are for the engine with a minimal host. React adds its own render cost. A
+head-to-head benchmark against other libraries is planned for v0.2.
+
+## Related
+
+- [Getting started](./getting-started)
+- [React chat virtual list](./chat-virtual-list) (the same engine, pinned to the end)
+- [Dynamic height](./dynamic-height)
+- [API reference](/api/)

@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test'
 
-test('fixture page loads and exposes the driver bridge', async ({ page }) => {
-  await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'anchorlist fixture' })).toBeVisible()
-  const hasDriver = await page.evaluate(() => typeof (window as unknown as { __driver?: unknown }).__driver === 'object')
-  expect(hasDriver).toBe(true)
+test('fixture page loads, exposes the driver and runs the expected React major', async ({ page }) => {
+  await page.goto('./')
+  await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
+  const version = await page.evaluate(() => window.__driver.frameworkVersion())
+  const expected = test.info().project.name.endsWith('-react18') ? '18' : '19'
+  expect(version.split('.')[0]).toBe(expected)
 })

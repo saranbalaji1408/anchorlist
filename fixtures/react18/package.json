@@ -1,0 +1,21 @@
+{
+  "name": "@anchorlist/fixture-react18",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "The React fixture and the React unit tests, run against React 18 to verify the ^18.2 || ^19 peer range.",
+  "scripts": {
+    "build:dev": "vite build --mode development",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "anchorlist": "workspace:*",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
+    "vite": "^8.3.4"
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "@anchorlist/react",
   "version": "0.0.0",
-  "description": "React virtual list with stable scroll anchoring: virtualized chat lists without scroll jump, infinite feeds, dynamic heights, masonry and grid.",
+  "description": "React virtual list with stable scroll anchoring: virtualized chat lists and reverse infinite scroll without scroll jump, infinite feeds and dynamic heights.",
   "keywords": [
     "virtual list",
     "virtualized list",
@@ -15,12 +15,11 @@
     "scroll anchoring",
     "dynamic height",
     "variable height",
-    "masonry",
-    "grid",
     "typescript",
     "react",
     "react virtual list",
-    "react hooks"
+    "react chat",
+    "react component"
   ],
   "homepage": "https://saranbalaji1408.github.io/anchorlist/",
   "bugs": {
@@ -31,7 +30,7 @@
     "url": "git+https://github.com/saranbalaji1408/anchorlist.git",
     "directory": "packages/react"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": "saranbalaji1408",
   "type": "module",
   "sideEffects": false,
@@ -66,5 +65,11 @@
   "peerDependencies": {
     "react": "^18.2.0 || ^19.0.0",
     "react-dom": "^18.2.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   }
 }

@@ -1,0 +1,10 @@
+body { margin: 0; font: 14px/1.4 system-ui, sans-serif; }
+h1 { font-size: 16px; margin: 8px; }
+.example { width: 420px; margin: 0 8px; }
+.example [id='scroller'] { outline: 1px solid #ccc; }
+.bubble { padding: 8px 12px; border-radius: 12px; max-width: 75%; background: #eee; }
+.bubble.me { margin-left: auto; background: #cde; }
+.loader { padding: 8px; text-align: center; color: #666; }
+.post { padding: 8px 12px; border-bottom: 1px solid #ddd; }
+.post h2 { font-size: 15px; margin: 0 0 4px; }
+.post p { margin: 0; }
