@@ -127,7 +127,7 @@ interface VirtualizerHost { render(sync: boolean): void }
 | Option | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `count` | `number` | required | Item count. |
-| `getKey` | `(index) => Key` | required | Unique, stable key (`string \| number`). Must describe the list at the time `plan()` was called, so use immutable snapshots. |
+| `getKey` | `(index) => Key` | required | Unique, stable key (`string \| number`). Must describe the list at the time `plan()` was called, so use immutable snapshots. Duplicate keys are not supported: they disable lazy key validation until the list changes, so the list costs one O(n) rebuild per change. |
 | `estimateSize` | `(index) => number` | 48, then the measured average | Used for unmeasured items. Without it, estimates are refreshed at idle when the average drifts by more than 10%. |
 | `align` | `'start' \| 'end'` | `'start'` | Pinned edge. `'end'` for chat, `'start'` for feeds. Creation only. |
 | `overscan` | `number` (px) | 400 | Rendered beyond each side of the viewport. |
@@ -141,7 +141,7 @@ interface VirtualizerHost { render(sync: boolean): void }
 | `onRangeChange` | `(range: VisibleRange) => void` | none | Visible range (no overscan) changed. |
 | `onAtEdgeChange` | `(atEdge: boolean) => void` | none | `isAtEdge(align)` changed (also fires once after mount). |
 | `initialSnapshot` | `Snapshot` | none | Restore a position on mount. Creation only. |
-| `maxCachedSizes` | `number` | unlimited | Size-cache limit (least recently measured are evicted). Creation only. |
+| `maxCachedSizes` | `number` | unlimited | Size-cache limit (least recently measured are evicted; mounted rows never are, even when this is smaller than the mounted count). Creation only. |
 
 Callbacks run synchronously inside the engine's loop, after the offset is final for that pass.
 They may call `scrollToKey` / `scrollToEdge` and may schedule state updates. They must not call
@@ -158,14 +158,14 @@ They may call `scrollToKey` / `scrollToEdge` and may schedule state updates. The
 | `destroy()` | `void` | Removes listeners, timers and any deferred transform. |
 | `scrollToKey(key, { align?, offset? })` | `boolean` | `false` if the key is unknown. Positions at the estimate now, then locks onto the key (see [Target lock](#target-lock)). `align`: `'start'` (default), `'center'`, `'end'`. `offset` is added to the final scroll offset. |
 | `scrollToIndex(index, opts?)` | `boolean` | Same, by index. `false` when out of range. |
-| `scrollToEdge(edge = align)` | `void` | Jumps to an edge. At the `align` edge with no `hasMore` there, the list becomes pinned. |
+| `scrollToEdge(edge = align)` | `void` | Jumps to an edge. At the `align` edge with no `hasMore` there, the list becomes pinned; any other edge becomes an item anchor once the frame settles. |
 | `isAtEdge(edge = align)` | `boolean` | Within `atEdgeThreshold` of that edge. |
 | `getVisibleRange()` | `VisibleRange` | Items intersecting the viewport. Same object until it changes (safe for `useSyncExternalStore`). |
 | `subscribe(listener)` | `() => void` | Called after the visible range or the at-edge state changes. Returns unsubscribe. |
 | `getItemRect(key)` | `ItemRect \| null` | `{ start, size, measured }` in content space. `measured` is false for estimates and for sizes made stale by a cross-axis resize. |
 | `getTotalSize()` | `number` | List size including padding and gaps (estimates included). |
 | `indexOf(key)` | `number` | O(1). -1 if unknown. |
-| `getSnapshot()` | `Snapshot` | `{ key, index, delta, pinned }`. Serializable. |
+| `getSnapshot()` | `Snapshot` | `{ key, index, delta, pinned }`. Serializable. Works before `attach()` and after `destroy()` (model positions). |
 
 Before the first `commit()`, the engine knows no keys: `scrollToKey` returns false and
 `indexOf` returns -1.
@@ -191,14 +191,15 @@ interface Scroller<E> {
 
 - `elementScroller({ element, list, content?, axis? })`: the DOM implementation. `axis` is `VERTICAL`
   (default) or `HORIZONTAL` (left-to-right; RTL is not normalised in v0.1). It listens to `scroll`,
-  `touchstart`, `touchend`, `touchcancel`, `scrollend` and `wheel` (passive), and observes the scroll
-  container, content wrapper, list and rows with one `ResizeObserver`.
+  `touchstart`, `touchend`, `touchcancel` and `wheel` (passive), and observes the scroll container,
+  content wrapper, list and rows with one `ResizeObserver`.
 - `simulatedScroller(options?)`: a deterministic, DOM-free layout for tests and benchmarks. It models
   a header, rows with a gap and a footer, and a manual clock (`tick()`, `advance(ms)`). It uses the
   browser's event order: offset clamps queue `scroll`, size changes queue `resize`, and `tick()`
-  delivers scroll before resize, then runs frame callbacks.
-- `ScrollerEvent`: `'scroll' | 'resize' | 'touchstart' | 'touchend' | 'touchcancel' | 'scrollend'`,
-  and anything else (`'input'`, `'wheel'`, …) counts as user input.
+  delivers scroll before resize, then runs frame callbacks. `quantize: 'round' | 'trunc'` stores
+  whole-pixel offsets like browsers at DPR 1 (Chromium and Firefox round; WebKit truncates).
+- `ScrollerEvent`: `'scroll' | 'resize' | 'touchstart' | 'touchend' | 'touchcancel'`, and anything
+  else (`'input'`, `'wheel'`, …) counts as user input (it cancels a `scrollToKey` lock).
 
 ## Behaviour
 
@@ -208,18 +209,36 @@ interface Scroller<E> {
   through appends (end) or prepends (start), trims and resizes. Any other edge mode (from
   `scrollToEdge`) becomes an item anchor once the frame settles.
 - **Item**: the first item reaching into the viewport is anchored by its `align`-side edge (end edge
-  for `'end'`, start edge for `'start'`), together with 2 fallbacks after and 2 before it. The anchor is
-  re-captured at the end of every settled frame, so all its points come from one measured layout.
-  - **Small corrections.** Corrections of 0.25 px or less are not written. The same anchor keeps its
-    intended position, so these never add up, and a change moves content by at most 0.5 px.
-  - **Clamped positions.** A position that was clamped (unreachable) is adopted.
-  If the anchor is removed, the first surviving fallback (after, before, after, before) takes over.
-  If all are gone, the item now at the anchor's index takes over. The list never jumps to an edge
-  unless it was pinned.
+  for `'end'`, start edge for `'start'`). The anchor is re-captured at the end of every settled frame.
+  It records its *intended* position, so whole-pixel rounding never builds up (see
+  [Whole pixels](#whole-pixels)). A clamped (unreachable) position is adopted.
+- **Removing the anchor.** If the anchor is removed, the rows **after** the gap stay still, for both
+  aligns. If nothing after it survives, the rows before it stay still.
+- **Clear or replace.** If nothing survives (the list was cleared and refilled, or fully replaced),
+  the list starts over at the `align` edge, like a fresh mount.
 - **Target**: set by `scrollToKey`. See [Target lock](#target-lock).
 
-A user scroll re-captures an item anchor, or pins when it ends within `atEdgeThreshold` of the `align`
-edge with no `hasMore` there.
+### User movement
+
+Any change of the scroll offset that the engine did not make is user movement. It is detected at the
+start of every commit and pass as well as on `scroll`, so a re-render that commits after a user scroll
+but before its `scroll` event keeps the scroll, and still applies its own compensation (for example a
+prepend). Content that shrank under an offset at its end (a browser clamp) is not user movement. A
+user scroll re-anchors where the user is, or pins when it ends within `atEdgeThreshold` of the
+`align` edge (released again if `hasMore` is set there).
+
+### Whole pixels
+
+Browsers store scroll offsets in whole pixels at DPR 1 (Chromium and Firefox round, WebKit
+truncates), while rows have fractional sizes, so most corrections cannot be exact. The engine writes
+rounded offsets, reads them back and keeps each anchor's intended position. Guarantees at DPR 1:
+
+- each painted change moves content at most **0.5 px**, or at most 1 px when the error already
+  exceeded 0.5 px;
+- content is never more than **1 px** from its intended position, so errors do not build up.
+
+With sub-pixel offsets (DPR 2 and above), the steps halve. `scrollToKey` targets and edges are
+written exactly.
 
 ### Follow
 
@@ -255,8 +274,8 @@ on the content wrapper, and the effective offset is `offset + pending`, when:
 - `scroller.touchWebKit` is true and a touch is active or the last scroll was less than 120 ms ago; or
 - `scroller.overscrolled() !== 0`.
 
-The correction is committed to the scroll offset (and the transform cleared) on `scrollend`, after
-120 ms without scroll events, or as soon as overscroll ends. Visual positions are identical before and
+The correction is committed to the scroll offset (and the transform cleared) 120 ms after the last
+scroller event, or as soon as overscroll ends. Visual positions are identical before and
 after. While overscrolled, `onStartReached` / `onEndReached` are suppressed.
 
 ### Target lock
@@ -276,10 +295,11 @@ overscrolled.
 
 ### Snapshots
 
-`getSnapshot()` returns `{ key, index, delta, pinned }`: the anchor key, its index (used if the key is
-gone), and the position of its `align`-side edge relative to the viewport start. Passing it as
-`initialSnapshot` restores the anchor exactly once its row is measured. `pinned: true` restores to
-the `align` edge.
+`getSnapshot()` returns `{ key, index, delta, pinned }`: the anchor key, its index at the time
+(informational; -1 for an empty list), and the intended position of its `align`-side edge
+relative to the viewport start. Passing it as `initialSnapshot` restores the anchor exactly once its
+row is measured. If the key no longer exists, the list starts at the `align` edge. `pinned: true`
+restores to the `align` edge.
 
 ### Idle work
 
@@ -289,7 +309,7 @@ the `align` edge.
   edges, and the rendered range is validated on every commit.
 - refreshes size estimates when the measured average drifts by more than 10%.
 
-At 100k items this takes about 10–28 ms. See DESIGN.md.
+At 100k items this takes about 5–9 ms. See DESIGN.md.
 
 ## Data structures
 
