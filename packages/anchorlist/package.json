@@ -65,6 +65,10 @@
     "./rtl": {
       "types": "./dist/rtl.d.ts",
       "import": "./dist/rtl.js"
+    },
+    "./horizontal": {
+      "types": "./dist/horizontal.d.ts",
+      "import": "./dist/horizontal.js"
     }
   },
   "main": "./dist/index.js",

@@ -32,12 +32,11 @@ interface Instance {
  * @param options - Virtualizer options for this render. `align`,
  *   `initialSnapshot` and `maxCachedSizes` are read on the first render only.
  * @param elements - Returns the scroll container, the list and the optional
- *   content wrapper (and axis) once they are mounted (for example from refs).
+ *   content wrapper once they are mounted (for example from refs).
  *   Called in layout effects until it returns a value.
  * @param scroller - Creates the scroller from `elements` when attaching.
- *   Default `elementScroller`; pass `windowScroller` from
- *   `@anchorlist/core/window` or `rtlScroller` from `@anchorlist/core/rtl`.
- *   Read when attaching.
+ *   Default `elementScroller`; for example `windowScroller` from
+ *   `@anchorlist/core/window`. Read when attaching.
  * @returns The virtualizer and the plan to render.
  */
 export function useAnchorList(

@@ -80,5 +80,13 @@
     "ignore": ["./scroller.js"],
     "limit": "0.6 kB",
     "gzip": true
+  },
+  {
+    "name": "@anchorlist/react/horizontal (react and core external)",
+    "path": "packages/react/dist/horizontal.js",
+    "import": "{ horizontal }",
+    "ignore": ["react", "react-dom", "@anchorlist/core"],
+    "limit": "0.3 kB",
+    "gzip": true
   }
 ]

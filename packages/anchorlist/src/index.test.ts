@@ -48,5 +48,6 @@ describe('anchorlist subpaths', () => {
   it('re-exports the window and right-to-left scrollers', async () => {
     expect((await import('./window')).windowScroller).toBe((await import('@anchorlist/core/window')).windowScroller)
     expect((await import('./rtl')).rtlScroller).toBe((await import('@anchorlist/core/rtl')).rtlScroller)
+    expect((await import('./horizontal')).horizontal).toBe((await import('@anchorlist/react/horizontal')).horizontal)
   })
 })

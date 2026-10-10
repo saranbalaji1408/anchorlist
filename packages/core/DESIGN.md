@@ -312,6 +312,7 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | `@anchorlist/core/ssr` | 368 B | 400 B |
 | `@anchorlist/core/window` (shared scroller chunk external) | 360 B | 600 B |
 | `@anchorlist/core/rtl` (shared scroller chunk external) | 567 B | 600 B |
+| `@anchorlist/react/horizontal` (react and core external) | 189 B | 300 B |
 
 The list entry has 2 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
 features therefore live outside `createVirtualizer`: adapter helpers in the main entry

@@ -1,5 +1,6 @@
 import { AnchorList, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
 import { animateToKey } from 'anchorlist/animate'
+import { horizontal as horizontalLayout } from 'anchorlist/horizontal'
 import { rtlScroller } from 'anchorlist/rtl'
 import { snapshotEstimate, takeSnapshot } from 'anchorlist/snapshot'
 import { initialPlan } from 'anchorlist/ssr'
@@ -129,10 +130,8 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
       ? { estimateSize: snapshotEstimate(config.initialSnapshot, (i) => items[i]!.id, s.estimate === null ? undefined : () => s.estimate!) }
       : {}),
     ...(config.initialRect ? { initialRect: config.initialRect, initialPlan } : {}),
-    ...(horizontal ? { horizontal } : {}),
-    ...(layout === 'rtl'
-      ? { scroller: rtlScroller, style: { height: s.height, width: s.width, overflowX: 'auto' }, scrollerProps: { id: SCROLLER_ID, dir: 'rtl' } }
-      : {}),
+    ...(layout === 'horizontal' ? { scroller: horizontalLayout() } : {}),
+    ...(layout === 'rtl' ? { scroller: horizontalLayout(rtlScroller), scrollerProps: { id: SCROLLER_ID, dir: 'rtl' } } : {}),
     // The page scrolls: the container has no height, and a fixed bar covers the top `margin` px.
     ...(layout === 'window' ? { scroller: (e) => windowScroller({ ...e, scrollMargin: margin }), style: { width: s.width } } : {}),
   }

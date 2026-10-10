@@ -35,7 +35,8 @@ export function rtlConvention(): RtlConvention {
  * direction is read at creation; create a new scroller (re-attach) when it
  * changes. `axis` is ignored. The element must scroll horizontally
  * (`overflow-x: auto`); with React's `AnchorList`, pass
- * `style={{ overflowX: 'auto' }}` along with `scroller={rtlScroller}`.
+ * `scroller={horizontal(rtlScroller)}` (`horizontal` from
+ * `@anchorlist/react/horizontal`), which sets that up.
  * `elementScroller` does not mirror: use this scroller for any horizontal
  * list that can be right-to-left (`dir="rtl"` on it or an ancestor).
  */

@@ -255,9 +255,8 @@ interface Scroller<E> {
   start), detected once per call with a throwaway element (`rtlConvention()`). The list's spacers
   are `paddingRight` (before) and `paddingLeft` (after). A left-to-right container gets a plain
   horizontal `elementScroller`. The direction is read when the scroller is created, so re-attach
-  after changing it. The element must scroll horizontally (`overflow-x: auto`); React's
-  `AnchorList` applies no overflow style with a custom scroller, so pass
-  `style={{ overflowX: 'auto' }}`. `elementScroller` never mirrors, so any horizontal list under
+  after changing it. The element must scroll horizontally (`overflow-x: auto`); with React, pass
+  `scroller={horizontal(rtlScroller)}` (`@anchorlist/react/horizontal`), which sets that up. `elementScroller` never mirrors, so any horizontal list under
   `dir="rtl"` needs `rtlScroller`. Budget: 0.6 kB gzip on top of the list entry.
 
 Both subpath scrollers reuse `elementScroller` through a shared chunk, so they add only their own
