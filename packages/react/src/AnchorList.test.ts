@@ -28,9 +28,9 @@ describe('AnchorList (render phase)', () => {
     expect(html).toContain('id="list"')
     expect(html).toContain('aria-label="Messages"')
     expect(html).toContain('class="sc"')
-    expect(html).toContain('overflow-y:auto;overflow-anchor:none')
+    expect(html).toContain('overflow-y:auto;overflow-anchor:none;position:relative')
     expect(html).toContain('pill:-1')
-    expect(html).toMatch(/<header>top<\/header><div role="list" style="display:flex;flex-direction:column;gap:4px;position:relative"><\/div><footer>bottom<\/footer>/)
+    expect(html).toMatch(/<header>top<\/header><div role="list" style="display:flex;flex-direction:column;gap:4px"><\/div><footer>bottom<\/footer>/)
     expect(html).not.toContain('data-key')
   })
 
@@ -38,7 +38,7 @@ describe('AnchorList (render phase)', () => {
     const html = renderToStaticMarkup(
       createElement(AnchorList<{ id: string }>, { items, getKey: (m) => m.id, renderItem, style: { height: 300 } }),
     )
-    expect(html).toContain('overflow-y:auto;overflow-anchor:none;height:300px')
+    expect(html).toContain('overflow-y:auto;overflow-anchor:none;position:relative;height:300px')
   })
 })
 

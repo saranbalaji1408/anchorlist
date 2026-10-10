@@ -29,7 +29,7 @@ test.describe('focus preservation', () => {
   for (const align of ['start', 'end'] as const) {
     test(`the focused row stays mounted and focused while scrolled far away (align ${align})`, async ({ d, page }) => {
       const items = makeItems(2000, 'm', rng(71))
-      await d.mount({ items, align })
+      await d.mount({ items, align, header: 80 })
       const key = align === 'start' ? 'm2' : 'm1997'
       await focusRow(page, key)
       // Far away, by user scrolls.
@@ -41,6 +41,8 @@ test.describe('focus preservation', () => {
       // It is out of the viewport and does not cover the visible rows.
       const r = await d.rowRect(key)
       expect(r.bottom <= 0 || r.top >= 600).toBe(true)
+      // At its own position in the scroll content (the header included).
+      expect(Math.abs(r.top - ((await d.getItemRect(key))!.start - (await d.scrollTop())))).toBeLessThanOrEqual(1)
       // Back in range: the same node, in flow, still focused.
       await d.scrollToEdge(align)
       await d.frames(3)

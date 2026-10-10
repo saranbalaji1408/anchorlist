@@ -63,15 +63,17 @@ describe('keptRow', () => {
     expect(keptRow(h.v, plan, 'nope')).toBeNull()
   })
 
-  it('returns the index and list-space start of a row outside the range', async () => {
-    const h = mount({ keys: keysOf(500), size: () => 50, viewport: 500, gap: 4, options: { paddingStart: 10, estimateSize: () => 50 } })
+  it('returns the index and content-space start of a row outside the range', async () => {
+    const h = mount({ keys: keysOf(500), size: () => 50, viewport: 500, gap: 4, header: 100, options: { paddingStart: 10, estimateSize: () => 50 } })
     await h.settle()
     h.sim.userScroll(200 * 54)
     await h.settle()
     const plan = h.v.plan()
     expect(plan.start).toBeGreaterThan(3)
-    expect(keptRow(h.v, plan, h.keys[3]!)).toEqual({ index: 3, start: 10 + 3 * 54 })
-    expect(keptRow(h.v, plan, h.keys[499]!)).toEqual({ index: 499, start: 10 + 499 * 54 })
+    // Content space: header, padding, then items with gaps (like getItemRect).
+    expect(keptRow(h.v, plan, h.keys[3]!)).toEqual({ index: 3, start: 100 + 10 + 3 * 54 })
+    expect(keptRow(h.v, plan, h.keys[499]!)).toEqual({ index: 499, start: 100 + 10 + 499 * 54 })
+    expect(keptRow(h.v, plan, h.keys[3]!)!.start).toBe(h.v.getItemRect(h.keys[3]!)!.start)
   })
 
   it('finds the key in a changed list before it is committed', async () => {

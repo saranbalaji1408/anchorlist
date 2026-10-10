@@ -88,6 +88,8 @@ interface RowProps {
   render: AnyRender
   className: string | undefined
   style: CSSProperties
+  /** Receives the key of the row containing focus. */
+  focus: { current: Key | null }
 }
 
 /** `flow-root` keeps the children's margins inside the measured border box. */
@@ -95,10 +97,10 @@ const ROW: CSSProperties = { display: 'flow-root' }
 const STICKY: CSSProperties = { position: 'sticky', top: 0, height: 0, zIndex: 1 }
 
 /** One row. Its props never include the index, so prepends and trims skip it. */
-const Row = memo(function Row({ v, k, item, render, className, style }: RowProps): ReactElement {
+const Row = memo(function Row({ v, k, item, render, className, style, focus }: RowProps): ReactElement {
   const ref = useCallback((el: HTMLDivElement | null) => v.measureElement(el, k), [v, k])
   return (
-    <div ref={ref} role="listitem" data-key={k} className={className} style={style}>
+    <div ref={ref} role="listitem" data-key={k} className={className} style={style} onFocus={() => (focus.current = k)}>
       {(render as (item: unknown) => ReactNode)(item)}
     </div>
   )
@@ -123,7 +125,7 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
   const row = (i: number, style = ROW): ReactElement => {
     const item = items[i]!
     const k = getKey(item)
-    return <Row key={k} k={k} v={v} item={item} render={renderItem as AnyRender} className={props.rowClassName} style={style} />
+    return <Row key={k} k={k} v={v} item={item} render={renderItem as AnyRender} className={props.rowClassName} style={style} focus={focused} />
   }
   const rows: ReactNode[] = []
   for (let i = plan.start; i <= plan.end; i++) rows.push(row(i))
@@ -136,7 +138,7 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
       {...props.scrollerProps}
       ref={element}
       className={props.className}
-      style={{ overflowY: 'auto', overflowAnchor: 'none', ...props.style }}
+      style={{ overflowY: 'auto', overflowAnchor: 'none', position: 'relative', ...props.style }}
     >
       {sticky && <Sticky v={v} render={sticky} />}
       <div ref={content}>
@@ -145,11 +147,7 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
           ref={list}
           role="list"
           aria-busy={props.busy}
-          style={{ display: 'flex', flexDirection: 'column', gap: props.gap, position: 'relative' }}
-          onFocus={(e) => {
-            const i = (e.target as Element).closest('[data-index]')?.getAttribute('data-index')
-            focused.current = i == null ? null : getKey(items[+i]!)
-          }}
+          style={{ display: 'flex', flexDirection: 'column', gap: props.gap }}
           // Focus that leaves the window stays in the row: keep it.
           onBlur={() => void (document.hasFocus() && (focused.current = null))}
         >
