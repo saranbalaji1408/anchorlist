@@ -222,7 +222,10 @@ The cache maps key → measured size and keeps the running sum for the average.
 | `scroller.test.ts` | `isTouchWebKit`, both axes, `elementScroller` against fake elements, the simulator layout and event order. |
 | `virtualizer.test.ts` | Behaviour for both aligns, including: follow; anchor removal; `scrollToKey` lock and cancel; edges and edge triggers; overscroll and touch deferral; cross-axis remeasure; gap and padding; estimate refresh; rebuild; aria; snapshots; user movement before the `scroll` event; state without callbacks; whole-pixel per-change and absolute bounds (rounding and truncating engines); clear and replace; holding the rows after a gap; `getSnapshot` without a scroller; duplicate keys; `maxCachedSizes` below the mounted count. |
 | `engine.fuzz.test.ts` | 20 operation types, seeded. 5 variants × 2 aligns: plain, gap + padding, touch WebKit with random touches, whole pixels with rounding, and whole pixels with truncation. `FUZZ_ITERATIONS` (local default 1500; CI runs 10,000 per configuration), `FUZZ_SEED`, `FUZZ_LOG`, `FUZZ_TRACE`. |
-| `engine.perf.test.ts` | Opt-in 100k bench (`pnpm --filter @anchorlist/core bench`). |
+| `engine.perf.test.ts` | Opt-in 100k bench (`pnpm --filter @anchorlist/core bench`). Asserts mount < 250 ms, streaming p50 < 50 µs, 50-item prepend p50 < 1 ms, heap growth < 2 MiB over 100 prepend/trim cycles. |
+| `adapter.test.ts` | `initialPlan` (both edges, estimates, determinism, hand-over on attach) and `keptRow` (positions with gap and padding, lookup in a changed list). |
+| `sticky.test.ts`, `animate.test.ts`, `snapshot.test.ts` | The opt-in entries: stuck item and push offset; animation to unmounted rows for every align, cancellation, reduced motion; stored sizes and their restoration. |
+| `entries.test.ts` | Opt-in entries stay out of the main entry and import nothing at runtime. |
 
 The 20 operation types:
 
@@ -273,10 +276,17 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | Entry | Size | Budget |
 | --- | --- | --- |
 | `{ createVirtualizer, elementScroller }` | 4497 B | 4500 B |
-| everything (`*`) | 5577 B | 6500 B |
-| React chat path (core + react) | 5367 B | 5800 B |
+| main entry, everything (`*`) | 5811 B | 6500 B |
+| React chat path (core + react) | 5771 B | 5800 B |
+| `@anchorlist/core/sticky` | 372 B | 500 B |
+| `@anchorlist/core/animate` | 734 B | 800 B |
+| `@anchorlist/core/snapshot` | 385 B | 500 B |
 
-The list entry has 3 B of headroom, so any engine addition must remove bytes elsewhere.
+The list entry has 3 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
+features therefore live outside `createVirtualizer`: adapter helpers in the main entry
+(`initialPlan`, `keptRow`, tree-shaken from the list entry) and opt-in entries (`/sticky`,
+`/animate`, `/snapshot`) that import nothing at runtime, so the build shares no chunk with the main
+entry (`entries.test.ts` checks both).
 Size-driven choices:
 
 - one `Plan` object instead of a side table;
@@ -306,5 +316,11 @@ Size-driven choices:
 - **Long touches** can accumulate large deferred corrections (thousands of px) in the transform. They
   are committed when the touch ends and is idle. The visual position is correct throughout, but very
   large transforms are untested on real devices.
-- **Not in v0.1:** window scroller, RTL, lanes, sticky items, smooth scrolling to unmounted rows, and
-  SSR `initialRect`.
+- **Sticky items are overlay copies.** Rows cannot be `position: sticky` (the engine measures
+  painted positions), so the stuck header is an `aria-hidden` copy. Clicks on it reach the copy's
+  own handlers; it is not focusable for assistive technology.
+- **Kept (focused) rows** are positioned from the last committed model; after a change they may be
+  off by the change until the next render. They are off-screen by definition.
+- **Smooth scrolling writes the offset like a user**, so it can pin at the `align` edge on the way
+  there, as a user scroll would.
+- **Not in v0.2:** window scroller, RTL, lanes.

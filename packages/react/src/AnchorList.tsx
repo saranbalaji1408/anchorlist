@@ -43,8 +43,9 @@ export type AnchorListHandle = Pick<
  * and `getKey` is accepted and passed through unchanged (`align`, `overscan`,
  * `gap`, `paddingStart`, `paddingEnd`, `hasMoreStart`, `hasMoreEnd`,
  * `onStartReached`, `onEndReached`, `follow`, `onRangeChange`,
- * `onAtEdgeChange`, `initialSnapshot`, ...). `align`, `initialSnapshot` and
- * `maxCachedSizes` are read on mount only.
+ * `onAtEdgeChange`, `initialSnapshot`, `initialRect`, ...). `align`,
+ * `initialSnapshot` and `maxCachedSizes` are read on mount only. With
+ * `initialRect`, server and hydration renders include the rows that fill it.
  */
 export interface AnchorListProps<T> extends Omit<VirtualizerOptions, 'count' | 'getKey'> {
   /** The items, as an immutable snapshot: pass a new array instead of mutating it. */
