@@ -51,6 +51,7 @@ type Op =
   | 'scrollToKey'
   | 'scrollToEdge'
   | 'touch'
+  | 'scrollUpdate'
 
 /** Operations that move the viewport on purpose: no drift check. */
 const MOVES = new Set<Op>(['scroll', 'scrollToKey', 'scrollToEdge'])
@@ -75,6 +76,7 @@ const WEIGHTS: Array<[Op, number]> = [
   ['scrollToKey', 3],
   ['scrollToEdge', 2],
   ['touch', 4],
+  ['scrollUpdate', 6],
 ]
 const TOTAL_WEIGHT = WEIGHTS.reduce((s, [, w]) => s + w, 0)
 
@@ -87,6 +89,7 @@ interface Failure {
 interface Variant {
   gap?: number
   touchWebKit?: boolean
+  quantize?: 'round' | 'trunc'
 }
 
 async function run(
@@ -107,9 +110,19 @@ async function run(
     crossSize: 400,
     gap: variant.gap ?? 0,
     touchWebKit: variant.touchWebKit ?? false,
+    ...(variant.quantize ? { quantize: variant.quantize } : {}),
     options: { align, overscan: 200, paddingStart: variant.gap ? 12 : 0, paddingEnd: variant.gap ? 20 : 0 },
   })
   let touching = false
+  // A render can clamp the offset before the commit runs (new rows, old
+  // spacers). Movement lost to that clamp cannot be recovered by any engine.
+  let renderClamped: boolean | undefined
+  const setRows = h.sim.setRows
+  h.sim.setRows = (rows) => {
+    const before = h.sim.offset()
+    setRows(rows)
+    if (h.sim.offset() !== before) renderClamped = true
+  }
   await h.settle()
 
   const failures: Failure[] = []
@@ -148,13 +161,36 @@ async function run(
     const tracing = step >= traceFrom && step <= traceTo
     if (tracing) await trace(`step ${step} ${op} before`)
     const snap = h.v.getSnapshot()
-    const anchor = snap.key
-    const before = anchor === null ? undefined : edgeOf(anchor)
+    let anchor = snap.key
+    let moved = false
+    // Positions of rows at distances 1..8, 16, 32, ... on both sides of the
+    // anchor (mounted or not), for anchor-removal checks.
+    const anchorActual = anchor === null ? undefined : edgeOf(anchor)
+    const ai = anchor === null ? -1 : h.v.indexOf(anchor)
+    const probes: Array<[number, Key, number]> = []
+    if (ai >= 0)
+      for (let s = 1; s < 2 * h.keys.length; s = s < 8 ? s + 1 : s * 2)
+        for (const dir of [1, -1]) {
+          const k = h.keys[ai + dir * s]
+          if (k !== undefined) probes.push([dir * s, k, edgeOf(k)!])
+        }
+    // Two references. Scroll offsets are whole pixels on most engines. Each
+    // painted change moves content at most 0.5 px (unit-tested separately),
+    // but one fuzz op can span several painted changes (a commit, then a
+    // resize correction), so per op: content moves at most 1 px from where it
+    // actually was (`actual`), and it never ends more than 1 px from its
+    // intended position (`before`, the snapshot delta), so errors cannot build up.
+    let before = anchor === null ? undefined : snap.delta
+    let actual = anchorActual
     const keys = h.keys
     const n = keys.length
     const mounted = [...h.mounted.keys()]
     let removed = new Set<Key>()
     let note = ''
+    let target: { key: Key; a: 'start' | 'center' | 'end' } | undefined
+    let toEdge: Edge | undefined
+    let userPinned = false
+    renderClamped = false
     let expectedShift = 0
     const effBefore = h.sim.offset() - h.sim.translation
     let settleFrames = 4
@@ -227,6 +263,24 @@ async function run(
       case 'scroll':
         h.sim.userScroll(h.sim.offset() + int(-900, 900))
         break
+      case 'scrollUpdate': {
+        // The user scrolls, then a re-render commits before the scroll event
+        // arrives. The scroll must be kept and the update still compensated.
+        const from = h.sim.offset()
+        h.sim.userScroll(from + int(-300, 300))
+        if (from !== h.sim.offset()) {
+          // The scroll is the user's: from here the item the engine will
+          // anchor on (first visible) must not move.
+          anchor = h.v.getSnapshot().key
+          before = actual = anchor === null ? undefined : edgeOf(anchor)
+          moved = true
+        }
+        // Ending within atEdgeThreshold of the align edge pins (documented): no drift check.
+        if (moved && h.v.isAtEdge()) userPinned = true
+        if (tracing) await trace(`  scrolled`)
+        h.setKeys(rand() < 0.5 ? [...fresh(int(1, 10)), ...keys] : [...keys])
+        break
+      }
       case 'viewport': {
         const vp = int(300, 800)
         if (align === 'end') expectedShift = vp - h.sim.viewport()
@@ -234,11 +288,12 @@ async function run(
         break
       }
       case 'scrollToKey':
-        h.v.scrollToKey(keys[int(0, n - 1)]!, { align: (['start', 'center', 'end'] as const)[int(0, 2)]! })
+        target = { key: keys[int(0, n - 1)]!, a: (['start', 'center', 'end'] as const)[int(0, 2)]! }
+        h.v.scrollToKey(target.key, { align: target.a })
         settleFrames = 12
         break
       case 'scrollToEdge':
-        h.v.scrollToEdge(rand() < 0.5 ? 'start' : 'end')
+        h.v.scrollToEdge((toEdge = rand() < 0.5 ? 'start' : 'end'))
         settleFrames = 8
         break
       case 'touch':
@@ -249,14 +304,50 @@ async function run(
     await h.settle(settleFrames)
     if (tracing) await trace(`step ${step} ${op} after`)
 
-    if (MOVES.has(op)) continue
-    if (snap.pinned) {
+    const eff = h.sim.offset() - h.sim.translation
+    const atLimit = eff <= TOLERANCE || eff >= h.sim.scrollSize() - h.sim.viewport() - TOLERANCE
+    if (toEdge) {
+      checked++
+      if (!h.v.isAtEdge(toEdge)) failures.push({ step, op, detail: `did not reach the ${toEdge} edge` })
+      continue
+    }
+    if (target) {
+      // Settled: the key is aligned, unless the offset is at a limit.
+      const s = h.visualStart(target.key)
+      const z = h.sizes.get(target.key) ?? 0
+      const miss = s === undefined ? Infinity : s + (z - h.sim.viewport()) * { start: 0, center: 0.5, end: 1 }[target.a]
+      checked++
+      if (Math.abs(miss) > 2 * TOLERANCE + 1e-6 && !atLimit)
+        failures.push({ step, op, detail: `scrollToKey ${target.key} (${target.a}) is off by ${miss.toFixed(2)} px` })
+      continue
+    }
+    // A user scroll that ends at the align edge pins (also when the update shrank the content).
+    if (MOVES.has(op) || (op === 'scrollUpdate' && (renderClamped || userPinned || h.v.isAtEdge()))) continue
+    if (snap.pinned && !moved) {
       // Pinned: follow at the pinned edge, through trims and resizes.
       checked++
       if (!h.v.isAtEdge()) failures.push({ step, op, detail: `lost the ${align} edge (offset ${h.sim.offset()})` })
       continue
     }
-    if (anchor === null || before === undefined || removed.has(anchor)) continue
+    if (anchor === null || before === undefined) continue
+    if (removed.has(anchor)) {
+      // The anchor is gone: rows after the gap (else before it) must hold
+      // their intended positions, for both aligns. Removals are one
+      // contiguous run, so any surviving row on that side represents it.
+      const side = (dir: number): [number, Key, number] | undefined =>
+        probes.find(([d, k]) => Math.sign(d) === dir && !removed.has(k))
+      const held = side(1) ?? side(-1)
+      if (held === undefined || anchorActual === undefined) {
+        // Nothing survived: back at the align edge, like a fresh mount.
+        checked++
+        if (!h.v.isAtEdge()) failures.push({ step, op, detail: 'list replaced but not at the align edge' })
+        continue
+      }
+      // The same whole-pixel error applies to every row, so take it from the anchor.
+      anchor = held[1]
+      before = held[2] - (anchorActual - snap.delta)
+      actual = held[2]
+    }
     const after = edgeOf(anchor)
     if (after === undefined) {
       failures.push({ step, op, detail: `anchor ${anchor} lost` })
@@ -266,16 +357,17 @@ async function run(
     // shifted position was out of range then, the engine adopts the clamp.
     if (op === 'viewport' && (effBefore - expectedShift < 0 || effBefore - expectedShift > h.sim.scrollSize() - h.sim.viewport())) continue
     const drift = after - before - expectedShift
-    if (Math.abs(drift) <= TOLERANCE) {
+    const move = after - actual! - expectedShift
+    if (Math.abs(move) <= 2 * TOLERANCE + 1e-6 && Math.abs(drift) <= 2 * TOLERANCE + 1e-6) {
       checked++
       continue
     }
     // Unreachable: holding the anchor would need an effective offset (the
     // offset plus any deferred correction) outside [0, max].
-    const needed = h.sim.offset() - h.sim.translation + drift
+    const needed = h.sim.offset() - h.sim.translation + move
     const max = h.sim.scrollSize() - h.sim.viewport()
-    if (needed < -TOLERANCE || needed > max + TOLERANCE) continue
-    failures.push({ step, op, detail: `anchor ${anchor} drifted ${drift.toFixed(2)} px${note}` })
+    if (needed < -1e-6 || needed > max + 1e-6) continue
+    failures.push({ step, op, detail: `anchor ${anchor} moved ${move.toFixed(2)} px, ${drift.toFixed(2)} px from intended${note}` })
   }
   return { failures, checked }
 }
@@ -284,6 +376,8 @@ const VARIANTS: Array<[string, Variant]> = [
   ['plain', {}],
   ['gap and padding', { gap: 6 }],
   ['touch WebKit', { touchWebKit: true }],
+  ['whole pixels, rounding', { quantize: 'round' }],
+  ['whole pixels, truncating', { quantize: 'trunc', gap: 6 }],
 ]
 
 describe('engine fuzz', () => {
