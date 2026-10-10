@@ -120,4 +120,12 @@ export default [
     gzip: true,
     modifyRolldownConfig: chunkPaths,
   },
+  {
+    name: '@anchorlist/vue (vue and core external)',
+    path: 'packages/vue/dist/index.js',
+    import: '*',
+    ignore: ['vue', '@anchorlist/core'],
+    limit: '1.3 kB',
+    gzip: true,
+  },
 ]
