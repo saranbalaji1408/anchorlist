@@ -11,6 +11,7 @@ interface Stuck {
   top: number
   bottom: number
   hidden: boolean
+  inert: boolean
   inList: boolean
 }
 
@@ -27,6 +28,7 @@ const stuck = (page: Page): Promise<Stuck | null> =>
       top: r.top - top,
       bottom: r.bottom - top,
       hidden: !!el.closest('[aria-hidden="true"]'),
+      inert: !!el.closest('[inert]'),
       inList: !!el.closest('[role="list"]'),
     }
   })
@@ -37,7 +39,7 @@ test.describe('sticky items', () => {
     expect(await d.scrollToKey('m60')).toBe(true)
     await d.frames(3)
     const s = await stuck(page)
-    expect(s).toMatchObject({ text: 'm50', hidden: true, inList: false })
+    expect(s).toMatchObject({ text: 'm50', hidden: true, inert: true, inList: false })
     expect(Math.abs(s!.top)).toBeLessThanOrEqual(1)
     expect(s!.bottom - s!.top).toBeCloseTo(40, 0)
     // The copy is an overlay: the rows keep their positions.

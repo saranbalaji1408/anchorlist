@@ -60,3 +60,32 @@ describe('stickyState', () => {
     expect(stickyState(fake(10, 30, -470, 7, true), range(19, 30), tens, 40, { start: 'left' })).toEqual({ index: 10, offset: -10 })
   })
 })
+
+describe('stickyState walks', () => {
+  it('walks only the new indices with the same isSticky function, with the same results', () => {
+    // 100k rows, only item 0 sticky; rows around the viewport are mounted from -20 px.
+    let calls = 0
+    const only0 = (i: number): boolean => (calls++, i === 0)
+    const at = (s: number): ReturnType<typeof stickyState> => stickyState(fake(s - 2, s + 20, -120), range(s, s + 10), only0, 40)
+    expect(at(90_000)).toEqual({ index: 0, offset: 0 })
+    expect(calls).toBeGreaterThan(90_000)
+    calls = 0
+    for (let s = 90_001; s < 90_100; s++) expect(at(s)).toEqual({ index: 0, offset: 0 })
+    expect(calls).toBeLessThan(5_000)
+    // Back up the list: the remembered range answers at once.
+    calls = 0
+    expect(at(50_000)).toEqual({ index: 0, offset: 0 })
+    expect(calls).toBeLessThan(50)
+    // A different function starts over and agrees.
+    expect(stickyState(fake(49_998, 50_020, -120), range(50_000, 50_010), (i) => i === 0, 40)).toEqual({ index: 0, offset: 0 })
+  })
+
+  it('finds a sticky item between the remembered walk and a new start', () => {
+    const sticky = (i: number): boolean => i === 0 || i === 500
+    // Mounted rows start far above the viewport so no row pushes.
+    const at = (s: number): number => stickyState(fake(s - 2, s + 20, -120), range(s, s + 10), sticky, 40).index
+    expect(at(400)).toBe(0)
+    expect(at(600)).toBe(500)
+    expect(at(450)).toBe(0)
+  })
+})

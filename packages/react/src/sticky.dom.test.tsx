@@ -66,6 +66,8 @@ describe('StickyItem', () => {
     expect(stuck()?.textContent).toBe('i0')
     expect(stuck()!.closest('[role="list"]')).toBeNull()
     expect(stuck()!.querySelector('[data-index]')).toBeNull()
+    // Inert: never focusable, so aria-hidden content cannot receive focus.
+    expect(stuck()!.hasAttribute('inert')).toBe(true)
     await scrollTo(30 * 50)
     expect(stuck()?.textContent).toBe('i0')
   })
@@ -74,7 +76,7 @@ describe('StickyItem', () => {
     await scrollTo(80 * 50)
     expect(scroller().querySelector('[data-key="i50"]')).toBeNull()
     expect(stuck()?.textContent).toBe('i50')
-    expect((stuck() as HTMLElement).style.transform).toBe('')
+    expect((stuck() as HTMLElement).style.transform).toBe('translateY(0px)')
   })
 
   it('is pushed out by the next header, then replaced by it', async () => {
@@ -84,6 +86,6 @@ describe('StickyItem', () => {
     expect((stuck() as HTMLElement).style.transform).toBe('translateY(-25px)')
     await scrollTo(50 * 50 + 10)
     expect(stuck()?.textContent).toBe('i50')
-    expect((stuck() as HTMLElement).style.transform).toBe('')
+    expect((stuck() as HTMLElement).style.transform).toBe('translateY(0px)')
   })
 })
