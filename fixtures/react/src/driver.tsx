@@ -1,5 +1,5 @@
 import { AnchorList, type AnchorListHandle, type AnchorListProps, type FollowContext } from 'anchorlist'
-import { StrictMode, startTransition, useLayoutEffect, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react'
+import { StrictMode, startTransition, useLayoutEffect, useState, useSyncExternalStore, version, type ReactNode, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot, type Root } from 'react-dom/client'
 import { createDom } from '../../../scenarios/src/dom'
@@ -178,6 +178,7 @@ export function installDriver(container: HTMLElement): void {
     events: () => ({ ...events, atEdge: [...events.atEdge] }),
     renders: () => ({ ...renders }),
     rendersWithoutScroller: () => [...withoutScroller],
+    frameworkVersion: () => version,
     resetCounters() {
       renders = {}
       withoutScroller = []

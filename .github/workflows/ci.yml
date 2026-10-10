@@ -28,15 +28,17 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+      - run: pnpm test:react18
       - run: pnpm size
 
   e2e:
-    name: E2E (${{ matrix.browser }})
+    name: E2E (${{ matrix.browser }}, React ${{ matrix.react }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, webkit, firefox]
+        react: [19, 18]
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -47,11 +49,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
-      - run: pnpm e2e --project=${{ matrix.browser }}
+      - run: pnpm e2e --project=${{ matrix.browser }}${{ matrix.react == 18 && '-react18' || '' }}
       - if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report-${{ matrix.browser }}
+          name: playwright-report-${{ matrix.browser }}-react${{ matrix.react }}
           path: playwright-report/
           retention-days: 7
 

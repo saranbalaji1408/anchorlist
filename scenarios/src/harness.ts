@@ -43,7 +43,7 @@ export const test = base.extend<{ d: RemoteDriver }>({
     page.on('console', (m) => {
       if ((m.type() === 'error' || m.type() === 'warning') && !BROWSER_NOTICE.test(m.text())) errors.push(m.text())
     })
-    await page.goto('/')
+    await page.goto('./')
     await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
     await use(remote(page))
     expect(errors, 'console errors').toEqual([])

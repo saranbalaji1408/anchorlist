@@ -18,7 +18,7 @@ export function ChatExample(): ReactNode {
   const loadOlder = useCallback(async () => {
     if (loading.current) return
     loading.current = true
-    await delay(100)
+    await delay(300)
     setMessages((m) => [...createMessages(20), ...m])
     setPages((p) => p - 1)
     loading.current = false

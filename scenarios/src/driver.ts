@@ -98,6 +98,8 @@ export interface Driver extends Dom {
   /** Ids of rows whose content rendered while the scroll container was not in the document. */
   rendersWithoutScroller(): string[]
   resetCounters(): void
+  /** Version of the framework the fixture runs on (for example React `18.3.1`). */
+  frameworkVersion(): string
 }
 
 declare global {

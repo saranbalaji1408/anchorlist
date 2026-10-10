@@ -22,13 +22,12 @@ const probe = (page: Page) => ({
   distanceToEnd: () => page.locator('#scroller').evaluate((el) => el.scrollHeight - el.scrollTop - el.clientHeight),
   scrollHeight: () => page.locator('#scroller').evaluate((el) => el.scrollHeight),
   setScrollTop: (v: number) => page.locator('#scroller').evaluate((el, v) => void (el.scrollTop = v), v),
-  /** Key and top of the row at `y` px below the viewport top. */
+  /** Key and top of the first row ending below `y` px from the viewport top (rows have gaps). */
   rowAt: (y: number) =>
     page.locator('#scroller').evaluate((el, y) => {
       const t = el.getBoundingClientRect().top + y
       const row = Array.from(el.querySelectorAll<HTMLElement>('[data-key]')).find((r) => {
-        const b = r.getBoundingClientRect()
-        return b.top <= t && b.bottom > t
+        return r.getBoundingClientRect().bottom > t
       })
       return row ? { key: row.dataset.key!, top: row.getBoundingClientRect().top } : null
     }, y),
@@ -38,18 +37,19 @@ const probe = (page: Page) => ({
 test.describe('README examples', () => {
   test('chat: opens at the newest message, loads older pages without a jump, follows own messages', async ({ page }) => {
     const errors = watchErrors(page)
-    await page.goto('/?example=chat')
+    await page.goto('./?example=chat')
     const p = probe(page)
     await expect(page.locator('#scroller [data-key]').first()).toBeVisible()
     expect(await p.distanceToEnd()).toBeLessThanOrEqual(1)
 
     // Scroll to the top: an older page is prepended and the row being read stays put.
     await p.setScrollTop(0)
-    await page.waitForTimeout(30)
+    // Wait for the scroll to render the top rows (the fake page load takes 300 ms).
+    await expect.poll(async () => (await p.rowAt(200))?.top ?? Infinity).toBeLessThan(500)
     const read = (await p.rowAt(200))!
     const height = await p.scrollHeight()
     await expect.poll(p.scrollHeight).toBeGreaterThan(height)
-    await page.waitForTimeout(100)
+    await page.waitForTimeout(50)
     expect(Math.abs((await p.topOf(read.key)) - read.top)).toBeLessThanOrEqual(TEXT_TOLERANCE)
 
     // A received message is not followed while scrolled up; a sent one is.
@@ -64,7 +64,7 @@ test.describe('README examples', () => {
 
   test('feed: opens at the top and appends pages near the end', async ({ page }) => {
     const errors = watchErrors(page)
-    await page.goto('/?example=feed')
+    await page.goto('./?example=feed')
     const p = probe(page)
     await expect(page.locator('#scroller [data-key]').first()).toBeVisible()
     expect(await page.locator('#scroller').evaluate((el) => el.scrollTop)).toBe(0)
@@ -72,7 +72,7 @@ test.describe('README examples', () => {
     await p.setScrollTop(1e6)
     await expect.poll(p.scrollHeight).toBeGreaterThan(height)
     const read = (await p.rowAt(200))!
-    await page.waitForTimeout(100)
+    await page.waitForTimeout(50)
     expect(Math.abs((await p.topOf(read.key)) - read.top)).toBeLessThanOrEqual(TEXT_TOLERANCE)
     expect(errors).toEqual([])
   })

@@ -18,7 +18,7 @@ export function FeedExample(): ReactNode {
   const loadMore = useCallback(async () => {
     if (loading.current) return
     loading.current = true
-    await delay(100)
+    await delay(300)
     setPosts((p) => [...p, ...createPosts(20)])
     loading.current = false
   }, [])
