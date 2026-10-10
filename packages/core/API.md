@@ -6,6 +6,7 @@ Normative reference for `@anchorlist/core` v0.1 and for framework adapters built
 - [Model](#model)
 - [Adapter contract](#adapter-contract)
 - [DOM structure](#dom-structure)
+- [Sticky items](#sticky-items)
 - [createVirtualizer](#createvirtualizer)
 - [Options](#options)
 - [Virtualizer methods](#virtualizer-methods)
@@ -114,6 +115,35 @@ position immediately and run the loop in a microtask.
   pass `content` whenever you render a header or footer.
 - A sticky overlay (for example a date pill) can render from `getVisibleRange()` via `subscribe()`.
   Put it outside the content wrapper.
+- Rows must never be `position: sticky`: the engine measures rows where they are painted, so a
+  stuck row would be measured in the wrong place. Use [sticky items](#sticky-items) instead.
+
+## Sticky items
+
+`@anchorlist/core/sticky` (separate entry, not part of the list entry):
+
+```ts
+function stickyState(
+  scroller: Element,
+  range: VisibleRange,
+  isSticky: (index: number) => boolean,
+  size: number,
+  axis?: Pick<Axis, 'start'>, // default vertical
+): { index: number; offset: number }
+```
+
+Sticky items (for example group headers) stay in normal flow. The adapter renders an
+`aria-hidden` copy of item `index` in the sticky overlay, shifted along the main axis by
+`offset`, and calls `stickyState` again on every `scroll` event and after every commit:
+
+- `index` is the last sticky item whose row starts at or before the viewport start (scanning back
+  from `range.startIndex`; a row that is not mounted is above the viewport), or -1.
+- `offset` (≤ 0) is how far the next sticky item pushes the copy out:
+  `min(0, nextStart - size)`, where `size` is the copy's size.
+- Rows are found through the `data-index` attribute the engine writes, so the copy must not carry
+  one. Screen readers read each header once, in its row.
+
+React: `StickyItem` from `@anchorlist/react/sticky`, returned from `AnchorList`'s `sticky` prop.
 
 ## createVirtualizer
 

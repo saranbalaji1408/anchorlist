@@ -39,6 +39,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./sticky": {
+      "types": "./dist/sticky.d.ts",
+      "import": "./dist/sticky.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

@@ -17,6 +17,8 @@ export interface Item {
   text?: string
   /** "Sent by the user": with `followMine`, adding such an item at the pinned edge forces follow. */
   mine?: boolean
+  /** A sticky item (group header) when the list renders with `stickyItems`. */
+  header?: boolean
 }
 
 /** Serializable scroll position (mirrors the core `Snapshot`). */
@@ -51,6 +53,11 @@ export interface ListState {
   hasMoreEnd: boolean
   /** Follow (jump to the pinned edge) when an added item has `mine: true`. */
   followMine: boolean
+  /**
+   * Sticky items: items with `header: true` stick to the viewport start (a
+   * copy with `data-testid="stuck"` and `aria-hidden`, outside the list). Replaces the pill.
+   */
+  stickyItems: boolean
 }
 
 /** Mount-time options. */

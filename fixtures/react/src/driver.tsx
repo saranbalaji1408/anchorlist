@@ -1,4 +1,5 @@
-import { AnchorList, type AnchorListHandle, type AnchorListProps, type FollowContext } from 'anchorlist'
+import { AnchorList, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
+import { StickyItem } from 'anchorlist/sticky'
 import { StrictMode, startTransition, useLayoutEffect, useState, useSyncExternalStore, version, type ReactNode, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot, type Root } from 'react-dom/client'
@@ -23,7 +24,7 @@ function Bubble({ item }: { item: Item }): ReactNode {
   renders[item.id] = (renders[item.id] ?? 0) + 1
   if (!document.getElementById(SCROLLER_ID)) withoutScroller.push(item.id)
   return (
-    <div style={{ height, boxSizing: 'border-box', borderBottom: '1px solid #ccc', overflowWrap: 'anywhere' }}>
+    <div style={{ height, boxSizing: 'border-box', borderBottom: '1px solid #ccc', overflowWrap: 'anywhere', background: item.header ? '#ffd' : '#fff' }}>
       {item.text ?? item.id}
     </div>
   )
@@ -33,6 +34,12 @@ function Bubble({ item }: { item: Item }): ReactNode {
 const renderItem = (item: Item): ReactNode => <Bubble item={item} />
 const getKey = (item: Item): string => item.id
 const pill = (range: { startKey: string | number | null }): ReactNode => <div data-testid="pill">{range.startKey}</div>
+const isHeader = (item: Item): boolean => !!item.header
+const renderStuck = (item: Item): ReactNode => (
+  <div data-testid="stuck">
+    <Bubble item={item} />
+  </div>
+)
 
 // --------------------------------------------------------------------- app
 
@@ -52,6 +59,7 @@ const DEFAULTS: ListState = {
   hasMoreStart: false,
   hasMoreEnd: false,
   followMine: false,
+  stickyItems: false,
 }
 
 let events: Events = { startReached: 0, endReached: 0, atEdge: [] }
@@ -88,6 +96,9 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
     header: s.header === null ? null : <div style={{ height: s.header, background: '#eef' }}>header</div>,
     footer: s.footer === null ? null : <div style={{ height: s.footer, background: '#efe' }}>footer</div>,
     ...(s.sticky ? { sticky: pill } : {}),
+    ...(s.stickyItems
+      ? { sticky: (range: VisibleRange) => <StickyItem range={range} items={items} isSticky={isHeader} renderItem={renderStuck} /> }
+      : {}),
     ...(s.estimate === null ? {} : { estimateSize: () => s.estimate! }),
     ...(s.overscan === null ? {} : { overscan: s.overscan }),
     ...(s.followMine ? { follow } : {}),
@@ -119,7 +130,7 @@ const interned = new Map<string, Item>()
 const intern = (items: Item[]): Item[] =>
   items.map((m) => {
     const prev = interned.get(m.id)
-    if (prev && prev.height === m.height && prev.text === m.text && prev.mine === m.mine) return prev
+    if (prev && prev.height === m.height && prev.text === m.text && prev.mine === m.mine && prev.header === m.header) return prev
     interned.set(m.id, m)
     return m
   })
