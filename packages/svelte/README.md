@@ -37,5 +37,5 @@ Full documentation: https://saranbalaji1408.github.io/anchorlist/
 - **Rows get no index**, so a prepend updates no mounted row. A row updates when its item changes or
   when state read in the snippet changes. Keep items immutable (`$state.raw` or new objects).
 - **Headless:** `createAnchorList(options, elements)` returns `{ virtualizer, plan }` for custom
-  markup; render rows `plan.start..plan.end` as the only children of the list.
+  markup; render rows `plan.start..plan.end` as the list's children, each with `data-key={key}`.
 - Requires Svelte 5 (runes).

@@ -253,4 +253,13 @@ describe('createAnchorList', () => {
     expect(scroller().scrollTop).toBe(scroller().scrollHeight - 600)
     unmount(app)
   })
+
+  it('pairs rows with keys by data-key, ignoring other children of the list', async () => {
+    const app = mount(Headless, { target: container, props: { items: Array.from({ length: 100 }, (_, i) => `h${i}`), spinner: true } })
+    flushSync()
+    await tick()
+    expect(document.querySelector('.spinner')!.hasAttribute('data-index')).toBe(false)
+    expect(scroller().querySelector('[data-key="h99"]')!.getAttribute('data-index')).toBe('99')
+    unmount(app)
+  })
 })

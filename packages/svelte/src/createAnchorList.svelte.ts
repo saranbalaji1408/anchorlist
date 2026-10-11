@@ -18,8 +18,9 @@ export interface AnchorListState {
  * `flushSync` for synchronous re-render requests, and `destroy()` on unmount.
  *
  * Render rows `plan.start..plan.end` (inclusive) as the only children of
- * `list`, in order, keyed by `options.getKey(i)`. Rows are registered from
- * the DOM before each commit, so they need no ref. Do not pass the index to
+ * `list`, in order, keyed by `options.getKey(i)`, each with
+ * `data-key={key}`. Rows are registered from the DOM by `data-key` before
+ * each commit, so they need no ref. Do not pass the index to
  * rows; the engine writes `data-index` and `aria-posinset` itself. Most apps
  * should use `AnchorList` instead.
  *
@@ -52,15 +53,21 @@ export function createAnchorList(
     untrack(() => {
       if (!e && (e = elements())) v.attach(elementScroller(e))
       if (!e) return
-      // The list's children are the rendered rows, in plan order.
+      // Rows are paired with plan keys by `data-key`, never by position, so
+      // other children (or rows still outroing) are never measured as rows.
+      const keys = new Map<string, Key>()
+      for (let i = p.start; i <= p.end; i++) {
+        const key = p.options.getKey(i)
+        keys.set(String(key), key)
+      }
       const seen = new Set<Key>()
-      const kids = (e.list as Element).children
-      for (let j = 0; j < kids.length; j++) {
-        const key = p.options.getKey(p.start + j)
+      for (const el of (e.list as Element).children) {
+        const key = keys.get(el.getAttribute('data-key')!)
+        if (key === undefined || seen.has(key)) continue
         seen.add(key)
-        if (rows.get(key) !== kids[j]) {
-          rows.set(key, kids[j]!)
-          v.measureElement(kids[j], key)
+        if (rows.get(key) !== el) {
+          rows.set(key, el)
+          v.measureElement(el, key)
         }
       }
       rows.forEach((_, key) => seen.has(key) || (rows.delete(key), v.measureElement(null, key)))
