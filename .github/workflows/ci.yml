@@ -36,13 +36,17 @@ jobs:
       - run: pnpm size
 
   e2e:
-    name: E2E (${{ matrix.browser }}, React ${{ matrix.react }})
+    name: E2E (${{ matrix.browser }}, ${{ matrix.fixture.name }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, webkit, firefox]
-        react: [19, 18]
+        # Project suffix per fixture (see playwright.config.ts projects).
+        fixture:
+          - { name: React 19, suffix: '' }
+          - { name: React 18, suffix: '-react18' }
+          - { name: Vue, suffix: '-vue' }
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -53,11 +57,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
-      - run: pnpm e2e --project=${{ matrix.browser }}${{ matrix.react == 18 && '-react18' || '' }}
+      - run: pnpm e2e --project=${{ matrix.browser }}${{ matrix.fixture.suffix }}
       - if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report-${{ matrix.browser }}-react${{ matrix.react }}
+          name: playwright-report-${{ matrix.browser }}${{ matrix.fixture.suffix || '-react19' }}
           path: playwright-report/
           retention-days: 7
 
