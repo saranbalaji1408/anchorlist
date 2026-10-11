@@ -1,4 +1,5 @@
 import { createRawSnippet, flushSync, mount, tick, unmount, type Snippet } from 'svelte'
+import { VERSION } from 'svelte/compiler'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { installLayout, type TestLayout } from '../../react/src/testLayout'
 import Headless from './Headless.test.svelte'
@@ -68,6 +69,13 @@ afterEach(() => {
   container.remove()
   layout.restore()
   vi.restoreAllMocks()
+})
+
+it('runs on the Svelte version under test', () => {
+  // `pnpm test:svelte-floor` runs this file against the oldest supported Svelte 5.
+  const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env
+  expect(VERSION).toBe(env?.EXPECT_SVELTE_VERSION ?? VERSION)
+  expect(VERSION.startsWith('5.')).toBe(true)
 })
 
 describe('mount', () => {

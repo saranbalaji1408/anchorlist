@@ -2,7 +2,7 @@
 '@anchorlist/svelte': minor
 ---
 
-Add `@anchorlist/svelte`, Svelte 5 (runes) bindings for `@anchorlist/core`.
+Add `@anchorlist/svelte`, Svelte 5.18+ (runes) bindings for `@anchorlist/core`.
 
 - `<AnchorList>` takes `items`, `getKey(item)` and `rowClass` plus every core option (`align`, `gap`, `follow`, `hasMoreStart`, `onStartReached`, ...). Other attributes (`class`, `style`, `id`, `aria-label`, event handlers) go to the scroll container. Optional props accept `undefined`.
 - Snippets: `children(item)`, `header`, `footer`, and `sticky(range)`, which renders from the visible range.

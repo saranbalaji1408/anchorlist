@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:react18": "vitest run --config fixtures/react18/vitest.config.ts",
     "test:vue33": "vitest run --config fixtures/vue33/vitest.config.ts",
+    "test:svelte-floor": "vitest run --config fixtures/svelte-floor/vitest.config.ts",
     "e2e": "playwright test",
     "size": "size-limit && pnpm treeshake",
     "treeshake": "node scripts/treeshake.ts",

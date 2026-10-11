@@ -38,4 +38,4 @@ Full documentation: https://saranbalaji1408.github.io/anchorlist/
   when state read in the snippet changes. Keep items immutable (`$state.raw` or new objects).
 - **Headless:** `createAnchorList(options, elements)` returns `{ virtualizer, plan }` for custom
   markup; render rows `plan.start..plan.end` as the list's children, each with `data-key={key}`.
-- Requires Svelte 5 (runes).
+- Requires Svelte 5.18 or later (runes).
