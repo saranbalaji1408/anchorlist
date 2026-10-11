@@ -11,8 +11,9 @@ loads upwards, or to its **start** for a feed. Rows can have any mix of heights.
 as they render, so you don't need a fixed row height.
 
 ::: tip Status
-v0.1 ships the framework-agnostic core (`@anchorlist/core`) and React bindings
-(`@anchorlist/react`). Vue and Svelte bindings are planned.
+v0.2 ships the framework-agnostic core (`@anchorlist/core`) and React bindings
+(`@anchorlist/react`), with sticky headers, focus preservation, smooth scrolling, snapshot sizes
+and server rendering. Vue and Svelte bindings are planned.
 :::
 
 ## Install

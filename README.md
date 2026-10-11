@@ -37,7 +37,9 @@ const renderMessage = (m) => <Message message={m} /> // stable: module scope or 
   `'start'` serves top-anchored feeds.
 - **Dynamic heights:** rows are measured as they render, so no fixed row height or estimate is
   required.
-- **Small:** hard gzip budgets enforced in CI. The React chat path (core + react) must stay at or below 5.8 kB and is currently 5.37 kB.
+- **Production features as opt-in entries:** sticky group headers, smooth scrolling to unrendered
+  items, snapshot sizes and server rendering, plus focus preservation and `aria-busy` built in.
+- **Small:** hard gzip budgets enforced in CI. The React chat path (core + react) must stay at or below 5.8 kB and is currently 5.63 kB.
 
 ## Packages
 
@@ -54,7 +56,7 @@ Vue and Svelte bindings are planned.
 - [anchorlist vs TanStack Virtual](https://saranbalaji1408.github.io/anchorlist/compare/tanstack-virtual)
 - [anchorlist vs react-virtuoso](https://saranbalaji1408.github.io/anchorlist/compare/react-virtuoso)
 
-Head-to-head benchmarks are planned for v0.2.
+- [Chat benchmark](https://saranbalaji1408.github.io/anchorlist/compare/benchmark): drift, following, re-renders and bundle size against both, in one harness ([`bench/`](bench)).
 
 ## Development
 

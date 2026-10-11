@@ -111,6 +111,30 @@ A snapshot is `{ key, index, delta, pinned }`, plain serializable data. You can 
 `history.state` or `sessionStorage`. It is restored exactly once the anchored row has been
 measured. If that key no longer exists, the list starts at the top.
 
+### With measured sizes
+
+The anchored post is restored exactly either way. To also lay out the posts around it at their
+real sizes from the first frame (so the scrollbar and the posts above don't shift as they are
+measured again), store their sizes with `takeSnapshot` and restore them with `snapshotEstimate`:
+
+```tsx
+import { snapshotEstimate, takeSnapshot } from 'anchorlist/snapshot'
+
+// Save: the anchor plus the measured sizes of up to 100 posts around it.
+savedPosition = takeSnapshot(list.current, (i) => posts[i].id, posts.length)
+
+// Restore:
+<AnchorList
+  initialSnapshot={savedPosition}
+  estimateSize={snapshotEstimate(savedPosition, (i) => posts[i].id)}
+  /* ... */
+/>
+```
+
+The result is still plain JSON. `@anchorlist/core/snapshot` is a separate entry of 385 B gzip. With
+server rendering, the server HTML can also start at the saved post: see
+[server rendering](./server-rendering).
+
 ## Long feeds and memory
 
 Rendering cost depends on the viewport, not on the list length. Only the rows in the viewport plus
@@ -129,8 +153,8 @@ the core design notes:
 | 50-item prepend while anchored | p50 43–46 µs, p95 69–71 µs |
 | Idle key validation and estimate refresh | 9–9.3 ms |
 
-These numbers are for the engine with a minimal host. React adds its own render cost. A
-head-to-head benchmark against other libraries is planned for v0.2.
+These numbers are for the engine with a minimal host. React adds its own render cost. For a
+comparison with other libraries in the browser, see the [chat benchmark](/compare/benchmark).
 
 ## Related
 

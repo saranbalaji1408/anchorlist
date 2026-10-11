@@ -116,7 +116,8 @@ list.current?.scrollToKey(replyId, { align: 'center' })
 ```
 
 `scrollToKey` positions at the estimated offset immediately (no blank frame), then stays locked
-on the target while the surrounding rows are measured. User input cancels the lock.
+on the target while the surrounding rows are measured. User input cancels the lock. To animate
+there instead, use [`animateToKey`](./smooth-scroll).
 
 To show a "jump to latest" button, listen to `onAtEdgeChange`:
 
@@ -186,5 +187,8 @@ The strict 0.5 px-per-paint bound is checked by unit tests. End-to-end scenarios
 
 - [Infinite feed (top-anchored)](./feed)
 - [Dynamic height](./dynamic-height)
+- [Sticky group headers](./sticky-headers) (date separators that stick)
+- [Smooth scroll to a message](./smooth-scroll)
+- [Chat benchmark](/compare/benchmark)
 - [API reference](/api/)
 - [anchorlist vs react-virtuoso](/compare/react-virtuoso)

@@ -10,10 +10,9 @@ components for lists, grouped lists, grids and tables. It measures item heights 
 supports chat-style lists. anchorlist covers a narrower set of use cases with a small,
 framework-agnostic core. The anchoring model and the size budgets are the main differences.
 
-::: info Benchmarks
-This page compares features only. A head-to-head benchmark (scroll stability, frame cost, bundle
-size measured in one harness) is planned for **v0.2**. Until then, the only numbers here are
-anchorlist's own.
+::: info Benchmark
+The [chat benchmark](./benchmark) measures both libraries in one harness: drift on prepend and
+resize, following new messages, re-renders and bundle size.
 :::
 
 ## Feature comparison
@@ -21,7 +20,7 @@ anchorlist's own.
 The react-virtuoso column reflects its public documentation at the time of writing. Corrections
 are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 
-| | anchorlist v0.1 | react-virtuoso |
+| | anchorlist v0.2 | react-virtuoso |
 | --- | --- | --- |
 | Model | Framework-agnostic core and a thin React component | React components |
 | Frameworks | React (Vue and Svelte planned) | React |
@@ -33,11 +32,12 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | Width change re-measure | Built in, anchor restored before paint | Built in |
 | iOS momentum-safe corrections | Deferred through a transform | Not documented |
 | Restore scroll position | `getSnapshot` / `initialSnapshot` | `getState` / `restoreStateFrom` |
-| Grouped lists, sticky headers | Planned (v0.2) | Yes (`GroupedVirtuoso`) |
+| Grouped lists, sticky headers | Sticky items: `StickyItem` from `anchorlist/sticky` | Yes (`GroupedVirtuoso`) |
 | Tables | Not planned yet | Yes (`TableVirtuoso`) |
 | Grid | Planned (v0.4) | Yes (`VirtuosoGrid`) |
 | Window scrolling | Planned (v0.3) | Yes (`useWindowScroll`) |
-| SSR | Planned (v0.2) | Yes (`initialItemCount`) |
+| SSR | Opt-in: `initialRect` + `initialPlan` | Yes (`initialItemCount`) |
+| Smooth scroll to an unrendered item | `animateToKey` (`anchorlist/animate`) | `scrollToIndex({ behavior: 'smooth' })` |
 
 ## Size
 
@@ -46,14 +46,17 @@ anchorlist enforces gzip size budgets in CI with size-limit:
 | Entry | Size (min + gzip) |
 | --- | --- |
 | `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.50 kB (4,497 B) |
-| `@anchorlist/core` everything | ≤ 6.5 kB budget, currently 5.58 kB |
-| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.01 kB |
-| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.37 kB |
+| `@anchorlist/core` main entry, everything | ≤ 6.5 kB budget, currently 5.67 kB |
+| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.19 kB |
+| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.63 kB |
+
+Sticky items, smooth scrolling, snapshot sizes and server rendering are separate entries, so a
+list that doesn't use them doesn't load them.
 
 The budgets are hard limits: CI fails if an entry grows past its budget.
 
-A size comparison against react-virtuoso, measured with the same tool and settings, will be
-published with the v0.2 benchmark.
+Measured with the same tool and settings in the [benchmark](./benchmark#bundle-size),
+`{ AnchorList }` is 5,521 B and react-virtuoso's `{ Virtuoso }` 19,093 B (React external).
 
 ## When to choose anchorlist
 
@@ -66,7 +69,7 @@ published with the v0.2 benchmark.
 
 ## When to choose react-virtuoso
 
-- You need grouped lists with sticky headers, tables, grids, window scrolling or SSR today.
+- You need tables, grids or window scrolling today.
 - You want a mature, widely used library with a long track record.
 
 ## Migrating

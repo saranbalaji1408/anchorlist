@@ -23,11 +23,13 @@ const llmsPlugins = llmstxt({
   title: SITE_NAME,
   description: 'A virtual list for React with stable scroll anchoring (chat, reverse infinite scroll, feeds, dynamic heights).',
   details: [
-    'anchorlist v0.1 ships `@anchorlist/core` (framework-agnostic engine, zero dependencies) and',
+    'anchorlist v0.2 ships `@anchorlist/core` (framework-agnostic engine, zero dependencies) and',
     '`@anchorlist/react`; the unscoped `anchorlist` package re-exports both.',
     "Use `align: 'end'` for chat (pinned to the newest item) and `align: 'start'` (default) for feeds.",
     'Items need unique, stable keys; replace arrays instead of mutating them; never set scrollTop directly.',
     'Keep `renderItem` stable (module scope or useCallback) so a prepend re-renders no mounted row.',
+    'Opt-in entries: `anchorlist/sticky` (StickyItem), `anchorlist/animate` (animateToKey), `anchorlist/snapshot`',
+    '(takeSnapshot, snapshotEstimate) and `anchorlist/ssr` (initialPlan, with the initialRect option).',
   ].join('\n'),
 }) as unknown as VitePlugins
 
@@ -62,7 +64,7 @@ function structuredData(pageData: PageData, url: string): HeadConfig[] {
       runtimePlatform: 'browser',
       version: pkg.version,
       keywords:
-        'virtual list, virtualized list, react virtual list, chat, reverse infinite scroll, infinite scroll, scroll anchoring, dynamic height',
+        'virtual list, virtualized list, react virtual list, chat, reverse infinite scroll, infinite scroll, scroll anchoring, dynamic height, sticky headers, server rendering',
     }),
   ]
 
@@ -173,6 +175,10 @@ export default defineConfig({
           { text: 'Chat (pinned to the end)', link: '/guide/chat-virtual-list' },
           { text: 'Feed (pinned to the start)', link: '/guide/feed' },
           { text: 'Dynamic height', link: '/guide/dynamic-height' },
+          { text: 'Sticky group headers', link: '/guide/sticky-headers' },
+          { text: 'Smooth scroll to an item', link: '/guide/smooth-scroll' },
+          { text: 'Accessibility and focus', link: '/guide/accessibility' },
+          { text: 'Server rendering', link: '/guide/server-rendering' },
         ],
       },
       {
@@ -180,6 +186,7 @@ export default defineConfig({
         items: [
           { text: 'vs TanStack Virtual', link: '/compare/tanstack-virtual' },
           { text: 'vs react-virtuoso', link: '/compare/react-virtuoso' },
+          { text: 'Chat benchmark', link: '/compare/benchmark' },
         ],
       },
       { text: 'API', items: [{ text: 'Reference', link: '/api/' }] },

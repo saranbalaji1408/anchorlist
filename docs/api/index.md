@@ -9,7 +9,9 @@ description: API reference for anchorlist, @anchorlist/react and @anchorlist/cor
 | --- | --- |
 | `anchorlist` | Re-exports everything below. |
 | `@anchorlist/react` | React 18 / 19 component. |
-| `@anchorlist/core` | Framework-agnostic engine, zero dependencies: `createVirtualizer`, `elementScroller`, `simulatedScroller`, data structures, types. |
+| `@anchorlist/core` | Framework-agnostic engine, zero dependencies: `createVirtualizer`, `elementScroller`, `simulatedScroller`, `keptRow`, data structures, types. |
+| `@anchorlist/core/sticky`, `/animate`, `/snapshot`, `/ssr` | [Opt-in entries](#opt-in-entries): `stickyState`, `animateToKey`, `takeSnapshot` / `snapshotEstimate`, `initialPlan`. Also `anchorlist/sticky`, `anchorlist/animate`, `anchorlist/snapshot`, `anchorlist/ssr`. |
+| `@anchorlist/react/sticky` | [`StickyItem`](#stickyitem). Also `anchorlist/sticky`. |
 
 All packages are ESM only, ship TypeScript declarations and target ES2020.
 
@@ -32,16 +34,38 @@ import { AnchorList, type AnchorListHandle } from 'anchorlist'
 | `className` / `style` | `string` / `CSSProperties` | Applied to the scroll container. Give it a height, and no main-axis border. |
 | `rowClassName` | `string` | Class of each row wrapper. Don't give rows margins; use `gap`. |
 | `scrollerProps` | `HTMLAttributes<HTMLDivElement>` | Extra attributes for the scroll container (`id`, `aria-label`, `onKeyDown`, ...). |
+| `busy` | `boolean` | Sets `aria-busy` on the list, for example while a page of items is loading. |
 | `ref` | `Ref<AnchorListHandle>` | Imperative handle, see below. |
-| ...core options | | Every [core option](#options) except `count` and `getKey` is passed through unchanged: `align`, `overscan`, `gap`, `paddingStart`, `paddingEnd`, `estimateSize`, `hasMoreStart`, `hasMoreEnd`, `startThreshold`, `endThreshold`, `onStartReached`, `onEndReached`, `atEdgeThreshold`, `follow`, `onRangeChange`, `onAtEdgeChange`, `initialSnapshot`, `maxCachedSizes`. |
+| ...core options | | Every [core option](#options) except `count` and `getKey` is passed through unchanged: `align`, `overscan`, `gap`, `paddingStart`, `paddingEnd`, `estimateSize`, `hasMoreStart`, `hasMoreEnd`, `startThreshold`, `endThreshold`, `onStartReached`, `onEndReached`, `atEdgeThreshold`, `follow`, `onRangeChange`, `onAtEdgeChange`, `initialSnapshot`, `maxCachedSizes`, `initialRect`, `initialPlan`. |
 
 `align`, `initialSnapshot` and `maxCachedSizes` are read once, on mount.
+
+The row containing focus stays mounted, out of the flow at its own position, while it is outside
+the rendered range (vertical lists). See [accessibility](/guide/accessibility).
 
 ### `AnchorListHandle`
 
 `scrollToKey`, `scrollToIndex`, `scrollToEdge`, `isAtEdge`, `getSnapshot`, `getVisibleRange`,
 `getItemRect`, `getTotalSize`, `indexOf`, `subscribe`. They behave as the
-[virtualizer methods](#virtualizer-methods) of the same name.
+[virtualizer methods](#virtualizer-methods) of the same name. `element` is the scroll container
+(for [`animateToKey`](#opt-in-entries)).
+
+### `StickyItem`
+
+```tsx
+import { StickyItem } from 'anchorlist/sticky' // or '@anchorlist/react/sticky'
+
+<AnchorList sticky={(range) => <StickyItem range={range} items={rows} isSticky={isHeader} renderItem={renderRow} />} /* ... */ />
+```
+
+| Prop | Type | Notes |
+| --- | --- | --- |
+| `range` | `VisibleRange` | The range passed to `sticky`. |
+| `items` | `readonly T[]` | The list's items. |
+| `isSticky` | `(item: T) => boolean` | Whether an item sticks once scrolled past. Keep it stable. |
+| `renderItem` | `(item: T) => ReactNode` | Renders the stuck copy, usually the list's `renderItem`. Give it a background. |
+
+The copy is `aria-hidden` and `inert`. Vertical lists only. Guide: [sticky group headers](/guide/sticky-headers).
 
 ### `useAnchorList(options, elements)`
 
@@ -88,6 +112,8 @@ an item **key**. A frame goes like this:
 | `onAtEdgeChange` | `(atEdge: boolean) => void` | none | `isAtEdge(align)` changed (also fires once after mount). |
 | `initialSnapshot` | `Snapshot` | none | Restore a position on mount. Creation only. |
 | `maxCachedSizes` | `number` | unlimited | Size-cache limit (least recently measured are evicted; mounted rows never are, even when this is smaller than the mounted count). Creation only. |
+| `initialRect` | `{ width, height }` | none | Viewport to assume before `attach()`, for server rendering. Read by `initialPlan` only. |
+| `initialPlan` | `(v, options) => Plan` | none | Adapters plan with it instead of `v.plan()`; pass `initialPlan` from `@anchorlist/core/ssr`. |
 
 Callbacks run synchronously inside the engine's loop, after the offset is final for that pass. They
 may call `scrollToKey` / `scrollToEdge` and may schedule state updates. They must not call `plan()` /
@@ -125,6 +151,33 @@ returns -1.
 - `simulatedScroller(options?)` is a deterministic, DOM-free layout for tests and benchmarks, with
   a manual clock (`tick()`, `advance(ms)`). `quantize: 'round' | 'trunc'` stores whole-pixel
   offsets like browsers at DPR 1.
+
+### Opt-in entries
+
+Separate entries, so lists that don't use them don't load them. Sizes are min + gzip, checked in
+CI.
+
+| Entry | Exports | Size (budget) |
+| --- | --- | --- |
+| `@anchorlist/core/sticky` | `stickyState(scroller, range, isSticky, size, axis?)`: `{ index, offset }` of the stuck item | 423 B (500 B) |
+| `@anchorlist/react/sticky` | `StickyItem` (core part included) | 794 B (800 B) |
+| `@anchorlist/core/animate` | `animateToKey(v, element, key, options?)`: `Promise<boolean>` | 742 B (800 B) |
+| `@anchorlist/core/snapshot` | `takeSnapshot(v, getKey, count, limit = 100)`, `snapshotEstimate(snapshot, getKey, estimateSize?)` | 385 B (500 B) |
+| `@anchorlist/core/ssr` | `initialPlan(v, options)` | 368 B (400 B) |
+
+- **`animateToKey`** recomputes the target every frame and lands through `scrollToKey`. Options:
+  `align`, `offset`, `duration` (400 ms), `easing`, `axis`, `signal`. User input, `signal`, a newer
+  animation, a removed key or an unmounted list cancel it (resolves `false`); it jumps under
+  `prefers-reduced-motion`. Guide: [smooth scroll](/guide/smooth-scroll).
+- **`takeSnapshot`** is `getSnapshot()` plus `sizes: [key, size][]` for measured items around the
+  anchor; **`snapshotEstimate`** turns them into an `estimateSize` to pass with `initialSnapshot`.
+  Guide: [restore the scroll position](/guide/feed#with-measured-sizes).
+- **`initialPlan`**, passed as the `initialPlan` option together with `initialRect`, renders the rows
+  that fill `initialRect.height` before `attach()`, from `initialSnapshot` when set, else from the
+  `align` edge, so server and hydration renders match. Guide:
+  [server rendering](/guide/server-rendering).
+- **`keptRow(v, plan, key)`** (main entry) tells an adapter where to keep a focused row while it is
+  outside the plan: `{ index, start }` or `null`.
 
 ### Behaviour
 
@@ -287,7 +340,7 @@ interface Range { readonly start: number; readonly end: number } // inclusive, e
 interface Plan extends Range { readonly options: VirtualizerOptions }
 interface VisibleRange { startIndex: number; endIndex: number; startKey: Key | null; endKey: Key | null }
 interface FollowContext { atEdge: boolean; added: number; count: number }
-interface Snapshot { key: Key | null; index: number; delta: number; pinned: boolean }
+interface Snapshot { key: Key | null; index: number; delta: number; pinned: boolean; sizes?: [Key, number][] }
 interface ItemRect { start: number; size: number; measured: boolean }
 interface ScrollToOptions { align?: ItemAlign; offset?: number }
 ```
