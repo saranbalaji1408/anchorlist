@@ -74,11 +74,12 @@ last message grows while tokens arrive) is O(1) in the list size. In the 100k-it
 micro-benchmark that update measured p50 6.9–7.1 µs and p95 12–13 µs (Apple M2, Node 24,
 simulated scroller).
 
-## Limits in v0.1
+## Limits
 
 - No border compensation: don't put main-axis borders on the scroll container or the list.
-- Window scrolling (`windowScroller`), horizontal RTL, grid and masonry are planned for later
-  versions.
+- The same measuring works along the x axis ([horizontal list](./horizontal-list),
+  [RTL](./rtl-virtual-list)) and for a list that scrolls with the page
+  ([window scroller](./window-scroller)). Grid and masonry layouts are planned.
 
 ## Related
 

@@ -48,6 +48,9 @@ npm install anchorlist
 - [Virtualized list with dynamic height](/guide/dynamic-height): measured rows and width changes.
 - [Sticky group headers](/guide/sticky-headers), [smooth scroll to an item](/guide/smooth-scroll),
   [accessibility and focus](/guide/accessibility) and [server rendering](/guide/server-rendering).
+- [Window scroller](/guide/window-scroller): a list that scrolls with the page, under a fixed app bar.
+- [Horizontal virtual list](/guide/horizontal-list) and [RTL virtual list](/guide/rtl-virtual-list):
+  the same anchoring on the x axis, right-to-left included.
 - [API reference](/api/)
 - Comparisons: [TanStack Virtual alternative](/compare/tanstack-virtual),
   [react-virtuoso alternative](/compare/react-virtuoso), [chat benchmark](/compare/benchmark)

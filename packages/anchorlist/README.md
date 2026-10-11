@@ -64,6 +64,8 @@ mounted row.
 | Follow new items at the pinned edge | Default when pinned; `follow` policy for "jump on my own message" |
 | Dynamic heights | Rows measured as they render; `estimateSize` optional |
 | Width / keyboard resizes | Re-measured and restored before paint |
+| Window scrolling | `scroller={windowScroller}` from `anchorlist/window`, `scrollMargin` for a fixed app bar |
+| Horizontal and right-to-left | `scroller={horizontal()}` from `anchorlist/horizontal`; `horizontal(rtlScroller)` with `anchorlist/rtl` |
 | Load more at either edge | `onStartReached` / `onEndReached` |
 | Jump to an item | `scrollToKey` stays locked on the target while sizes settle |
 | iOS Safari momentum and rubber-band | Corrections deferred through a transform, the fling is not interrupted |
@@ -83,8 +85,9 @@ mounted row.
 | Prepend without scroll jump | Built in, key-based | Key-based with `anchorTo: 'end'` | `firstItemIndex` bookkeeping |
 | Size estimate required | No | Yes | No |
 | Frameworks | React (Vue, Svelte planned) | Many | React |
+| Window scroll, horizontal | Yes (opt-in entries) | Yes | Yes |
 | Sticky items | Yes (`anchorlist/sticky`) | Implemented by the app | Yes |
-| Grid, window scroll | Planned | Yes | Yes |
+| Grid / masonry | Planned | Yes | Yes |
 
 Feature comparisons are based on each library's public documentation. In the
 [chat benchmark](https://saranbalaji1408.github.io/anchorlist/compare/benchmark) (pinned versions,
@@ -105,6 +108,9 @@ Details: [vs TanStack Virtual](https://saranbalaji1408.github.io/anchorlist/comp
   [smooth scroll](https://saranbalaji1408.github.io/anchorlist/guide/smooth-scroll),
   [accessibility](https://saranbalaji1408.github.io/anchorlist/guide/accessibility),
   [server rendering](https://saranbalaji1408.github.io/anchorlist/guide/server-rendering)
+- [Window scroller virtual list](https://saranbalaji1408.github.io/anchorlist/guide/window-scroller)
+- [Horizontal virtual list](https://saranbalaji1408.github.io/anchorlist/guide/horizontal-list) and
+  [RTL virtual list](https://saranbalaji1408.github.io/anchorlist/guide/rtl-virtual-list)
 - [API reference](https://saranbalaji1408.github.io/anchorlist/api/)
 - For AI coding tools: [llms.txt](https://saranbalaji1408.github.io/anchorlist/llms.txt),
   [llms-full.txt](https://saranbalaji1408.github.io/anchorlist/llms-full.txt)
