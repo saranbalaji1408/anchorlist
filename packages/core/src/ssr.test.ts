@@ -25,6 +25,11 @@ describe('initialPlan', () => {
     expect(initialPlan(v, sized)).toMatchObject({ start: 0, end: 3 })
   })
 
+  it('fills the larger side, so horizontal lists fill their width', () => {
+    const o = opts(100, { initialRect: { width: 1000, height: 200 }, estimateSize: () => 100 })
+    expect(initialPlan(createVirtualizer(o, host), o)).toMatchObject({ start: 0, end: 9 })
+  })
+
   it('fills from the end edge for align end, and stops at the list edges', () => {
     const o = opts(100, { align: 'end', initialRect: { width: 300, height: 500 }, estimateSize: () => 100 })
     const v = createVirtualizer(o, host)

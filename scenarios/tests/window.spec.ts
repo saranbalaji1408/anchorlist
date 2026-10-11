@@ -112,6 +112,36 @@ for (const margin of [0, MARGIN]) {
       })
     })
 
+    test('animates the page to an unmounted key and lands below the scroll margin', async ({ d, page }) => {
+      const a = axis(page)
+      await d.mount({ items: makeItems(1000, 'm', rng(60), 40, 160), align: 'start', layout: 'window', scrollMargin: margin })
+      expect(await d.animateToKey('m600', { duration: 300 })).toBe(true)
+      await d.frames(3)
+      expect(Math.abs(await a.start('m600'))).toBeLessThanOrEqual(1)
+    })
+
+    test('keeps a focused row mounted and focused when the page scrolls far away', async ({ d, page }) => {
+      const a = axis(page)
+      await d.mount({ items: makeItems(1000, 'm', rng(61), 40, 160), align: 'start', layout: 'window', scrollMargin: margin })
+      await page.evaluate(() => {
+        const el = document.querySelector<HTMLElement>('#scroller [data-key="m2"]')!.firstElementChild as HTMLElement
+        el.tabIndex = -1
+        el.focus({ preventScroll: true })
+      })
+      for (let i = 0; i < 8; i++) {
+        await a.scrollBy(2000)
+        await d.frames(1)
+      }
+      await d.frames(2)
+      const state = await page.evaluate(() => {
+        const row = document.querySelector<HTMLElement>('#scroller [data-key="m2"]')
+        return { position: row?.style.position, focus: !!row?.contains(document.activeElement) }
+      })
+      expect(state).toEqual({ position: 'absolute', focus: true })
+      // Not checked: its position is off by the list container's offset in the page (a known limit).
+      expect(await a.offset()).toBeGreaterThan(10000)
+    })
+
     test('pins to the bottom of the page and follows appends (align end)', async ({ d, page }) => {
       const a = axis(page)
       const items = makeItems(300, 'm', rng(55), 40, 160)

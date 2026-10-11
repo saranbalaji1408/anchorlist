@@ -1,4 +1,4 @@
-import type { Axis } from './scroller'
+import type { Scroller } from './scroller'
 import type { Key } from './types'
 import type { ScrollToOptions, Virtualizer } from './virtualizer'
 
@@ -8,20 +8,25 @@ export interface AnimateOptions extends ScrollToOptions {
   duration?: number
   /** Maps time (0 to 1) to progress (0 to 1). Default: ease in-out cubic. */
   easing?: (t: number) => number
-  /** Axis properties of the scroll container. Default: vertical. */
-  axis?: Pick<Axis, 'offset' | 'client' | 'scrollSize'>
+  /**
+   * Reads and writes the scroll offset. Default: the vertical scroll offset of
+   * `element`. Pass a scroller for other lists, for example
+   * `windowScroller({ list: element })` for a list that scrolls with the page,
+   * `rtlScroller({ element, list: element })` for a right-to-left one, or
+   * `elementScroller({ element, list: element, axis: HORIZONTAL })`.
+   */
+  scroller?: Pick<Scroller, 'offset' | 'setOffset' | 'viewport' | 'scrollSize'>
   /** Aborting cancels the animation (the promise resolves `false`). */
   signal?: AbortSignal
 }
 
 const ALIGN = { start: 0, center: 0.5, end: 1 }
-const VERTICAL: Pick<Axis, 'offset' | 'client' | 'scrollSize'> = { offset: 'scrollTop', client: 'clientHeight', scrollSize: 'scrollHeight' }
 const easeInOut = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - (2 - 2 * t) ** 3 / 2)
 /** Running animation per scroll container, so a new one replaces it. */
 const running = new WeakMap<object, () => void>()
 
 /**
- * Smoothly scrolls `element` (the list's scroll container) to the item with
+ * Smoothly scrolls the list whose container is `element` to the item with
  * `key`, including items that are not mounted. The target is recomputed from
  * the engine's layout on every frame, so rows measured on the way (which move
  * the target) are absorbed; the last frame hands over to
@@ -42,7 +47,19 @@ export function animateToKey(
   key: Key,
   options: AnimateOptions = {},
 ): Promise<boolean> {
-  const { align = 'start', offset = 0, duration = 400, easing = easeInOut, axis = VERTICAL, signal } = options
+  const {
+    align = 'start',
+    offset = 0,
+    duration = 400,
+    easing = easeInOut,
+    scroller: sc = {
+      offset: () => element.scrollTop,
+      setOffset: (v) => void (element.scrollTop = v),
+      viewport: () => element.clientHeight,
+      scrollSize: () => element.scrollHeight,
+    },
+    signal,
+  } = options
   const land = (): boolean => v.scrollToKey(key, { align, offset })
   running.get(element)?.()
   return new Promise((resolve) => {
@@ -68,12 +85,12 @@ export function animateToKey(
       // A removed key or an unmounted list (detached container) ends it unlanded.
       if (!r || !element.isConnected) return finish(false)
       if (t >= 1) return finish(land())
-      const viewport = element[axis.client]
-      const target = Math.min(Math.max(r.start + offset + (r.size - viewport) * ALIGN[align], 0), element[axis.scrollSize] - viewport)
+      const viewport = sc.viewport()
+      const target = Math.min(Math.max(r.start + offset + (r.size - viewport) * ALIGN[align], 0), sc.scrollSize() - viewport)
       const e = easing(t)
       // Cover the eased share of what remains, so a moving target is still met at t = 1.
-      const from = element[axis.offset]
-      element[axis.offset] = from + ((target - from) * (e - done)) / (1 - done || 1)
+      const from = sc.offset()
+      sc.setOffset(from + ((target - from) * (e - done)) / (1 - done || 1))
       done = e
       id = requestAnimationFrame(frame)
     }

@@ -1,4 +1,4 @@
-import { AnchorList, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
+import { AnchorList, elementScroller, HORIZONTAL, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
 import { animateToKey } from 'anchorlist/animate'
 import { horizontal as horizontalLayout } from 'anchorlist/horizontal'
 import { rtlScroller } from 'anchorlist/rtl'
@@ -27,6 +27,8 @@ let renders: Record<string, number> = {}
 let withoutScroller: string[] = []
 /** Rows run along the horizontal axis: item heights are widths. Set on mount. */
 let horizontal = false
+/** The mounted config, for helpers that need the layout (animateToKey's scroller). */
+let mounted: MountConfig = { items: [] }
 
 function Bubble({ item }: { item: Item }): ReactNode {
   const read = (): number | undefined => heights.get(item.id) ?? item.height
@@ -201,6 +203,7 @@ export function installDriver(container: HTMLElement): void {
     interned.clear()
     const init: ListState = { ...DEFAULTS, ...config, items: intern(config.items) }
     horizontal = config.layout === 'horizontal' || config.layout === 'rtl'
+    mounted = config
     const app = <App init={init} config={config} bridge={bridge} list={list} />
     return config.strict ? <StrictMode>{app}</StrictMode> : app
   }
@@ -249,7 +252,20 @@ export function installDriver(container: HTMLElement): void {
     rendersWithoutScroller: () => [...withoutScroller],
     frameworkVersion: () => version,
     lastUpdateMs: () => lastUpdateMs,
-    animateToKey: (key, o) => animateToKey(handle(), handle().element, key, o),
+    animateToKey(key, o) {
+      const element = handle().element
+      const layout = mounted.layout
+      // The scroller animateToKey reads and writes the offset through, per layout.
+      const scroller =
+        layout === 'window'
+          ? windowScroller({ list: element, scrollMargin: mounted.scrollMargin ?? 0 })
+          : layout === 'rtl'
+            ? rtlScroller({ element, list: element })
+            : layout === 'horizontal'
+              ? elementScroller({ element, list: element, axis: HORIZONTAL })
+              : undefined
+      return animateToKey(handle(), element, key, { ...o, ...(scroller && { scroller }) })
+    },
     takeSnapshot() {
       const items = current
       return takeSnapshot(handle(), (i) => items[i]!.id, items.length)

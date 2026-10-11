@@ -102,6 +102,39 @@ for (const layout of ['horizontal', 'rtl'] as Layout[]) {
       })
     })
 
+    test('animates to an unmounted key and lands at the start', async ({ d, page }) => {
+      const a = axis(page)
+      await d.mount({ items: makeItems(400, 'm', rng(48), 40, 200), align: 'start', layout, width: WIDTH, height: HEIGHT })
+      expect(await d.animateToKey('m250', { duration: 300 })).toBe(true)
+      await d.frames(3)
+      expect(Math.abs(await a.start('m250'))).toBeLessThanOrEqual(1)
+      expect(await a.offset()).toBeGreaterThan(5000)
+    })
+
+    test('keeps a focused row mounted at its own position when it scrolls far away', async ({ d, page }) => {
+      const a = axis(page)
+      await d.mount({ items: makeItems(400, 'm', rng(49), 40, 200), align: 'start', layout, width: WIDTH, height: HEIGHT })
+      await page.evaluate(() => {
+        const el = document.querySelector<HTMLElement>('#scroller [data-key="m2"]')!.firstElementChild as HTMLElement
+        el.tabIndex = -1
+        el.focus({ preventScroll: true })
+      })
+      for (let i = 0; i < 8; i++) {
+        await a.scrollBy(2000)
+        await d.frames(1)
+      }
+      await d.frames(2)
+      const state = await page.evaluate(() => {
+        const row = document.querySelector<HTMLElement>('#scroller [data-key="m2"]')
+        return { position: row?.style.position, focus: !!row?.contains(document.activeElement) }
+      })
+      expect(state).toEqual({ position: 'absolute', focus: true })
+      // At its own place in the scroll content: its rect minus the scroll offset.
+      const rect = (await d.getItemRect('m2'))!
+      expect(Math.abs((await a.start('m2')) - (rect.start - (await a.offset())))).toBeLessThanOrEqual(1)
+      expect(Math.abs((await a.end('m2')) - (await a.start('m2')) - rect.size)).toBeLessThanOrEqual(1)
+    })
+
     test('scrolls to a key at the start and at the end', async ({ d, page }) => {
       const a = axis(page)
       await d.mount({ items: makeItems(300, 'm', rng(46), 40, 200), align: 'start', layout, width: WIDTH, height: HEIGHT })

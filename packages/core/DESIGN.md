@@ -305,12 +305,12 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | --- | --- | --- |
 | `{ createVirtualizer, elementScroller }` | 4498 B | 4500 B |
 | main entry, everything (`*`) | 5673 B | 6500 B |
-| React chat path (core + react) | 5626 B | 5800 B |
+| React chat path (core + react) | 5666 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
-| `@anchorlist/core/animate` | 742 B | 800 B |
+| `@anchorlist/core/animate` | 758 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
-| `@anchorlist/core/ssr` | 368 B | 400 B |
-| `@anchorlist/core/window` (shared scroller chunk external) | 360 B | 600 B |
+| `@anchorlist/core/ssr` | 379 B | 400 B |
+| `@anchorlist/core/window` (shared scroller chunk external) | 379 B | 600 B |
 | `@anchorlist/core/rtl` (shared scroller chunk external) | 567 B | 600 B |
 | `@anchorlist/react/horizontal` (react and core external) | 189 B | 300 B |
 
@@ -363,5 +363,10 @@ Size-driven choices:
   list's estimated size puts at the viewport, so that content is not held. `align: 'end'` still
   pins to the end edge.
 - **RTL direction changes** are not observed: the direction is read when `rtlScroller` is created.
-- **Integration of v0.2 helpers with v0.3 scrollers** is described in the sections above.
+- **v0.2 helpers with v0.3 scrollers.** `animateToKey` takes a `scroller` (window, RTL and
+  horizontal work); `initialPlan` fills the larger side of `initialRect`; the kept focused row uses
+  `inset-inline-start` on horizontal lists (LTR and RTL). Not yet: the kept row's position under
+  `windowScroller` (it is offset by the container's page position; it stays mounted and focused),
+  and `StickyItem` / `stickyState` on horizontal, RTL and window lists (the React sticky entry has
+  6 B of budget left).
 - **Not yet:** lanes.

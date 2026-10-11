@@ -90,6 +90,23 @@ describe('animateToKey', () => {
     })
   }
 
+  it('scrolls through a given scroller instead of the element (window, right-to-left, horizontal)', async () => {
+    const h = mount({ keys: keysOf(3000), size, viewport: VIEWPORT })
+    await h.settle()
+    const key = h.keys[1500]!
+    // The element only receives input listeners; offsets go through the scroller.
+    const el = element(h)
+    Object.defineProperty(el, 'scrollTop', {
+      get: () => {
+        throw new Error('element offset read')
+      },
+    })
+    const done = animateToKey(h.v, el, key, { duration: 200, scroller: h.sim })
+    await run(h)
+    await expect(done).resolves.toBe(true)
+    expect(Math.abs(h.visualStart(key)!)).toBeLessThanOrEqual(0.5)
+  })
+
   it('animates upwards and applies the offset option', async () => {
     const h = mount({ keys: keysOf(3000), size, viewport: VIEWPORT, options: { align: 'end' } })
     await h.settle()

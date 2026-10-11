@@ -145,7 +145,13 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
   // The focused row stays mounted outside the range, out of flow, in the same
   // keyed array as the rows so that React never re-creates it (see keptRow).
   const kept = keptRow(v, plan, focused.current)
-  if (kept) rows[kept.index < plan.start ? 'unshift' : 'push'](row(kept.index, { position: 'absolute', width: '100%', top: kept.start }))
+  // A horizontal list (`horizontal()` lays the rows out in a row) keeps it at its inline start, which
+  // is the left edge, or the right edge in a right-to-left scroll container: content space either way.
+  const x = list.current?.style.flexDirection == 'row'
+  if (kept)
+    rows[kept.index < plan.start ? 'unshift' : 'push'](
+      row(kept.index, x ? { position: 'absolute', height: '100%', insetInlineStart: kept.start } : { position: 'absolute', width: '100%', top: kept.start }),
+    )
   return (
     <div
       {...props.scrollerProps}
