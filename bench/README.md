@@ -66,8 +66,8 @@ and gzipped bytes of the import each configuration uses (`{ AnchorList }`, `{ us
 For every browser, scenario and library, `median` is the median of each metric over the runs,
 `worst` is the maximum, and `runs` holds the raw values. `versions.anchorlist` is the commit the
 packages were built from, marked when the working tree had uncommitted package changes; publish
-numbers only from a clean tree. The machine's CPU is recorded: timings are only comparable within
-one results file.
+numbers only from a clean tree. The machine's CPU and its load averages before and after the run are recorded: timings are only
+comparable within one results file, and only meaningful when the load stayed low.
 
 ## Limits
 

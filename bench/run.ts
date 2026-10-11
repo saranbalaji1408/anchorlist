@@ -10,7 +10,7 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
-import { cpus } from 'node:os'
+import { cpus, loadavg } from 'node:os'
 import { extname, join } from 'node:path'
 import { chromium, firefox, webkit, type Browser, type Page } from '@playwright/test'
 import type { Bench } from './src/main.tsx'
@@ -231,6 +231,8 @@ const versions = (): Record<string, string> => {
   }
 }
 
+/** 1, 5 and 15 minute load averages: timings are only meaningful on a quiet machine. */
+const startLoad = loadavg()
 const results: Record<string, unknown> = {}
 for (const name of BROWSERS) {
   const browser = await ENGINES[name].launch()
@@ -264,7 +266,7 @@ const sizes = JSON.parse(execFileSync(join(ROOT, 'node_modules/.bin/size-limit')
 mkdirSync(join(ROOT, 'results'), { recursive: true })
 const out = {
   date: new Date().toISOString(),
-  machine: { cpu: cpus()[0]?.model, cores: cpus().length, platform: process.platform },
+  machine: { cpu: cpus()[0]?.model, cores: cpus().length, platform: process.platform, loadBefore: startLoad, loadAfter: loadavg() },
   runs: RUNS,
   items: COUNT,
   versions: versions(),
