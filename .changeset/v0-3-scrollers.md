@@ -11,3 +11,4 @@ Any scroller, any axis: window scrolling, horizontal lists and right-to-left.
 - Both are subpath entries that reuse `elementScroller`, so the list entry does not grow.
 - `@anchorlist/react`: `AnchorList` accepts a `scroller` factory (for example `windowScroller`), also the third argument of `useAnchorList`. `@anchorlist/react/horizontal` adds `horizontal(base?)`, a factory that lays the list out horizontally (`scroller={horizontal()}`, or `horizontal(rtlScroller)` for right-to-left), so the default list stays as small as before.
 - `anchorlist` re-exports the new entries as `anchorlist/window`, `anchorlist/rtl` and `anchorlist/horizontal`.
+- `animateToKey` (`@anchorlist/core/animate`) takes a `scroller` option instead of `axis`, so it works with window, horizontal and right-to-left lists; `initialPlan` fills the larger side of `initialRect`; a kept focused row is placed correctly in horizontal and right-to-left lists.
