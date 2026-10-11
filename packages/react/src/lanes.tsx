@@ -23,22 +23,20 @@ function Sync({ lanes, options }: { lanes: Lanes; options: VirtualizerOptions })
 function LanesListImpl<T>(props: LanesListProps<T>, ref: ForwardedRef<AnchorListHandle>): ReactElement {
   const { lanes, items, getKey, scroller = elementScroller } = props
   const options: VirtualizerOptions = { ...props, count: items.length, getKey: (i) => getKey(items[i]!) }
-  const converted = lanes.options(options)
   return (
     <>
       <Sync lanes={lanes} options={options} />
       <AnchorList<T>
         ref={ref}
         {...props}
-        gap={0}
-        paddingStart={0}
-        paddingEnd={0}
-        estimateSize={converted.estimateSize!}
-        // AnchorList leaves overflow to a custom scroller; the default one scrolls the container.
-        style={props.scroller ? props.style : { overflowY: 'auto', ...props.style }}
+        // The lanes' estimates, and no gap or padding.
+        {...lanes.options(options)}
+        getKey={getKey}
         scroller={(e) => {
           // Items are positioned absolutely inside the list.
           e.list.style.position = 'relative'
+          // AnchorList leaves overflow to a custom scroller: the default one scrolls the container.
+          if (!props.scroller) e.element.style.overflowY = 'auto'
           return lanes.scroller(scroller(e))
         }}
       />
