@@ -175,6 +175,7 @@ export function installDriver(container: HTMLElement): void {
     return config.strict ? <StrictMode>{app}</StrictMode> : app
   }
   let server: ReactNode = null
+  let lastUpdateMs = 0
 
   const driver: Driver = {
     ...dom,
@@ -192,7 +193,12 @@ export function installDriver(container: HTMLElement): void {
     async update(patch, mode = 'sync') {
       if (patch.items) patch = { ...patch, items: intern(patch.items) }
       const apply = (s: ListState): ListState => ({ ...s, ...patch })
-      if (mode === 'sync') return flushSync(() => bridge.set(apply))
+      if (mode === 'sync') {
+        const t = performance.now()
+        flushSync(() => bridge.set(apply))
+        lastUpdateMs = performance.now() - t
+        return
+      }
       const done = new Promise<void>((r) => waiters.push(r))
       startTransition(() => bridge.set(apply))
       await done
@@ -212,6 +218,7 @@ export function installDriver(container: HTMLElement): void {
     renders: () => ({ ...renders }),
     rendersWithoutScroller: () => [...withoutScroller],
     frameworkVersion: () => version,
+    lastUpdateMs: () => lastUpdateMs,
     animateToKey: (key, o) => animateToKey(handle(), handle().element, key, o),
     takeSnapshot() {
       const items = current

@@ -3,7 +3,8 @@ import { expect, still, test } from '../src/harness'
 /**
  * 100k items through the framework adapter, timed in the page (framework
  * render + engine; the engine alone is benchmarked in packages/core). The
- * budgets are loose: they catch O(n) regressions, not small slowdowns.
+ * update budgets are relative to a 10k list in the same page, so they catch
+ * O(n) regressions rather than machine load.
  */
 const N = 100_000
 
@@ -21,46 +22,61 @@ test.describe('100k items', () => {
     })
     await page.reload()
     await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
-    const mountMs = await page.evaluate(async (n) => {
-      const items = Array.from({ length: n }, (_, i) => ({ id: `m${i}`, height: 30 + (i % 9) * 10 }))
-      const t = performance.now()
-      await window.__driver.mount({ items })
-      return performance.now() - t
-    }, N)
-    expect(mountMs).toBeLessThan(2000)
-    expect((await d.mountedKeys()).length).toBeLessThan(80)
-
-    // 50-item prepends while anchored (sync updates, each committed before it returns).
-    const anchor = await d.rowAt(300)
-    let prepends: number[] = []
-    await still(d, [`top:${anchor}`], async () => {
-      prepends = await page.evaluate(async (n) => {
-        const base = Array.from({ length: n }, (_, i) => ({ id: `m${i}`, height: 30 + (i % 9) * 10 }))
-        let list = base
+    /** Mounts `n` items. Returns the time to the mounted list, in ms. */
+    const mount = (n: number): Promise<number> =>
+      page.evaluate(async (n) => {
+        const items = Array.from({ length: n }, (_, i) => ({ id: `m${i}`, height: 30 + (i % 9) * 10 }))
+        const t = performance.now()
+        await window.__driver.mount({ items })
+        return performance.now() - t
+      }, n)
+    /** 20 50-item prepends while anchored (sync updates, each committed before it returns). Returns their times. */
+    const prepend = (n: number): Promise<number[]> =>
+      page.evaluate(async (n) => {
+        let list = Array.from({ length: n }, (_, i) => ({ id: `m${i}`, height: 30 + (i % 9) * 10 }))
         const times: number[] = []
         for (let r = 0; r < 20; r++) {
           list = [...Array.from({ length: 50 }, (_, i) => ({ id: `p${r}-${i}`, height: 40 })), ...list]
           const t = performance.now()
           await window.__driver.update({ items: list })
-          times.push(performance.now() - t)
+          // The render and commit only: the fixture's own O(n) item preparation is not the library's.
+          times.push(window.__driver.lastUpdateMs?.() ?? performance.now() - t)
           await new Promise((res) => requestAnimationFrame(res))
         }
         return times
-      }, N)
-    })
-    expect(median(prepends)).toBeLessThan(30)
+      }, n)
+    /** 100 streaming updates: the newest item grows, as a token stream would. Returns their times. */
+    const stream = (n: number): Promise<number[]> =>
+      page.evaluate(async (n) => {
+        const times: number[] = []
+        for (let i = 0; i < 100; i++) {
+          const t = performance.now()
+          window.__driver.setItemHeight(`m${n - 1}`, 100 + i)
+          times.push(performance.now() - t)
+        }
+        return times
+      }, n)
 
-    // Streaming: the newest item grows, as a token stream would.
-    const stream = await page.evaluate(async (n) => {
-      const times: number[] = []
-      for (let i = 0; i < 100; i++) {
-        const t = performance.now()
-        window.__driver.setItemHeight(`m${n - 1}`, 100 + i)
-        times.push(performance.now() - t)
-      }
-      return times
-    }, N)
-    expect(median(stream)).toBeLessThan(5)
+    // Absolute times depend on machine load, so updates are budgeted against the same work on a
+    // 10k list in the same page: costs that grow with the list (O(n) per update) show up as ~10x.
+    await mount(N / 10)
+    const small = { prepend: median(await prepend(N / 10)), stream: median(await stream(N / 10)) }
+
+    const mountMs = await mount(N)
+    expect(mountMs).toBeLessThan(2000)
+    expect((await d.mountedKeys()).length).toBeLessThan(80)
+    const anchor = await d.rowAt(300)
+    let prepends: number[] = []
+    await still(d, [`top:${anchor}`], async () => {
+      prepends = await prepend(N)
+    })
+    const large = { prepend: median(prepends), stream: median(await stream(N)) }
+    test.info().annotations.push({ type: 'perf', description: JSON.stringify({ mountMs, small, large }) })
+    // At most 3x the 10k cost (plus 2 ms for timer resolution), and a sanity ceiling.
+    expect(large.prepend).toBeLessThan(3 * small.prepend + 2)
+    expect(large.stream).toBeLessThan(3 * small.stream + 2)
+    expect(large.prepend).toBeLessThan(200)
+    expect(large.stream).toBeLessThan(50)
 
     // Heap over 100 prepend + trim cycles at a constant count (Chromium exposes the heap).
     if (browserName !== 'chromium') return

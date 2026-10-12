@@ -124,6 +124,12 @@ export interface Driver extends Dom {
   serverRender(config: MountConfig): Promise<string[]>
   /** Hydrates the server-rendered list with the same config. Resolves after 2 frames. */
   hydrate(): Promise<void>
+  /**
+   * Duration in ms of the framework render and commit (engine work included) of the last sync
+   * `update`, excluding the fixture's own preparation of the items. Optional: perf budgets fall
+   * back to timing `update` as a whole.
+   */
+  lastUpdateMs?(): number
 }
 
 declare global {
