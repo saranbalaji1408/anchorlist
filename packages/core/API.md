@@ -359,7 +359,8 @@ function snapshotEstimate(snapshot, getKey: (index) => Key, estimateSize?): ((in
 
 - validates every key against `getKey` (O(n)) and rebuilds on a mismatch. Edge diffs only see the
   edges, and the rendered range is validated on every commit.
-- refreshes size estimates when the measured average drifts by more than 10%.
+- refreshes size estimates when the measured average drifts by more than 10%. The new estimate is
+  rounded to whole pixels, so lists of whole-pixel rows stay on whole pixels.
 
 At 100k items this takes about 5–9 ms. See DESIGN.md.
 

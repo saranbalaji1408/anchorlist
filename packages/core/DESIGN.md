@@ -178,7 +178,11 @@ The cache maps key → measured size and keeps the running sum for the average.
 - **A cross-axis resize** marks every entry stale. Mounted rows are re-measured in the same callback.
   Unmounted entries remain usable as estimates and report `measured: false`.
 - **Estimates** are the `estimateSize` option, or 48. When the measured average drifts by more than
-  10%, idle work rebuilds the index with it (O(n)).
+  10%, idle work rebuilds the index with it, rounded to whole pixels (O(n)). A fractional average
+  would put every estimated row, and so every prepend and the content end, on fractions of a pixel.
+  Whole-pixel offsets can follow those only to within 1 px, so a list of whole-pixel rows drifted by
+  up to 0.6 px per prepend and pinned up to 0.6 px short of its end (seen in Firefox scenarios).
+  Rounded, such a list stays on whole pixels and its corrections are exact.
 
 ## plan() and commit()
 
@@ -276,15 +280,15 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 
 | Entry | Size | Budget |
 | --- | --- | --- |
-| `{ createVirtualizer, elementScroller }` | 4497 B | 4500 B |
-| main entry, everything (`*`) | 5674 B | 6500 B |
-| React chat path (core + react) | 5626 B | 5800 B |
+| `{ createVirtualizer, elementScroller }` | 4496 B | 4500 B |
+| main entry, everything (`*`) | 5671 B | 6500 B |
+| React chat path (core + react) | 5625 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
 | `@anchorlist/core/animate` | 742 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
 | `@anchorlist/core/ssr` | 368 B | 400 B |
 
-The list entry has 3 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
+The list entry has 4 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
 features therefore live outside `createVirtualizer`: adapter helpers in the main entry
 (`keptRow`, tree-shaken from the list entry) and opt-in entries (`/sticky`, `/animate`,
 `/snapshot`, `/ssr`) that import nothing at runtime, so the build shares no chunk with the main

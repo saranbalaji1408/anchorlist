@@ -436,6 +436,40 @@ describe('whole-pixel offsets', () => {
   }
 })
 
+describe('learned estimate', () => {
+  for (const quantize of ['round', 'trunc'] as const) {
+    it(`is whole pixels, so whole-pixel rows never move under prepends or pin short of the edge (${quantize})`, async () => {
+      // Whole-pixel rows whose average is fractional (233.4...): a fractional
+      // estimate put the estimated rows, and every prepend, on fractions of a
+      // pixel, so the anchor moved up to 0.6 px per prepend.
+      const size = (k: Key): number => 20 + ((Number(String(k).replace(/\D/g, '')) * 37) % 381)
+      const h = mount({ keys: keysOf(80, 'm'), size, viewport: 600, quantize, options: { align: 'end', hasMoreStart: true } })
+      await h.settle()
+      h.sim.userScroll(h.sim.offset() - 2500)
+      await h.settle()
+      h.sim.advance(400) // idle: the estimate becomes the measured average
+      await h.settle()
+      const unmeasured = h.keys.find((k) => !h.v.getItemRect(k)!.measured)!
+      expect(Number.isInteger(h.v.getItemRect(unmeasured)!.size)).toBe(true)
+      const anchor = h.v.getSnapshot().key!
+      const at = h.visualEnd(anchor)!
+      for (let i = 0; i < 6; i++) {
+        h.setKeys([...keysOf(15, `t${i}-`), ...h.keys])
+        await h.settle()
+        expect(h.visualEnd(anchor), `prepend ${i}`).toBe(at)
+        h.sim.advance(400)
+        await h.settle()
+      }
+      // Clear and refill: pinned exactly at the end.
+      h.setKeys([])
+      await h.settle()
+      h.setKeys(keysOf(100, 'r'))
+      await h.settle()
+      expect(h.visualEnd('r99')).toBe(600)
+    })
+  }
+})
+
 describe('clear and replace', () => {
   it('starts over at the align edge after a clear while scrolled up', async () => {
     const h = mount({ keys: keysOf(100), size: () => 50, viewport: 400, options: { align: 'end' } })

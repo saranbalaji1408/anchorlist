@@ -645,7 +645,10 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
         if (dirty) rebuild(o)
         const avg = cache.average()
         if (!o.estimateSize && avg && Math.abs(avg - estimate) > estimate / 10) {
-          estimate = avg
+          // Whole pixels: a fractional estimate would put every estimated row,
+          // and so the content, on fractions of a pixel, which whole-pixel
+          // offsets can only follow to within 1 px.
+          estimate = Math.round(avg)
           // Unmeasured items take the new estimate (O(n)).
           idx.reset(idx.count, sizeFor(o))
           dirty = true
@@ -683,8 +686,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       }
       return cycle(scroll)
     }
-    // touchstart, touchend or touchcancel.
-    if (type.startsWith('touch') && !(touching = type === 'touchstart')) return scheduleIdle()
+    // touchstart, touchend or touchcancel: the only event names starting with `t`.
+    if (type[0] == 't' && !(touching = type === 'touchstart')) return scheduleIdle()
     // Any other event is direct input: it cancels a scrollToKey lock.
     if (mode.t === 2) recapture()
   }
