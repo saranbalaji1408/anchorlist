@@ -98,7 +98,7 @@ an item **key**. A frame goes like this:
 | --- | --- | --- | --- |
 | `count` | `number` | required | Item count. |
 | `getKey` | `(index) => Key` | required | Unique, stable key (`string \| number`). Must describe the list at the time `plan()` was called, so use immutable snapshots. Duplicate keys are not supported: they disable lazy key validation until the list changes, so the list costs one O(n) rebuild per change. |
-| `estimateSize` | `(index) => number` | 48, then the measured average | Used for unmeasured items. Without it, estimates are refreshed at idle when the average drifts by more than 10%. |
+| `estimateSize` | `(index) => number` | 48, then the measured average | Used for unmeasured items. Without it, estimates are refreshed at idle when the average drifts by more than 10%; the learned estimate is rounded to whole pixels. |
 | `align` | `'start' \| 'end'` | `'start'` | Pinned edge. `'end'` for chat, `'start'` for feeds. Creation only. |
 | `overscan` | `number` (px) | 400 | Rendered beyond each side of the viewport. |
 | `gap` | `number` (px) | 0 | Between items. The DOM must use the same gap. |

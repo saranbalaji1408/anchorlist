@@ -13,8 +13,8 @@ corrected before paint, without visible movement.
 ## No estimate needed
 
 `estimateSize` is optional. Without it, unmeasured rows start at 48 px, and once rows have been
-measured, the measured average is used. The estimate is refreshed at idle whenever the average
-drifts by more than 10%.
+measured, the measured average is used, rounded to whole pixels. The estimate is refreshed at idle
+whenever the average drifts by more than 10%.
 
 ```tsx
 // Module scope keeps the function stable, so mounted rows don't re-render.
