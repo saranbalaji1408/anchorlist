@@ -43,7 +43,7 @@ const renderMessage = (m) => <Message message={m} /> // stable: module scope or 
 - **Any scroller, any axis:** a list can scroll with the page (`anchorlist/window`), horizontally
   (`anchorlist/horizontal`) or right-to-left (`anchorlist/rtl`). These are opt-in entries, so a
   plain list does not pay for them.
-- **Small:** hard gzip budgets enforced in CI. The React chat path (core + react) must stay at or below 5.8 kB and is currently 5.67 kB.
+- **Small:** hard gzip budgets enforced in CI. The React chat path (core + react) must stay at or below 5.8 kB and is currently 5.66 kB.
 
 ## Packages
 

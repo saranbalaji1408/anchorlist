@@ -303,9 +303,9 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 
 | Entry | Size | Budget |
 | --- | --- | --- |
-| `{ createVirtualizer, elementScroller }` | 4498 B | 4500 B |
-| main entry, everything (`*`) | 5673 B | 6500 B |
-| React chat path (core + react) | 5666 B | 5800 B |
+| `{ createVirtualizer, elementScroller }` | 4496 B | 4500 B |
+| main entry, everything (`*`) | 5670 B | 6500 B |
+| React chat path (core + react) | 5663 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
 | `@anchorlist/core/animate` | 758 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
@@ -314,7 +314,7 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | `@anchorlist/core/rtl` (shared scroller chunk external) | 567 B | 600 B |
 | `@anchorlist/react/horizontal` (react and core external) | 189 B | 300 B |
 
-The list entry has 2 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
+The list entry has 4 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
 features therefore live outside `createVirtualizer`: adapter helpers in the main entry
 (`keptRow`, tree-shaken from the list entry) and opt-in entries (`/sticky`, `/animate`,
 `/snapshot`, `/ssr`) that import nothing at runtime, so the build shares no chunk with the main
