@@ -25,8 +25,9 @@ deleted, the messages after it stay still (or, if none survive, the ones before 
 conversation is replaced, for example when switching chats, the list starts over at the bottom.
 
 Browsers store scroll offsets in whole pixels at DPR 1, so most corrections can't be exact.
-At DPR 1, each painted change moves content by at most 0.5 px (at most 1 px only when the error was
-already above 0.5 px), and content is never more than 1 px from its intended position. Errors don't
+At DPR 1, each painted change moves content by at most 0.5 px when rows have whole-pixel heights.
+With fractional heights it is at most 0.5 px too, except at most 1 px once the error has already
+passed 0.5 px. Content is never more than 1 px from its intended position. Errors don't
 build up. This holds both on engines that round offsets (Chromium, Firefox) and on engines that
 truncate them (WebKit). With sub-pixel offsets (DPR 2 and above) the steps halve.
 

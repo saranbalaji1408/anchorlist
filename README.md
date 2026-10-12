@@ -31,8 +31,9 @@ const renderMessage = (m) => <Message message={m} /> // stable: module scope or 
 ## Why anchorlist
 
 - **Stable scroll anchoring:** prepend history, append messages, remove items and resize rows
-  without the viewport jumping. At DPR 1 each painted change moves content by at most 0.5 px and
-  content is never more than 1 px from its intended position, checked by a seeded fuzz test.
+  without the viewport jumping. At DPR 1 each painted change moves content by at most 0.5 px for whole-pixel rows (at most 1 px
+  with fractional heights once the error has passed 0.5 px), and content is never more than 1 px
+  from its intended position, checked by a seeded fuzz test.
 - **Chat and feeds from one option:** `align: 'end'` stays pinned to the newest item, and
   `'start'` serves top-anchored feeds.
 - **Dynamic heights:** rows are measured as they render, so no fixed row height or estimate is
