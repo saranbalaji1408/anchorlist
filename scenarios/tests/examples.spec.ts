@@ -43,12 +43,20 @@ test.describe('README examples', () => {
     expect(await p.distanceToEnd()).toBeLessThanOrEqual(1)
 
     // Scroll to the top: an older page is prepended and the row being read stays put.
-    await p.setScrollTop(0)
-    // Wait for the scroll to render the top rows (the fake page load takes 300 ms).
-    await expect.poll(async () => (await p.rowAt(200))?.top ?? Infinity).toBeLessThan(500)
-    const read = (await p.rowAt(200))!
-    const height = await p.scrollHeight()
-    await expect.poll(p.scrollHeight).toBeGreaterThan(height)
+    // Scroll and read the row in one step in the page, two frames later: well before the fake
+    // page load lands (300 ms). Polling from the test could read it after the prepend, and then
+    // neither the prepend nor the position check would be observed.
+    const read = await page.locator('#scroller').evaluate(async (el) => {
+      el.scrollTop = 0
+      for (let i = 0; i < 2; i++) await new Promise((r) => requestAnimationFrame(r))
+      const t = el.getBoundingClientRect().top + 200
+      const row = Array.from(el.querySelectorAll<HTMLElement>('[data-key]')).find((r) => r.getBoundingClientRect().bottom > t)!
+      return { key: row.dataset.key!, top: row.getBoundingClientRect().top, index: Number(row.dataset.index), origin: el.getBoundingClientRect().top }
+    })
+    expect(read.top - read.origin).toBeLessThan(500)
+    // The older page (20 messages) lands above it: its index moves by 20, its position does not.
+    const indexOf = (key: string): Promise<number> => page.locator(`#scroller [data-key="${key}"]`).evaluate((el) => Number((el as HTMLElement).dataset.index))
+    await expect.poll(() => indexOf(read.key)).toBe(read.index + 20)
     await page.waitForTimeout(50)
     expect(Math.abs((await p.topOf(read.key)) - read.top)).toBeLessThanOrEqual(TEXT_TOLERANCE)
 
