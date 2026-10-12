@@ -140,6 +140,32 @@ for (const kind of ['grid', 'masonry'] as Kind[]) {
       })
     })
 
+    test('keeps a focused item mounted at its lane position when it scrolls far away', async ({ d, page }) => {
+      const items = makeItems(600, 'm', rng(66), 40, 200)
+      await mount(d, items)
+      await page.evaluate(() => {
+        const el = document.querySelector<HTMLElement>('#scroller [data-key="m4"]')!.firstElementChild as HTMLElement
+        el.tabIndex = -1
+        el.focus({ preventScroll: true })
+      })
+      for (let i = 0; i < 10; i++) {
+        await axis(page).scrollBy(1500)
+        await d.frames(1)
+      }
+      await d.frames(2)
+      const state = await page.evaluate(() => {
+        const row = document.querySelector<HTMLElement>('#scroller [data-key="m4"]')
+        return { position: row?.style.position, focus: !!row?.contains(document.activeElement) }
+      })
+      expect(state).toEqual({ position: 'absolute', focus: true })
+      // Still at its place in the lanes, which every item before it (measured on mount) fixes.
+      const cell = (await cells(page)).find((c) => c.key === 'm4')!
+      const ref = layout(kind, items).get('m4')!
+      expect(Math.abs(cell.start - ref.start)).toBeLessThanOrEqual(TOLERANCE)
+      expect(cell.lane).toBe(ref.lane)
+      expect(cell.bottom).toBeLessThan(0)
+    })
+
     test('scrolls to a key and pins to the end (align end)', async ({ d, page }) => {
       const a = axis(page)
       const items = makeItems(300, 'm', rng(64), 40, 200)
