@@ -261,10 +261,13 @@ has no room). The seam is the `Scroller`: `lanes.scroller()` wraps it.
 - **Writing positions.** `setIndex` (in `commit()`, before measuring) and `setSpacers` (each pass,
   after measuring and before the anchor is restored) write `position`, the main-axis start, the
   cross offset and the cross size of every mounted item. The list's size goes into the
-  after-spacer: layout extent through the last mounted item plus the engine's after-spacer.
+  after-spacer: layout extent through the end of the longest run of consecutive mounted indices
+  (an item kept mounted for focus is a single index apart and the engine's after-spacer already
+  counts it) plus the engine's after-spacer.
 - **Rows.** `range()` widens a grid plan to whole rows, so a row's first item and its siblings
   are mounted together. Extra mounted items outside the plan are measured and positioned like the
-  others.
+  others. React's `LanesList` passes `range` to `AnchorList` as an internal `mapRange` prop
+  (about 20 B in `@anchorlist/react`).
 - **Limits.** Prepends that are not whole rows (grid) or any earlier change (masonry) re-lay out
   later items, which may change lanes; only the anchor's main-axis position is held. Jumps over
   unmeasured items use estimates for everything before the viewport. Engine padding is not
