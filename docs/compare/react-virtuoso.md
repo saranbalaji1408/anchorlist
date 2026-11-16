@@ -23,7 +23,7 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | | anchorlist v0.2 | react-virtuoso |
 | --- | --- | --- |
 | Model | Framework-agnostic core and a thin React component | React components |
-| Frameworks | React (Vue and Svelte planned) | React |
+| Frameworks | React and Vue (Svelte planned) | React |
 | Dynamic heights | Measured from the DOM; estimate optional | Measured automatically |
 | Chat (start at the bottom) | `align: 'end'` | `initialTopMostItemIndex` / `alignToBottom` |
 | Follow new messages | `follow` (boolean or pure function) | `followOutput` |

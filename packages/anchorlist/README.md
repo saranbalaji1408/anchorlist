@@ -6,7 +6,7 @@ jumping. It also handles infinite feeds and dynamic item heights. Pin a list to 
 or to its start for a feed, with any mix of row sizes. No row height or size estimate is needed.
 
 - Docs: https://saranbalaji1408.github.io/anchorlist/
-- Vue and Svelte bindings are planned. The engine (`@anchorlist/core`) is framework-agnostic.
+- Vue 3: [`@anchorlist/vue`](https://www.npmjs.com/package/@anchorlist/vue). Svelte bindings are planned. The engine (`@anchorlist/core`) is framework-agnostic.
 
 ## Install
 
@@ -85,7 +85,7 @@ mounted row.
 | Chat / end-pinned list | Built in | `anchorTo: 'end'` | Built in |
 | Prepend without scroll jump | Built in, key-based | Key-based with `anchorTo: 'end'` | `firstItemIndex` bookkeeping |
 | Size estimate required | No | Yes | No |
-| Frameworks | React (Vue, Svelte planned) | Many | React |
+| Frameworks | React, Vue (Svelte planned) | Many | React |
 | Window scroll, horizontal | Yes (opt-in entries) | Yes | Yes |
 | Sticky items | Yes (`anchorlist/sticky`) | Implemented by the app | Yes |
 | Grid / masonry | Yes (`anchorlist/lanes`) | Yes | Yes |
