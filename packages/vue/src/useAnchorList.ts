@@ -1,5 +1,5 @@
 import { createVirtualizer, elementScroller } from '@anchorlist/core'
-import type { ElementScrollerOptions, Plan, Virtualizer, VirtualizerOptions } from '@anchorlist/core'
+import type { ElementScrollerOptions, Plan, Scroller, Virtualizer, VirtualizerOptions } from '@anchorlist/core'
 import { getCurrentInstance, onBeforeUnmount, onMounted, onUpdated, shallowRef } from 'vue'
 
 /**
@@ -23,11 +23,15 @@ import { getCurrentInstance, onBeforeUnmount, onMounted, onUpdated, shallowRef }
  * @param elements - Returns the scroll container, the list and the optional
  *   content wrapper once they are mounted (for example from refs). Called
  *   after each update until it returns a value.
+ * @param scroller - Creates the scroller from `elements` when attaching.
+ *   Default `elementScroller`; for example `windowScroller` from
+ *   `@anchorlist/core/window`. Read when attaching.
  * @returns The virtualizer and the render-phase `plan()` function.
  */
 export function useAnchorList(
   options: () => VirtualizerOptions,
   elements: () => ElementScrollerOptions | null | undefined,
+  scroller: (elements: ElementScrollerOptions) => Scroller<Element> = elementScroller,
 ): readonly [Virtualizer, () => Plan] {
   const instance = getCurrentInstance()!
   // Read by plan() during render, so bumping it schedules a re-render.
@@ -44,7 +48,7 @@ export function useAnchorList(
     if (!attached) {
       const e = elements()
       if (!e) return
-      v.attach(elementScroller(e))
+      v.attach(scroller(e))
       attached = true
     }
     committed = plan
@@ -81,7 +85,9 @@ export function useAnchorList(
 
   const plan = (): Plan => {
     void version.value
-    return (rendered = v.plan(options()))
+    const o = options()
+    // `initialPlan` (server rendering) also plans the renders before attach.
+    return (rendered = o.initialPlan ? o.initialPlan(v, o) : v.plan(o))
   }
   return [v, plan]
 }
