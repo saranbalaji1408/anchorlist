@@ -44,6 +44,9 @@ const renderMessage = (m: Message) => <Bubble message={m} />
   `scrollMargin` for a fixed app bar; `scroller={horizontal()}` (`@anchorlist/react/horizontal`)
   lays the list out horizontally; `scroller={horizontal(rtlScroller)}` (`@anchorlist/core/rtl`)
   also handles `dir="rtl"`. With a custom scroller the container gets no `overflow` style.
+- **Grid and masonry:** `LanesList` from `@anchorlist/react/lanes` takes every `AnchorList` prop
+  plus `lanes`, a `grid({ lanes })` or `masonry({ lanes, gap })` layout from `@anchorlist/core/lanes`
+  created once per list (`useState`). Keep `overscan` at least as large as the largest item.
 - **Rows get no index**, so a prepend re-renders no mounted row. Keep `renderItem` stable (module
   scope or `useCallback`) and keep item objects immutable to get that benefit.
 - **Headless:** `useAnchorList(options, elements, scroller?)` returns `[virtualizer, plan]` for custom markup.

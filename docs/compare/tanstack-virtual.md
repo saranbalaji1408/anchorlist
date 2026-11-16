@@ -34,7 +34,7 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | Restore scroll position | `getSnapshot` / `initialSnapshot` (key-based) | `initialOffset` (pixel-based) |
 | Window scrolling | `windowScroller` (`anchorlist/window`) | Yes |
 | Horizontal | `horizontal()` (`anchorlist/horizontal`); right-to-left with `rtlScroller` | Yes |
-| Grid / masonry | Planned (v0.4) | Yes (lanes, or two virtualizers) |
+| Grid / masonry | `grid` and `masonry` with `LanesList` (`anchorlist/lanes`) | Yes (lanes, or two virtualizers) |
 | Sticky items | `StickyItem` (`anchorlist/sticky`) | Yes, via custom range extraction |
 | Smooth scroll to an unrendered item | `animateToKey` (`anchorlist/animate`) | `scrollToIndex` with `behavior: 'smooth'` |
 | Server rendering | Opt-in: `initialRect` + `initialPlan` | `initialRect` |
@@ -71,7 +71,6 @@ Measured with the same tool and settings in the [benchmark](./benchmark#bundle-s
 ## When to choose TanStack Virtual
 
 - You need Vue, Svelte, Solid, Angular or Lit today.
-- You need grids, masonry or window scrolling today.
 - You want full control over rendering and are happy to build anchoring yourself.
 
 ## Migrating

@@ -34,7 +34,7 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | Restore scroll position | `getSnapshot` / `initialSnapshot` | `getState` / `restoreStateFrom` |
 | Grouped lists, sticky headers | Sticky items: `StickyItem` from `anchorlist/sticky` | Yes (`GroupedVirtuoso`) |
 | Tables | Not planned yet | Yes (`TableVirtuoso`) |
-| Grid | Planned (v0.4) | Yes (`VirtuosoGrid`) |
+| Grid | `grid` and `masonry` with `LanesList` (`anchorlist/lanes`) | Yes (`VirtuosoGrid`) |
 | Window scrolling | `windowScroller` (`anchorlist/window`) | Yes (`useWindowScroll`) |
 | SSR | Opt-in: `initialRect` + `initialPlan` | Yes (`initialItemCount`) |
 | Smooth scroll to an unrendered item | `animateToKey` (`anchorlist/animate`) | `scrollToIndex({ behavior: 'smooth' })` |
@@ -69,7 +69,7 @@ Measured with the same tool and settings in the [benchmark](./benchmark#bundle-s
 
 ## When to choose react-virtuoso
 
-- You need tables, grids or window scrolling today.
+- You need tables today.
 - You want a mature, widely used library with a long track record.
 
 ## Migrating
