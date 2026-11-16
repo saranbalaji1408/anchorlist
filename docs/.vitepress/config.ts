@@ -187,6 +187,7 @@ export default defineConfig({
           { text: 'Horizontal list', link: '/guide/horizontal-list' },
           { text: 'Right-to-left (RTL)', link: '/guide/rtl-virtual-list' },
           { text: 'Grid and masonry', link: '/guide/virtual-grid-masonry' },
+          { text: 'Vue', link: '/guide/vue' },
         ],
       },
       {
