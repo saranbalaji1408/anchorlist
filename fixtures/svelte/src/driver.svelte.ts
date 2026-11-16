@@ -16,16 +16,21 @@ import { DEFAULTS, store } from './store.svelte'
 /**
  * Items arrive as fresh copies through each `page.evaluate`. Interning them by
  * id (when unchanged) keeps object identity like an immutable app store does,
- * so rows can skip updates.
+ * so rows can skip updates. Only the current items are kept: trimmed ids are
+ * dropped, so the fixture does not grow the heap over long runs.
  */
-const interned = new Map<string, Item>()
-const intern = (items: Item[]): Item[] =>
-  items.map((m) => {
+let interned = new Map<string, Item>()
+const intern = (items: Item[]): Item[] => {
+  const next = new Map<string, Item>()
+  const out = items.map((m) => {
     const prev = interned.get(m.id)
-    if (prev && prev.height === m.height && prev.text === m.text && prev.mine === m.mine && prev.header === m.header) return prev
-    interned.set(m.id, m)
-    return m
+    const item = prev && prev.height === m.height && prev.text === m.text && prev.mine === m.mine && prev.header === m.header ? prev : m
+    next.set(m.id, item)
+    return item
   })
+  interned = next
+  return out
+}
 
 export function installDriver(container: HTMLElement): void {
   let app: ReturnType<typeof mount> | null = null
