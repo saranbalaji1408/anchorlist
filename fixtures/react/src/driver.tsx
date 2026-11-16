@@ -136,18 +136,25 @@ function Committed({ s, onCommit }: { s: ListState; onCommit: () => void }): Rea
 /**
  * Items arrive as fresh copies through each `page.evaluate`. Interning them by
  * id (when unchanged) keeps object identity like an immutable app store does,
- * so memoised rows can skip re-rendering.
+ * so memoised rows can skip re-rendering. Only the current items are kept (and
+ * only their render counts), so trimmed ones are released like in an app.
  */
-const interned = new Map<string, Item>()
+let interned = new Map<string, Item>()
 /** The items of the last render. */
 let current: Item[] = []
-const intern = (items: Item[]): Item[] =>
-  items.map((m) => {
+const intern = (items: Item[]): Item[] => {
+  const next = new Map<string, Item>()
+  const out = items.map((m) => {
     const prev = interned.get(m.id)
-    if (prev && prev.height === m.height && prev.text === m.text && prev.mine === m.mine && prev.header === m.header) return prev
-    interned.set(m.id, m)
-    return m
+    const item = prev && prev.height === m.height && prev.text === m.text && prev.mine === m.mine && prev.header === m.header ? prev : m
+    next.set(m.id, item)
+    return item
   })
+  interned = next
+  // Render counts of removed items go too: the counter is per item, like the intern table.
+  for (const id in renders) if (!next.has(id)) delete renders[id]
+  return out
+}
 
 export function installDriver(container: HTMLElement): void {
   let root: Root | null = null
