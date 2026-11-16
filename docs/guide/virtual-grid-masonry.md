@@ -79,7 +79,7 @@ it are laid out again, and the item being viewed keeps its position.
 | --- | --- | --- |
 | `lanes` | (required) | Number of lanes: columns, or rows when `horizontal`. At least 1. |
 | `gap` | `0` | Gap between lanes and between items in a lane, in px. |
-| `horizontal` | `false` | Lanes are rows and items run horizontally. Use it with `scroller={horizontal()}`. |
+| `horizontal` | `false` | Lanes are rows and items run horizontally, with `scroller={horizontal()}`. Not yet covered by tests (see [Limits](#limits)). |
 
 `estimateSize` is the size of one item (default 48 px); the layout converts it for the engine.
 
@@ -91,9 +91,6 @@ it are laid out again, and the item being viewed keeps its position.
 - **`align="end"`** pins the grid to its newest items.
 - **`scrollToKey`** lands on an item that isn't mounted yet, through unmeasured items.
 - **Focus:** an item that contains focus stays mounted at its lane position while scrolled away.
-- **Any scroller:** the layout wraps the scroller, so `scroller={windowScroller}` (from
-  `anchorlist/window`) scrolls the grid with the page, and `grid({ lanes: 2, horizontal: true })`
-  with `scroller={horizontal()}` makes a horizontal grid.
 
 ## Limits
 
@@ -104,6 +101,12 @@ it are laid out again, and the item being viewed keeps its position.
 - Inserting a number of items that isn't a whole row before the viewport (grid), or any change
   before it (masonry), lays out the items after it again, so they may change lanes. The item being
   viewed keeps its position.
+
+- **Window and horizontal lanes are expected to work, but no tests cover them yet.** The layout
+  wraps any scroller, so `scroller={windowScroller}` (from `anchorlist/window`) and
+  `grid({ lanes: 2, horizontal: true })` with `scroller={horizontal()}` should behave like a
+  vertical grid in a container. Only the vertical, container-scrolled case is covered by the
+  end-to-end scenarios.
 
 ## Without React
 

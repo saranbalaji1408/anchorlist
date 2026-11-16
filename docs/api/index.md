@@ -100,7 +100,8 @@ const [lanes] = useState(() => grid({ lanes: 4, gap: 16 }))
 `<AnchorList>` with items laid out in lanes and positioned absolutely. It takes every
 `<AnchorList>` prop plus `lanes` (from [`grid` or `masonry`](#lanes), created once per list and read
 on mount). The lanes own the gap; `paddingStart` and `paddingEnd` are not used. A custom `scroller`
-(`windowScroller`, or `horizontal()` with `horizontal: true` lanes) is wrapped by the lanes. A grid
+(`windowScroller`, or `horizontal()` with `horizontal: true` lanes) is wrapped by the lanes; that is
+expected to work but not yet covered by tests. A grid
 always renders whole rows. Keep `overscan` (default 400) at least as large as the largest item.
 358 B gzip on top of `<AnchorList>` (budget 400 B). Guide: [virtual grid and masonry](/guide/virtual-grid-masonry).
 
