@@ -1,7 +1,7 @@
 # @anchorlist/svelte
 
 Svelte 5 bindings for [`@anchorlist/core`](https://www.npmjs.com/package/@anchorlist/core): a virtual list that keeps the row being read
-in place while items are prepended, appended, trimmed, removed or resized. About 2 kB gzip on top
+in place while items are prepended, appended, trimmed, removed or resized. About 2.1 kB gzip on top
 of the core (compiled).
 
 Start with the [`anchorlist`](https://www.npmjs.com/package/anchorlist) landing page for an overview.
@@ -31,8 +31,9 @@ Full documentation: https://saranbalaji1408.github.io/anchorlist/
   (read on mount), plus every core option (`align`, `gap`, `overscan`, `follow`, `hasMoreStart`,
   `onEndReached`, `initialSnapshot`, `initialRect`, `initialPlan`, ...). Other attributes (`class`,
   `style`, `id`, `aria-label`, event handlers) go to the scroll container.
-- **Snippets:** `children(item)`, `header`, `footer`, and `sticky(range)` (renders from the visible
-  range).
+- **Snippets:** `children(item)`, `header`, `footer`, and `sticky(list)`, rendered first in the scroll
+  container with the virtualizer: put a `StickyOverlay` from `@anchorlist/svelte/sticky` there for an
+  overlay pinned to the viewport top that renders from the visible range (a date pill).
 - **`bind:this`:** `scrollToKey`, `scrollToIndex`, `scrollToEdge`, `isAtEdge`, `getSnapshot`,
   `getVisibleRange`, `getItemRect`, `getTotalSize`, `indexOf`, `subscribe`, and `getElement()` (the
   scroll container, for example for `animateToKey` from `@anchorlist/core/animate`).
@@ -44,7 +45,7 @@ Full documentation: https://saranbalaji1408.github.io/anchorlist/
   x axis (`horizontal(rtlScroller)` for right-to-left); `scroller={(e) => windowScroller(e)}` from
   `@anchorlist/core/window` scrolls with the page; `LanesList` from `@anchorlist/svelte/lanes` takes
   a `lanes` prop (`grid(...)` or `masonry(...)` from `@anchorlist/core/lanes`).
-- **Sticky items:** render `StickyItem` from `@anchorlist/svelte/sticky` in the `sticky` snippet
+- **Sticky items:** render `StickyItem` from `@anchorlist/svelte/sticky` in a `StickyOverlay`
   (`range`, `items`, `isSticky`, and a `children(item)` snippet for the stuck copy).
 - **Server rendering:** pass `initialRect` and `initialPlan` (from `@anchorlist/core/ssr`); the server
   render and the hydration render produce the same rows.

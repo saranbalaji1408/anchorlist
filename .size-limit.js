@@ -174,7 +174,7 @@ export default [
     path: 'packages/svelte/dist/.size/index.js',
     import: '*',
     ignore: ['svelte', '@anchorlist/core'],
-    limit: '1.8 kB',
+    limit: '2.1 kB',
     gzip: true,
   },
   {
