@@ -37,15 +37,21 @@ const fakeBox = (right: number, width = 0) => ({
 })
 
 /** Stubs the DOM so that `rtlConvention()` detects `convention` and every element is `direction`. */
-const stubDom = (convention: RtlConvention, direction = 'rtl') => {
+const stubDom = (convention: RtlConvention, direction = 'rtl', body = true) => {
   vi.stubGlobal('getComputedStyle', () => ({ direction }))
+  const parents: string[] = []
+  const append = (name: string) => () => void parents.push(name)
   vi.stubGlobal('document', {
     createElement: () => {
       // The probe is 2 px wide with 4 px of content: max scroll 2.
       let pos = 0
       return {
         style: {},
-        innerHTML: '',
+        // Markup is refused, as under Trusted Types.
+        set innerHTML(_: string) {
+          throw new TypeError('This document requires TrustedHTML assignment.')
+        },
+        appendChild: (child: unknown) => child,
         get scrollLeft(): number {
           return convention === 0 ? -pos : convention === 1 ? pos : 2 - pos
         },
@@ -56,8 +62,10 @@ const stubDom = (convention: RtlConvention, direction = 'rtl') => {
         remove: () => undefined,
       }
     },
-    body: { appendChild: () => undefined },
+    body: body ? { appendChild: append('body') } : null,
+    documentElement: { appendChild: append('html') },
   })
+  return parents
 }
 
 describe('rtlConvention', () => {
@@ -68,6 +76,15 @@ describe('rtlConvention', () => {
       stubDom(c)
       expect(rtlConvention()).toBe(c)
     }
+  })
+
+  it('builds the probe without markup and uses the document element when there is no body yet', () => {
+    const inBody = stubDom(0)
+    expect(rtlConvention()).toBe(0)
+    expect(inBody).toEqual(['body'])
+    const parents = stubDom(1, 'rtl', false)
+    expect(rtlConvention()).toBe(1)
+    expect(parents).toEqual(['html'])
   })
 })
 

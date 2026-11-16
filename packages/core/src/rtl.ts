@@ -14,8 +14,10 @@ export type RtlConvention = 0 | 1 | 2
 export function rtlConvention(): RtlConvention {
   const probe = document.createElement('div')
   probe.style.cssText = 'direction:rtl;overflow:hidden;position:absolute;visibility:hidden;width:2px;height:1px'
-  probe.innerHTML = '<div style="width:4px;height:1px"></div>'
-  document.body.appendChild(probe)
+  // Built with DOM calls, not markup, so it works under Trusted Types. The document element
+  // stands in for a body that does not exist yet (a script in the head).
+  probe.appendChild(document.createElement('div')).style.cssText = 'width:4px;height:1px'
+  ;(document.body || document.documentElement).appendChild(probe)
   let convention: RtlConvention = 2
   if (probe.scrollLeft <= 0) {
     probe.scrollLeft = 1
