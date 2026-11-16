@@ -7,6 +7,10 @@ import { expect, still, test } from '../src/harness'
  * O(n) regressions rather than machine load.
  */
 const N = 100_000
+/** Items, cycles of 100 updates and growth limit (bytes) of the heap check. */
+const HEAP_N = 10_000
+const HEAP_CYCLES = 3
+const HEAP_LIMIT = 512 * 1024
 
 test.describe('100k items', () => {
   test.describe.configure({ timeout: 120_000 })
@@ -78,29 +82,40 @@ test.describe('100k items', () => {
     expect(large.prepend).toBeLessThan(200)
     expect(large.stream).toBeLessThan(50)
 
-    // Heap over 100 prepend + trim cycles at a constant count (Chromium exposes the heap).
+    // Heap over prepend + trim cycles at a constant count (Chromium exposes the heap). A 10k list
+    // reaches a steady state quickly: once every mounted item has been trimmed, each cycle replaces
+    // items with items of the same shape, so the heap must stay flat. Anything that keeps trimmed
+    // items (an id-keyed cache that never evicts) grows by every prepended item.
     if (browserName !== 'chromium') return
     const cdp = await page.context().newCDPSession(page)
     const heap = async (): Promise<number> => {
       await cdp.send('HeapProfiler.collectGarbage')
       return (await cdp.send('Runtime.getHeapUsage')).usedSize
     }
+    await page.evaluate(async (n) => {
+      const w = window as unknown as { __list?: { id: string; height: number }[] }
+      w.__list = Array.from({ length: n }, (_, i) => ({ id: `h${i}`, height: 30 + (i % 9) * 10 }))
+      await window.__driver.mount({ items: w.__list })
+    }, HEAP_N)
+    /** 100 updates, each prepending 50 items and trimming 50 from the end. */
     const cycle = (): Promise<void> =>
-      page.evaluate(async (n) => {
-        const w = window as unknown as { __list?: { id: string; height: number }[]; __next?: number }
-        let list = w.__list ?? Array.from({ length: n }, (_, i) => ({ id: `m${i}`, height: 30 + (i % 9) * 10 }))
+      page.evaluate(async () => {
+        const w = window as unknown as { __list: { id: string; height: number }[]; __next?: number }
+        let list = w.__list
         for (let r = 0; r < 100; r++) {
           const next = (w.__next = (w.__next ?? 0) + 1)
           list = [...Array.from({ length: 50 }, (_, i) => ({ id: `c${next}-${i}`, height: 40 })), ...list.slice(0, list.length - 50)]
           await window.__driver.update({ items: list })
         }
         w.__list = list
-      }, N)
-    await cycle() // warm up (JIT, caches, interned items)
+      })
+    // Warm up until every mounted item is trimmed (JIT, caches, the engine's tables).
+    for (let c = 0; c < (HEAP_N / 5000) + 1; c++) await cycle()
     const before = await heap()
-    await cycle()
+    for (let c = 0; c < HEAP_CYCLES; c++) await cycle()
     const after = await heap()
-    // The item array itself is ~100k objects; growth per 100 cycles must stay far below one copy of it.
-    expect(after - before).toBeLessThan(4 * 1024 * 1024)
+    // Measured on the React fixture in Chromium: flat 165-186 KB (JIT code), while keeping every
+    // trimmed item (an intern table or render counter that never evicts) adds 1.44-1.45 MB.
+    expect(after - before).toBeLessThan(HEAP_LIMIT)
   })
 })
