@@ -168,7 +168,7 @@ it in `setup()` and call `plan()` in the render function only.
 
 Sizes are min + gzip, checked in CI. `@anchorlist/vue` is 1,410 B with Vue and the core external
 (budget 1.45 kB), and the Vue chat path (core + `AnchorList`) is 5,704 B (budget 5.8 kB). The opt-in
-entries are separate: `/sticky` 905 B (950 B), `/horizontal` 189 B (300 B) and `/lanes` 431 B
+entries are separate: `/sticky` 905 B (950 B), `/horizontal` 189 B (300 B) and `/lanes` 381 B
 (450 B). A CI check confirms that `AnchorList` pulls in none of them.
 
 ## How it is tested
