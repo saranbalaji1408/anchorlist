@@ -26,7 +26,11 @@
 
   const { lanes, ...props }: LanesListProps<T> = $props()
 
-  const options = $derived({ ...props, count: props.items.length, getKey: (i: number) => props.getKey(props.items[i]!) } as VirtualizerOptions)
+  // The keys, read once per data change: mapping tracks every index, so an in-place change to
+  // `items` (an index write) syncs the lanes too, and the lanes read a plain array, never the
+  // `$state` proxy, as they walk the laid items.
+  const keys = $derived(props.items.map((item) => props.getKey(item)))
+  const options = $derived({ ...props, count: keys.length, getKey: (i: number) => keys[i]! } as VirtualizerOptions)
   // The lanes' estimates, and no gap or padding.
   const laneOptions = $derived.by(() => {
     const { count: _, getKey: __, ...o } = lanes.options(options)

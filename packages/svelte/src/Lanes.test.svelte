@@ -4,9 +4,14 @@
   import LanesList from './LanesList.svelte'
   import type { AnchorListHandle } from './types.js'
 
-  let { items, lanes, list = $bindable() }: { items: { id: string }[]; lanes: Lanes; list?: AnchorListHandle } = $props()
+  let {
+    items,
+    lanes,
+    getKey = (m) => m.id,
+    list = $bindable(),
+  }: { items: { id: string }[]; lanes: Lanes; getKey?: (m: { id: string }) => string; list?: AnchorListHandle } = $props()
 </script>
 
-<LanesList bind:this={list} id="sc" {items} getKey={(m) => m.id} {lanes} gap={30}>
+<LanesList bind:this={list} id="sc" {items} {getKey} {lanes} gap={30}>
   {#snippet children(m)}<span>{m.id}</span>{/snippet}
 </LanesList>

@@ -1,5 +1,5 @@
 import { elementScroller, HORIZONTAL, type ElementScrollerOptions, type Plan, type Virtualizer, type VirtualizerOptions } from '@anchorlist/core'
-import { grid } from '@anchorlist/core/lanes'
+import { grid, masonry } from '@anchorlist/core/lanes'
 import { createRawSnippet, flushSync, mount, tick, unmount, type Snippet } from 'svelte'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { installLayout, type TestLayout } from '../../react/src/testLayout'
@@ -329,6 +329,130 @@ describe('LanesList', () => {
       expect(k[0]! % 2, `first at ${top}`).toBe(0)
       expect(k[k.length - 1]! % 2, `last at ${top}`).toBe(1)
     }
+    unmount(app)
+  })
+})
+
+describe('LanesList reorder', () => {
+  const ref = (sizes: number[], n: number, g: number): number[] => {
+    const ends = new Array<number>(n).fill(0)
+    return sizes.map((s) => {
+      const lane = ends.indexOf(Math.min(...ends))
+      const start = ends[lane]!
+      ends[lane] = start + s + g
+      return start
+    })
+  }
+  for (const mode of ['in place', 'new array'] as const)
+    it(`lays out again after two inner items swap (${mode})`, async () => {
+      const sizes = [30, 90, 40, 60, 120, 50, 70, 35, 80, 45]
+      const items = make(10, 'i')
+      items.forEach((it, i) => layout.sizes.set(it.id, sizes[i]!))
+      const lanes = masonry({ lanes: 2 })
+      // Counted before the state wraps the lanes: a spy on the proxied object sees no calls.
+      const orig = lanes.sync
+      let calls = 0
+      lanes.sync = (o) => (calls++, orig(o))
+      const props = $state({ items, lanes })
+      const app = mount(Lanes, { target: container, props })
+      flushSync()
+      await tick()
+      const swapped = props.items.slice()
+      ;[swapped[1], swapped[4]] = [swapped[4]!, swapped[1]!]
+      const before = calls
+      if (mode === 'in place') {
+        const t = props.items[1]!
+        props.items[1] = props.items[4]!
+        props.items[4] = t
+      } else props.items = swapped
+      flushSync()
+      await tick()
+      expect(calls - before).toBeGreaterThan(0)
+      expect(keys().slice(0, 5)).toEqual(['i0', 'i4', 'i2', 'i3', 'i1'])
+      const want = ref(swapped.map((it) => layout.sizes.get(it.id)!), 2, 0)
+      expect(swapped.map((_, i) => lanes.position(i).start)).toEqual(want)
+      unmount(app)
+    })
+
+  it('lays out again after an in-place change outside the rendered range', async () => {
+    const items = make(400, 'i')
+    items.forEach((it, i) => layout.sizes.set(it.id, 30 + (i % 5) * 25))
+    const lanes = masonry({ lanes: 2 })
+    const orig = lanes.sync
+    let calls = 0
+    lanes.sync = (o) => (calls++, orig(o))
+    const props = $state({ items, lanes })
+    const app = mount(Lanes, { target: container, props })
+    flushSync()
+    await tick()
+    // Render (measure) every item on the way down, then come back: the far ones are laid but not rendered.
+    for (let top = 500; top <= 20000; top += 500) {
+      await scrollTo(top)
+      await new Promise((r) => setTimeout(r))
+    }
+    await scrollTo(0)
+    await new Promise((r) => setTimeout(r))
+    expect(keys()).not.toContain('i300')
+    const before = calls
+    const t = props.items[300]!
+    props.items[300] = props.items[301]!
+    props.items[301] = t
+    flushSync()
+    await tick()
+    // Nothing rendered changed, yet the lanes see the new order.
+    expect(calls - before).toBeGreaterThan(0)
+    const want = ref(props.items.map((it) => layout.sizes.get(it.id)!), 2, 0)
+    expect(props.items.map((_, i) => lanes.position(i).start).slice(0, 302)).toEqual(want.slice(0, 302))
+    unmount(app)
+  })
+
+  it('reads keys per scroll step in proportion to the rendered rows, not the laid ones', async () => {
+    const items = make(3000, 'i')
+    items.forEach((it, i) => layout.sizes.set(it.id, 40 + (i % 7) * 20))
+    const calls = { n: 0 }
+    const props = $state({ items, lanes: masonry({ lanes: 3 }), getKey: (m: { id: string }) => (calls.n++, m.id) })
+    const app = mount(Lanes, { target: container, props })
+    flushSync()
+    await tick()
+    // Lay everything out on the way to the end, then come back near the top.
+    for (let top = 3000; top <= 120000; top += 3000) {
+      await scrollTo(top)
+      await new Promise((r) => setTimeout(r))
+    }
+    expect(keys()).toContain('i2999')
+    await scrollTo(2000)
+    await new Promise((r) => setTimeout(r))
+    calls.n = 0
+    await scrollTo(2600)
+    await new Promise((r) => setTimeout(r))
+    const rendered = keys().length
+    expect(rendered).toBeGreaterThan(0)
+    // About 6 reads per rendered row (the engine's passes and the keyed block); syncing the
+    // lanes on each render added a walk over the laid items on top (453 here).
+    expect(calls.n).toBeLessThanOrEqual(7 * rendered)
+    unmount(app)
+  })
+
+  it('does not sync the lanes while scrolling without a data change (10k items)', async () => {
+    const items = make(10000, 'i')
+    items.forEach((it, i) => layout.sizes.set(it.id, 40 + (i % 7) * 20))
+    const lanes = masonry({ lanes: 3 })
+    // Counted before the state wraps the lanes, as above.
+    const orig = lanes.sync
+    let calls = 0
+    lanes.sync = (o) => (calls++, orig(o))
+    const props = $state({ items, lanes })
+    const app = mount(Lanes, { target: container, props })
+    flushSync()
+    await tick()
+    const before = calls
+    // Each sync walks every laid item: syncing on scroll renders costs O(laid) per step.
+    for (let step = 1; step <= 20; step++) {
+      await scrollTo(step * 300)
+      await new Promise((r) => setTimeout(r))
+    }
+    expect(keys().length).toBeGreaterThan(0)
+    expect(calls - before).toBe(0)
     unmount(app)
   })
 })

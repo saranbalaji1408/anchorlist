@@ -155,6 +155,12 @@ expected to work but are not yet covered by tests.
 </LanesList>
 ```
 
+Changing the `$state` `items` array in place (a swap, or replacing an item) re-lays out the lanes
+at once, also when the change is outside the rendered range. The keys are read once per data
+change, not on scroll. For lists of several thousand items that change often (feeds, chat), declare
+`items` with `$state.raw` and assign a new array: a deep `$state` array costs a proxy read per item
+on every change.
+
 ## Headless
 
 `createAnchorList(options, elements, scroller?)` returns `{ virtualizer, plan, rows, kept, focused }`
