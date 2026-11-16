@@ -280,7 +280,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   /** Deferred correction held in a transform (px). */
   let pending = 0
   let touching = false
-  let lastScrollAt = -Infinity
+  /** Touch WebKit: an event within the last IDLE_MS (momentum may follow). Cleared by the idle timer. */
+  let active = false
   /** Effective offset after our last write or event; a scroll event that lands here is ours. */
   let lastEff = 0
   /**
@@ -385,7 +386,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
 
   /** Touch WebKit during touch or momentum, and any rubber-band overscroll. */
   const defer = (): boolean =>
-    sc!.overscrolled() !== 0 || (sc!.touchWebKit && (touching || sc!.now() - lastScrollAt < IDLE_MS))
+    sc!.overscrolled() !== 0 || (sc!.touchWebKit && (touching || active))
 
   /**
    * Writes a whole-pixel offset and clears any pending transform. Engines
@@ -409,7 +410,18 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       } else scheduleIdle()
     }
   }
-  const scheduleIdle = (): void => later(0, () => commitPending(false), IDLE_MS)
+  // Idle is decided by the timer, never by comparing clocks: a timer that fires on time can read
+  // a coarser `now()` (Firefox reduces timer precision) as just under IDLE_MS, which would defer
+  // the commit by another IDLE_MS.
+  const scheduleIdle = (): void =>
+    later(
+      0,
+      () => {
+        active = false
+        commitPending(false)
+      },
+      IDLE_MS,
+    )
 
   /** Moves the effective offset, deferring into a transform when a write would interrupt the user. */
   const scrollTo = (desired: number): void => {
@@ -661,8 +673,12 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   const onEvent = (type: ScrollerEvent): void => {
     const s = sc
     if (!s) return
-    // Any event counts as activity for touch WebKit deferral (momentum may follow).
-    lastScrollAt = s.now()
+    // Any event counts as activity for touch WebKit deferral (momentum may follow): it re-arms
+    // the idle timer, so the timer fires IDLE_MS after the last event.
+    if (s.touchWebKit) {
+      active = true
+      scheduleIdle()
+    }
     const scroll = type === 'scroll'
     if (scroll || type === 'resize') {
       // Browsers clamp the offset during layout and fire `scroll` before the
