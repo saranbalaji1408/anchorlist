@@ -312,6 +312,16 @@ describe('LanesList', () => {
     expect(scroller().hasAttribute('count')).toBe(false)
   })
 
+  it('renders whole grid rows of the planned range (lanes.range)', async () => {
+    const lanes = grid({ lanes: 3, gap: 0 })
+    await render({ items: make(300, 'i'), lanes }, {}, LanesList)
+    await scrollTo(20 * 50)
+    const indices = keys().map((k) => Number(k.slice(1)))
+    expect(Math.min(...indices) % 3).toBe(0)
+    expect((Math.max(...indices) + 1) % 3).toBe(0)
+    expect(indices.length % 3).toBe(0)
+  })
+
   it('hands prepended items to the lanes before the list commits', async () => {
     const lanes = grid({ lanes: 3, gap: 0 })
     await render({ items: make(300, 'i'), lanes }, {}, LanesList)
