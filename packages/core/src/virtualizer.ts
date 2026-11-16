@@ -640,6 +640,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
     later(2, () => {
       const m = mode
       if (m.t !== 2) return
+      // -~x is x + 1 with undefined counted as 0 (q is unset on the first frame).
       m.q = resized ? 0 : -~m.q!
       resized = false
       if (m.q >= TARGET_FRAMES || sc!.now() - (m.s ||= sc!.now()) >= TARGET_MAX_MS) recapture()
@@ -762,6 +763,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       // A page (window scroller) may already be scrolled away from the start
       // edge: stay there. A target whose key is never found (the EDGE object)
       // re-captures the anchor at the viewport once items exist.
+      // The EDGE object as `k` is a key that `keys.indexOf` never finds, so the target holds
+      // nothing and only runs the lock; `as never` because `k` is typed `Key`.
       if (eff() && !atEnd && mode === EDGE) mode = { t: 2, k: EDGE } as never
       lock()
       cycle(false)
