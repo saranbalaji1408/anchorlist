@@ -1,4 +1,4 @@
-import { keptRow, type ElementScrollerOptions, type Key, type Scroller, type Virtualizer, type VirtualizerOptions } from '@anchorlist/core'
+import { keptRow, type ElementScrollerOptions, type Key, type Plan, type Scroller, type Virtualizer, type VirtualizerOptions } from '@anchorlist/core'
 import {
   defineComponent,
   h,
@@ -69,6 +69,15 @@ export interface AnchorListProps<T> extends Omit<VirtualizerOptions, 'count' | '
   scroller?: (elements: ElementScrollerOptions) => Scroller<Element>
 }
 
+/**
+ * Props that are not part of the public API. `LanesList` sets `mapRange` to
+ * `lanes.range`, so a grid renders whole rows of the planned range.
+ */
+export interface InternalProps {
+  /** Maps the plan to the rows to render (same options). Pure. */
+  mapRange?: (plan: Plan) => Plan
+}
+
 /** Slots of {@link AnchorList}. */
 export interface AnchorListSlots<T> {
   /**
@@ -118,9 +127,9 @@ const PROPS: ComponentPropsOptions = /*#__PURE__*/ (() => {
     follow: { type: [Boolean, Function], default: undefined },
   }
   for (const k of (
-    'items getKey rowClass estimateSize align overscan gap paddingStart paddingEnd startThreshold endThreshold ' +
-    'onStartReached onEndReached atEdgeThreshold onRangeChange onAtEdgeChange initialSnapshot maxCachedSizes ' +
-    'initialRect initialPlan scroller'
+    'items getKey rowClass estimateSize maxCachedSizes align overscan gap paddingStart paddingEnd startThreshold ' +
+    'endThreshold atEdgeThreshold onStartReached onEndReached onAtEdgeChange onRangeChange mapRange scroller ' +
+    'initialSnapshot initialRect initialPlan'
   ).split(' '))
     props[k] = null
   return props
@@ -161,13 +170,12 @@ export const AnchorList: <T>(
   /** Types for template tooling (the shape `vue-tsc` uses for generic components). */
   __ctx?: { props: AnchorListProps<T>; slots: AnchorListSlots<T>; expose(exposed: AnchorListHandle): void; attrs: Record<string, unknown>; emit: unknown }
 } = /*#__PURE__*/ defineComponent(
-  (props: AnchorListProps<unknown>, { slots, expose }) => {
-    let element: HTMLElement | undefined
+  (props: AnchorListProps<unknown> & InternalProps, { slots, expose }) => {
     let content: HTMLElement
     let list: HTMLElement | undefined
     /** Key of the row containing focus. */
     let focused: Key | null = null
-    const setElement = (e: unknown): unknown => (element = handle.element = e as HTMLElement)
+    const setElement = (e: unknown): unknown => (handle.element = e as HTMLElement)
     const setContent = (e: unknown): unknown => (content = e as HTMLElement)
     const setList = (e: unknown): unknown => (list = e as HTMLElement)
     const setFocused = (k: Key): unknown => (focused = k)
@@ -177,14 +185,16 @@ export const AnchorList: <T>(
         const { items, getKey } = props
         return { ...props, count: items.length, getKey: (i) => getKey(items[i]) }
       },
-      () => element && { element, list: list!, content },
+      () => handle.element && { element: handle.element, list: list!, content },
       props.scroller,
     )
     // Exposed raw, so the element assigned on mount is visible through the template ref.
-    const handle = { ...v, element: undefined as never } as { -readonly [K in keyof AnchorListHandle]: AnchorListHandle[K] }
+    const handle = { ...v } as unknown as { -readonly [K in keyof AnchorListHandle]: AnchorListHandle[K] }
     expose(handle)
     return () => {
       const p = plan()
+      // The rows to render: the plan, or what the internal `mapRange` (LanesList: `lanes.range`) makes of it.
+      const r = props.mapRange ? props.mapRange(p) : p
       const { items, getKey, gap } = props
       const row = (i: number, st: StyleValue = ROW): VNode => {
         const item = items[i]
@@ -192,22 +202,23 @@ export const AnchorList: <T>(
         return h(Row, { key: k, k, v, item, s: slots, c: props.rowClass, st, f: setFocused })
       }
       const rows: VNode[] = []
-      for (let i = p.start; i <= p.end; i++) rows.push(row(i))
+      for (let i = r.start; i <= r.end; i++) rows.push(row(i))
       // The focused row stays mounted outside the range, out of flow, in the same
       // keyed array as the rows so that Vue never moves its node (see keptRow).
-      const kept = keptRow(v, p, focused)
-      // A horizontal list (`horizontal()` lays the rows out in a row) keeps it at its inline start, which
-      // is the left edge, or the right edge in a right-to-left scroll container: content space either way.
+      const kept = keptRow(v, r, focused)
+      // Positioned in list space (the list is its containing block), so a page header above a
+      // window-scrolled list does not shift it. A horizontal list (`horizontal()` lays the rows out
+      // in a row) keeps it at its inline start: the left edge, or the right edge in right-to-left.
       const x = list?.style.flexDirection == 'row'
       if (kept)
-        rows[kept.index < p.start ? 'unshift' : 'push'](
-          row(kept.index, { position: 'absolute', [x ? 'height' : 'width']: '100%', [x ? 'insetInlineStart' : 'top']: `${kept.start}px` }),
+        rows[kept.index < r.start ? 'unshift' : 'push'](
+          row(kept.index, { position: 'absolute', [x ? 'height' : 'width']: '100%', [x ? 'insetInlineStart' : 'top']: `${kept.offset}px` }),
         )
       return h(
         'div',
         // Vue writes every key of a style object on each patch: keys a scroller writes (`overflowY` for a
         // custom one, `flexDirection` below) are left out or read back, so a re-render keeps them.
-        { ref: setElement, style: { overflowAnchor: 'none', position: 'relative', ...(!props.scroller && { overflowY: 'auto' }) } },
+        { ref: setElement, style: { overflowAnchor: 'none', ...(!props.scroller && { overflowY: 'auto' }) } },
         [
           slots.sticky?.(v),
           h('div', { ref: setContent }, [
@@ -219,7 +230,7 @@ export const AnchorList: <T>(
                 role: 'list',
                 // `aria-busy="false"` when not busy: the ARIA default, written explicitly.
                 'aria-busy': props.busy,
-                style: { display: 'flex', flexDirection: x ? 'row' : 'column', gap: gap && `${gap}px` },
+                style: { display: 'flex', flexDirection: x ? 'row' : 'column', gap: gap && `${gap}px`, position: 'relative' },
                 // Focus that leaves the window stays in the row: keep it.
                 onFocusout: () => {
                   if (document.hasFocus()) focused = null

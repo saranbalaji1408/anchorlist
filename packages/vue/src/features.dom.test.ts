@@ -174,7 +174,7 @@ describe('scroller', () => {
     expect(e.element).toBe(scroller())
     expect(e.list).toBe(scroller().querySelector('[role="list"]'))
     expect(scroller().style.overflowY).toBe('')
-    expect(scroller().style.position).toBe('relative')
+    expect(e.list.style.position).toBe('relative')
     await render({ items: make(101, 'i'), scroller: factory })
     expect(factory).toHaveBeenCalledTimes(1)
   })

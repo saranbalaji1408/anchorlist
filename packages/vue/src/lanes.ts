@@ -1,4 +1,4 @@
-import { elementScroller, type ElementScrollerOptions, type VirtualizerOptions } from '@anchorlist/core'
+import { elementScroller, type ElementScrollerOptions, type Plan, type VirtualizerOptions } from '@anchorlist/core'
 import type { Lanes } from '@anchorlist/core/lanes'
 import { camelize, defineComponent, h, type PublicProps, type SetupContext, type SlotsType, type VNode } from 'vue'
 import { AnchorList, type AnchorListHandle, type AnchorListProps, type AnchorListSlots } from './AnchorList'
@@ -64,6 +64,8 @@ export const LanesList: <T>(
           ...attrs,
           // The lanes' estimates, and no gap or padding; `count` is not a list prop, and `getKey` takes items.
           ...lanes.options(options),
+          // Whole rows for a grid: the lanes contract renders `lanes.range(plan, count)`.
+          mapRange: (p: Plan): Plan => ({ ...p, ...lanes.range(p, p.options.count) }),
           count: undefined,
           getKey,
           ref: setList,

@@ -42,38 +42,30 @@ export function useAnchorList(
   let syncing = false
   let again = false
   let committing = false
-  let timer: ReturnType<typeof setTimeout> | 0 = 0
 
   const commit = (): void => {
     const plan = rendered
     if (!plan || plan === committed) return
+    // Attaching runs the engine's first pass: its render request must flush before paint too.
     committing = true
-    try {
-      if (!attached) {
-        const e = elements()
-        if (!e) return
-        v.attach(scroller(e))
-        attached = true
-      }
-      committed = plan
-      v.commit(plan)
-    } finally {
-      committing = false
+    if (!attached) {
+      const e = elements()
+      if (!e) return void (committing = false)
+      v.attach(scroller(e))
+      attached = true
     }
+    committed = plan
+    v.commit(plan)
+    committing = false
   }
 
   const v = createVirtualizer(options(), {
     render(sync) {
       // From a resize callback (outside a commit, not sync): re-render in a later task, as React's
       // scheduler does. Vue's microtask flush would mount rows inside the ResizeObserver delivery,
-      // which browsers report as an undelivered-notifications error.
-      if (!sync && !committing) {
-        timer ||= setTimeout(() => {
-          timer = 0
-          version.value++
-        })
-        return
-      }
+      // which browsers report as an undelivered-notifications error. An observer delivers at most
+      // once per frame, so these tasks do not pile up.
+      if (!sync && !committing) return void setTimeout(() => version.value++)
       version.value++
       if (syncing) again = true
       else if (sync) {
@@ -98,7 +90,7 @@ export function useAnchorList(
 
   onMounted(commit)
   onUpdated(commit)
-  // A pending deferred re-render after unmount only bumps an unobserved ref.
+  // A deferred re-render pending at unmount only bumps an unobserved ref.
   onBeforeUnmount(() => v.destroy())
 
   const plan = (): Plan => {
