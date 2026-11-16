@@ -145,7 +145,7 @@ it in `setup()` and `plan()` in the render function. Requires Vue 3.3 or later.
 | --- | --- | --- |
 | `@anchorlist/vue` | `AnchorList`, `useAnchorList` (vue and core external) | 1,410 B (1.45 kB) |
 | `@anchorlist/vue`, `useAnchorList` only | the composable alone | 390 B (500 B) |
-| Vue chat path | core + `AnchorList` | 5,704 B (5.8 kB) |
+| Vue chat path | core + `AnchorList` | 5,703 B (5.8 kB) |
 | `@anchorlist/vue/sticky` | `StickyOverlay`, `StickyItem` (core part included) | 905 B (950 B) |
 | `@anchorlist/vue/horizontal` | `horizontal(base?)` | 189 B (300 B) |
 | `@anchorlist/vue/lanes` | `LanesList` (with `grid` / `masonry` from `@anchorlist/core/lanes`) | 381 B (450 B) |
