@@ -103,7 +103,7 @@ on mount). The lanes own the gap; `paddingStart` and `paddingEnd` are not used. 
 (`windowScroller`, or `horizontal()` with `horizontal: true` lanes) is wrapped by the lanes; that is
 expected to work but not yet covered by tests. A grid
 always renders whole rows. Keep `overscan` (default 400) at least as large as the largest item.
-358 B gzip on top of `<AnchorList>` (budget 400 B). Guide: [virtual grid and masonry](/guide/virtual-grid-masonry).
+342 B gzip on top of `<AnchorList>` (budget 400 B). Guide: [virtual grid and masonry](/guide/virtual-grid-masonry).
 
 ### `useAnchorList(options, elements, scroller?)`
 

@@ -129,7 +129,7 @@ special case. See the [API reference](/api/#lanes) for the full contract.
 ## Size
 
 `@anchorlist/core/lanes` is a separate entry of 1,365 B gzip (budget 1.5 kB) and
-`@anchorlist/react/lanes` adds 358 B on top of `AnchorList` (budget 400 B), both checked in CI. A
+`@anchorlist/react/lanes` adds 342 B on top of `AnchorList` (budget 400 B), both checked in CI. A
 CI check also bundles the plain list import and fails if any lanes code ends up in it, so lists
 that don't use lanes don't pay for them.
 
