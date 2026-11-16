@@ -5,13 +5,14 @@ import { defineConfig } from 'vite'
 // Builds into `fixtures/react/dist/vue`, served by the React fixture's preview
 // server at `/vue/`. Build it after the React 19 fixture, which empties `dist`.
 // Scenarios run against a development build, so Vue warnings reach the
-// console, where scenarios fail on them.
+// console, where scenarios fail on them. The production build (`build`) goes to
+// `/vue-prod/` for the heap check, which a development build of Vue cannot pass.
 export default defineConfig(({ mode }) => ({
-  base: '/vue/',
+  base: mode === 'production' ? '/vue-prod/' : '/vue/',
   plugins: [vue()],
   define: mode === 'development' ? { 'process.env.NODE_ENV': '"development"' } : {},
   build: {
-    outDir: fileURLToPath(new URL('../react/dist/vue', import.meta.url)),
+    outDir: fileURLToPath(new URL(mode === 'production' ? '../react/dist/vue-prod' : '../react/dist/vue', import.meta.url)),
     emptyOutDir: true,
     ...(mode === 'development' ? { minify: false } : {}),
   },

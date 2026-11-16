@@ -87,11 +87,13 @@ test.describe('100k items', () => {
     // items with items of the same shape, so the heap must stay flat. Anything that keeps trimmed
     // items (an id-keyed cache that never evicts) grows by every prepended item.
     if (browserName !== 'chromium') return
-    // Vue development builds hold about 14 MB per 100 updates past a forced GC, which later
-    // collections release. The scenarios run the development fixture, so this check cannot tell a
-    // leak from that on Vue and runs on React only. (A production build of the Vue fixture shows no
-    // adapter growth: what grew there was the fixture's own item interning, now evicted.)
-    if (test.info().project.name.endsWith('-vue')) return
+    // Vue development builds keep about 22 MB per 100 updates past a forced GC (65 MB over the
+    // measured cycles), which later collections release, so on Vue the check runs on the
+    // production build of the same fixture (served at `/vue-prod/`): 140-320 KB, as on React.
+    if (test.info().project.name.endsWith('-vue')) {
+      await page.goto('../vue-prod/')
+      await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
+    }
     const cdp = await page.context().newCDPSession(page)
     const heap = async (): Promise<number> => {
       await cdp.send('HeapProfiler.collectGarbage')

@@ -34,7 +34,7 @@ export default defineConfig({
     // and React 18 (StrictMode checks and React warnings on), served together.
     command:
       'pnpm build && pnpm --filter @anchorlist/fixture-react build:dev && ' +
-      'pnpm --filter @anchorlist/fixture-react18 build:dev && pnpm --filter @anchorlist/fixture-vue build:dev && ' +
+      'pnpm --filter @anchorlist/fixture-react18 build:dev && pnpm --filter @anchorlist/fixture-vue build:dev && pnpm --filter @anchorlist/fixture-vue build && ' +
       `pnpm --filter @anchorlist/fixture-react preview --port ${PORT} --strictPort`,
     url: BASE,
     reuseExistingServer: !isCI,
