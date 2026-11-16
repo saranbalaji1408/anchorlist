@@ -164,6 +164,11 @@ the list re-renders for it. A change that only touches items outside the rendere
 nothing, as with a plain `AnchorList`, so the lanes pick it up at the next render. To apply such a
 change at once, assign a new array.
 
+On each render of the list, the lanes compare the keys of every item laid out so far (everything up to
+the furthest point scrolled to). The keys are read from the raw array, not through Vue's reactive
+proxy, so the walk is negligible for typical lists and only becomes noticeable once on the order of
+100k items have been laid out.
+
 ## Headless
 
 `useAnchorList(options, elements, scroller?)` returns `[virtualizer, plan]` for custom markup. Call
