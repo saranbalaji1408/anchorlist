@@ -304,15 +304,20 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | Entry | Size | Budget |
 | --- | --- | --- |
 | `{ createVirtualizer, elementScroller }` | 4496 B | 4500 B |
-| main entry, everything (`*`) | 5700 B | 6500 B |
-| React chat path (core + react) | 5702 B | 5800 B |
+| main entry, everything (`*`) | 5701 B | 6500 B |
+| React chat path (core + react) | 5704 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
 | `@anchorlist/core/animate` | 758 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
 | `@anchorlist/core/ssr` | 379 B | 400 B |
-| `@anchorlist/core/window` (shared scroller chunk external) | 391 B | 600 B |
-| `@anchorlist/core/rtl` (shared scroller chunk external) | 567 B | 600 B |
+| `@anchorlist/core/window` (shared scroller chunk external) | 343 B | 600 B |
+| `@anchorlist/core/rtl` (shared scroller chunk external) | 517 B | 600 B |
 | `@anchorlist/react/horizontal` (react and core external) | 189 B | 300 B |
+
+The budgets live in `.size-limit.js`. An entry that ignores a relative chunk (`./scroller.js`)
+keeps that import in the measured bundle; `modifyRolldownConfig` writes it as `./scroller.js`.
+By default @size-limit/rolldown writes it as a path from its temporary directory to the
+checkout, and sizes then moved by about 50 B with where the repository was cloned.
 
 The list entry has 4 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
 features therefore live outside `createVirtualizer`: adapter helpers in the main entry

@@ -39,7 +39,7 @@ All of these must pass before a change is considered done.
   of AI tools in commits, pull requests, code comments or docs.
 - **One changeset per PR** that touches a published package: run `pnpm changeset`. All published
   packages are versioned together (`fixed` group). Docs/tooling-only PRs do not need one.
-- **Size budgets are hard limits** (`.size-limit.json`, gzip): core list entry 4.5 kB, core all
+- **Size budgets are hard limits** (`.size-limit.js`, gzip): core list entry 4.5 kB, core all
   6.5 kB, `@anchorlist/react` alone 1.3 kB, React chat path (core + react) 5.8 kB. Do not raise a
   budget without an explicit decision recorded in the PR.
 - **Zero dependencies in core.** Framework packages may only depend on `@anchorlist/core` and peers.

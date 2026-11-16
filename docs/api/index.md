@@ -176,14 +176,14 @@ returns -1.
   in the page, which is measured. It sets `overflow-anchor: none` on `content` while attached (restored on detach). An `align: 'start'`
   list that mounts on an already scrolled page keeps the page in place. It accepts
   `ElementScrollerOptions` (`element` is ignored), so it can be passed as a `scroller` factory.
-  391 B gzip on top of the list (budget 600 B). Guide: [window scroller](/guide/window-scroller).
+  343 B gzip on top of the list (budget 600 B). Guide: [window scroller](/guide/window-scroller).
 - `rtlScroller({ element, list, content? })` from `@anchorlist/core/rtl` (`anchorlist/rtl`): a
   horizontal scroller for a `direction: rtl` container. The start edge is the right edge, the
   spacers are `paddingRight` (before) and `paddingLeft` (after), and the offset is normalised to
   grow leftwards for all three browser `scrollLeft` conventions. A left-to-right container gets a
   plain horizontal `elementScroller`. The direction is read at creation; re-attach (remount) after
   changing it. `rtlConvention()` returns the detected convention: `0` negative (the standard),
-  `1` reverse, `2` default (maximum at the start). 567 B gzip on top of the list (budget 600 B).
+  `1` reverse, `2` default (maximum at the start). 517 B gzip on top of the list (budget 600 B).
   Guide: [RTL virtual list](/guide/rtl-virtual-list).
 - `simulatedScroller(options?)` is a deterministic, DOM-free layout for tests and benchmarks, with
   a manual clock (`tick()`, `advance(ms)`). `quantize: 'round' | 'trunc'` stores whole-pixel
