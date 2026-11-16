@@ -29,6 +29,8 @@ const intern = (items: Item[]): Item[] => {
     return item
   })
   interned = next
+  // Render counts of removed items go too: the counter is per item, like the intern table.
+  for (const id in store.renders) if (!next.has(id)) delete store.renders[id]
   return out
 }
 
