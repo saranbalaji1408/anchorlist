@@ -44,12 +44,7 @@ export interface Lanes {
   options(options: VirtualizerOptions): VirtualizerOptions
   /** The items to render for `range`: whole rows for a grid, `range` itself for masonry. Pure. */
   range(range: Range, count: number): Range
-  /**
-   * Records the committed items. Call in the commit phase, before `commit(plan)`.
-   * Keys are compared with the previous call's `getKey`, which must keep
-   * returning the keys it returned then (pass a new `getKey` over new items
-   * rather than mutating the items in place).
-   */
+  /** Records the committed items. Call in the commit phase, before `commit(plan)`. */
   sync(options: VirtualizerOptions): void
   /** Position of item `index` (lays out lazily up to it). */
   position(index: number): LanePosition
@@ -97,8 +92,10 @@ function lanes(
   let estimate: (i: number) => number = () => DEFAULT_SIZE
   let first: Key | undefined
   let last: Key | undefined
+  /** Key of each laid-out item when it was laid out (`getKey` may read items mutated in place). */
+  const keys: Key[] = []
   const size = (i: number): number => measured.get(getKey(i)) ?? estimate(i)
-  const layout = make(size, () => count, n, g)
+  const layout = make((i) => measured.get((keys[i] = getKey(i))) ?? estimate(i), () => count, n, g)
   const [main, cross, crossSize] = horizontal
     ? (['insetInlineStart', 'top', 'height'] as const)
     : (['top', 'insetInlineStart', 'width'] as const)
@@ -123,7 +120,7 @@ function lanes(
       // list keeps both edge keys. Items after the prefix are laid out lazily.
       const laid = Math.min(layout.laid(), was, o.count)
       let d = 0
-      while (d < laid && getKey(d) === o.getKey(d)) d++
+      while (d < laid && keys[d] === o.getKey(d)) d++
       getKey = o.getKey
       estimate = o.estimateSize ?? (() => DEFAULT_SIZE)
       count = o.count

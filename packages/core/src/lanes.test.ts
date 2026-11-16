@@ -85,10 +85,9 @@ function check(
       const measured = new Map<Key, number>()
       let next = 0
       const fresh = (s: number[]): Item[] => s.map((est) => ({ key: `k${next++}`, est }))
-      const options = (): VirtualizerOptions => {
-        const snapshot = items
-        return { count: snapshot.length, getKey: (i) => snapshot[i]!.key, estimateSize: (i) => snapshot[i]!.est }
-      }
+      // getKey reads the current array when called, like a Svelte adapter, and the swap command
+      // mutates it in place, like Vue or Svelte state: an earlier getKey sees the new keys.
+      const options = (): VirtualizerOptions => ({ count: items.length, getKey: (i) => items[i]!.key, estimateSize: (i) => items[i]!.est })
       lanes.sync(options())
       for (const c of cmds) {
         if (c.t === 'prepend') items = [...fresh(c.sizes), ...items]
@@ -97,9 +96,8 @@ function check(
         else if (c.t === 'trimEnd') items = items.slice(0, Math.max(0, items.length - c.k))
         else if (c.t === 'replace') items = fresh(c.sizes)
         else if (c.t === 'swap' && items.length > 3) {
-          // Two items inside the list trade places: both edge keys and the count stay.
+          // Two items inside the list trade places, in place: both edge keys and the count stay.
           const [i, j] = [1 + (c.a % (items.length - 2)), 1 + (c.b % (items.length - 2))]
-          items = items.slice()
           ;[items[i], items[j]] = [items[j]!, items[i]!]
         }
         if (c.t !== 'measure' && c.t !== 'probe') lanes.sync(options())
@@ -218,6 +216,28 @@ describe('masonry', () => {
       sync(keys)
       const expected = ref(keys.map((k) => est[k]!), 2, 4)
       keys.forEach((_, i) => expect(lanes.position(i)).toEqual(expected[i]))
+    }
+  })
+
+  it('re-lays out after items are reordered in place, behind the same getKey', () => {
+    for (const [make, ref] of [[masonry, refMasonry], [grid, refGrid]] as const) {
+      const lanes = make({ lanes: 2, gap: 4 })
+      const est: Record<string, number> = { a: 10, b: 50, c: 20, d: 30, e: 40, f: 60 }
+      // One array, mutated in place; getKey reads it when called (Vue and Svelte state).
+      const keys = ['a', 'b', 'c', 'd', 'e', 'f']
+      const o: VirtualizerOptions = { count: 6, getKey: (i) => keys[i]!, estimateSize: (i) => est[keys[i]!]! }
+      lanes.sync(o)
+      lanes.position(5)
+      const check = () => {
+        lanes.sync({ ...o })
+        const expected = ref(keys.map((k) => est[k]!), 2, 4)
+        keys.forEach((_, i) => expect(lanes.position(i)).toEqual(expected[i]))
+      }
+      ;[keys[1], keys[4]] = [keys[4]!, keys[1]!]
+      check()
+      // A sort that keeps both edges: a b c d e f by size, then put a and f back at the edges.
+      keys.splice(1, 4, ...keys.slice(1, 5).sort((x, y) => est[y]! - est[x]!))
+      check()
     }
   })
 

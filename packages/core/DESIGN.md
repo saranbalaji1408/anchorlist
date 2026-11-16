@@ -247,8 +247,11 @@ has no room). The seam is the `Scroller`: `lanes.scroller()` wraps it.
   its size. A grid gives the row's size (its tallest item, read live from the mounted siblings,
   plus the gap) to the row's last item and 0 to the rest, so the engine's `SizeIndex` holds the
   row sizes and every item's offset is its row's offset in the layout. The last item of a partial
-  last row carries it, so an append that fills that row moves the share to the new last item; the
-  old one is corrected when it is measured again. Masonry gives `(size + gap) / lanes`, which depends
+  last row carries it, so the share moves when the count changes at the end. After an append
+  that fills that row, an unmounted old last item keeps its cached row share and the scroll size
+  is up to one row too large; after a trim that leaves a partial row, the new last item keeps its
+  cached 0 and the scroll size is up to one row too small. Both recover when the row is measured
+  again, which happens once it mounts (overscan > 0 mounts it before it is visible). Masonry gives `(size + gap) / lanes`, which depends
   only on the item itself (no ordering issues inside a pass), and the engine offset of item `i` is
   the average lane end before it. With shortest-lane placement every item starts between that
   average minus one item size and the average, so an overscan of one item size covers it.
@@ -256,8 +259,12 @@ has no room). The seam is the `Scroller`: `lanes.scroller()` wraps it.
   Positions are computed lazily, in typed arrays, only up to the last item needed: grid row tops
   and sizes; masonry starts, ends, lanes and a running maximum of lane ends, which sizes the list.
   A size change invalidates from its index (masonry) or its row (grid); `sync()` invalidates from
-  the old end for appends, everything for other structural changes, and nothing when the count
-  and both edge keys are unchanged (streaming). A masonry re-layout starts from the lane ends
+  the old end for appends, everything for other structural changes, from the first changed key
+  in the laid-out prefix for a reorder that keeps both edge keys, and nothing otherwise
+  (streaming). The keys are the ones recorded when each item was laid out, not the previous
+  `getKey`, because adapters may read items that were mutated in place (Vue and Svelte state).
+  That walk costs O(deepest laid-out index) per `sync()`, once per host render: about 50-90 µs
+  for 10,000 laid-out items. A masonry re-layout starts from the lane ends
   found by scanning back to the last item of each lane. Sizes of removed keys are pruned when
   they outnumber the live ones.
 - **Writing positions.** `setIndex` (in `commit()`, before measuring) and `setSpacers` (each pass,
@@ -352,7 +359,7 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | `@anchorlist/core/window` (shared scroller chunk external) | 428 B | 600 B |
 | `@anchorlist/core/rtl` (shared scroller chunk external) | 509 B | 600 B |
 | `@anchorlist/react/horizontal` (react and core external) | 189 B | 300 B |
-| `@anchorlist/core/lanes` | 1425 B | 1500 B |
+| `@anchorlist/core/lanes` | 1436 B | 1500 B |
 | `@anchorlist/react/lanes` (react, core and the shared list chunk external) | 342 B | 400 B |
 
 `pnpm size` also runs `scripts/treeshake.ts`, which bundles the list import (from the sources and from `dist`) and fails if any optional entry (`/window`, `/rtl`, `/lanes`, and any later one listed in `exports`) contributes code. It does the same for `AnchorList` from `@anchorlist/react` against the React package's optional entries (`/horizontal`, `/lanes`).
