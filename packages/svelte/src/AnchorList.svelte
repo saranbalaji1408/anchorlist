@@ -32,9 +32,9 @@
 <script lang="ts" generics="T">
   import { elementScroller, type ElementScrollerOptions, type VirtualizerOptions } from '@anchorlist/core'
   import { createAnchorList } from './createAnchorList.svelte.js'
-  import type { AnchorListHandle, AnchorListProps } from './types.js'
+  import type { AnchorListHandle, InternalProps } from './types.js'
 
-  const { items, getKey, children, header, footer, sticky, rowClass, busy, scroller, rows: toRows, ...rest }: AnchorListProps<T> = $props()
+  const { items, getKey, children, header, footer, sticky, rowClass, busy, scroller, rows: toRows, ...rest }: InternalProps<T> = $props()
 
   let element: HTMLDivElement | undefined = $state()
   let content: HTMLElement | undefined = $state()

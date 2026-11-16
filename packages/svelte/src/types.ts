@@ -74,9 +74,13 @@ export interface AnchorListProps<T> extends Options, Omit<HTMLAttributes<HTMLDiv
    *   list under `dir="rtl"` needs.
    */
   scroller?: ((elements: ElementScrollerOptions) => Scroller<Element>) | undefined
-  /**
-   * The rows to render for a plan, for layouts that render other rows than the
-   * plan's range (`LanesList` renders whole grid rows). Default: the plan's range.
-   */
+}
+
+/**
+ * Internal props of `AnchorList`, not part of the public API: the rows to
+ * render for a plan, for layouts that render other rows than the plan's range
+ * (`LanesList` renders whole grid rows). Default: the plan's range.
+ */
+export interface InternalProps<T> extends AnchorListProps<T> {
   rows?: ((plan: Plan) => Range) | undefined
 }
