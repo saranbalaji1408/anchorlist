@@ -145,12 +145,13 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
   // The focused row stays mounted outside the range, out of flow, in the same
   // keyed array as the rows so that React never re-creates it (see keptRow).
   const kept = keptRow(v, plan, focused.current)
-  // A horizontal list (`horizontal()` lays the rows out in a row) keeps it at its inline start, which
-  // is the left edge, or the right edge in a right-to-left scroll container: content space either way.
+  // Positioned in list space (the list is its containing block), so a page header above a
+  // window-scrolled list does not shift it. A horizontal list (`horizontal()` lays the rows out
+  // in a row) keeps it at its inline start: the left edge, or the right edge in right-to-left.
   const x = list.current?.style.flexDirection == 'row'
   if (kept)
     rows[kept.index < plan.start ? 'unshift' : 'push'](
-      row(kept.index, x ? { position: 'absolute', height: '100%', insetInlineStart: kept.start } : { position: 'absolute', width: '100%', top: kept.start }),
+      row(kept.index, x ? { position: 'absolute', height: '100%', insetInlineStart: kept.offset } : { position: 'absolute', width: '100%', top: kept.offset }),
     )
   return (
     <div
@@ -166,7 +167,7 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
           ref={list}
           role="list"
           aria-busy={props.busy}
-          style={{ display: 'flex', flexDirection: 'column', gap: props.gap }}
+          style={{ display: 'flex', flexDirection: 'column', gap: props.gap, position: 'relative' }}
           // Focus that leaves the window stays in the row: keep it.
           onBlur={() => {
             if (document.hasFocus()) focused.current = null

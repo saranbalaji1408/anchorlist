@@ -365,8 +365,8 @@ Size-driven choices:
 - **RTL direction changes** are not observed: the direction is read when `rtlScroller` is created.
 - **v0.2 helpers with v0.3 scrollers.** `animateToKey` takes a `scroller` (window, RTL and
   horizontal work); `initialPlan` fills the larger side of `initialRect`; the kept focused row uses
-  `inset-inline-start` on horizontal lists (LTR and RTL). Not yet: the kept row's position under
-  `windowScroller` (it is offset by the container's page position; it stays mounted and focused),
-  and `StickyItem` / `stickyState` on horizontal, RTL and window lists (the React sticky entry has
+  `inset-inline-start` on horizontal lists (LTR and RTL), positioned in list space
+  (`keptRow().offset`, from item 0's rect minus `paddingStart`, so no new engine method), which is
+  also right under `windowScroller` below a page header. Not yet: `StickyItem` / `stickyState` on horizontal, RTL and window lists (the React sticky entry has
   6 B of budget left).
 - **Not yet:** lanes.

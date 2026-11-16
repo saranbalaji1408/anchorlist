@@ -52,4 +52,4 @@ const renderMessage = (m: Message) => <Bubble message={m} />
   Chromium diff changed props for the Performance panel's component track, which is O(n) for an
   `items` array of 100k entries on every render. Production builds and other browsers do not do
   this.
-- Sticky items, the kept focused row and `initialRect` are vertical-only for now.
+- Sticky items are vertical-only and need the default `elementScroller` for now.

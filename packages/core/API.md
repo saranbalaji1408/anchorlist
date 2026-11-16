@@ -425,24 +425,25 @@ position. `keptRow(v, plan, key)` (main entry) tells an adapter where to keep th
 while it is outside `plan`:
 
 - `null` when `key` is null, inside the range, unknown or not committed yet;
-- else `{ index, start }`: its index in `plan.options` (looked up by key when the list changed
-  since the last commit; O(n) only then) and its start in list space (padding included).
+- else `{ index, start, offset }`: its index in `plan.options` (looked up by key when the list
+  changed since the last commit; O(n) only then), its start in content space (like
+  `getItemRect`) and its `offset` in list space (padding included).
 
-The adapter renders it with `position: absolute; top: start; width: 100%` inside the list (the
-scroll container is `position: relative`), before the planned rows when `index < plan.start` and after them
+The adapter renders it with `position: absolute; top: offset; width: 100%` inside the list (the
+list is `position: relative`), before the planned rows when `index < plan.start` and after them
 otherwise, in the same keyed child list, so the framework never moves its node. It stays registered
 with `measureElement`, so it keeps `data-index` / `aria-posinset`. The adapter tracks the focused key
 from `focusin` (the row's `data-index`) and clears it on `focusout` unless the window lost focus.
 
 Lists should also set `aria-busy` on the list element while loading (React: `busy`).
 
-The kept row is positioned in content space, so its containing block must be the scroll
-container (`position: relative` on it, nothing positioned in between). Vertical lists use `top`
-and `width: 100%`. Horizontal lists use `inset-inline-start` and `height: 100%`, which is the left
-edge, or the right edge in a right-to-left container: content space either way (React detects a
-horizontal list from the list's `flex-direction: row`). With `windowScroller` the scroll container
-is the document, so the kept row stays mounted and focused but is offset by the list container's
-position in the page (not fixed yet).
+The kept row is positioned in list space, so its containing block must be the list
+(`position: relative` on it). Vertical lists use `top` and `width: 100%`. Horizontal lists use
+`inset-inline-start` and `height: 100%`, which is the left edge, or the right edge in a
+right-to-left container: list space either way (React detects a horizontal list from the list's
+`flex-direction: row`). List space does not depend on where the list sits, so this holds with
+`windowScroller` below a page header too. Until a change at index 0 is committed, `offset` falls
+back to `start` for that one render.
 
 ### Smooth scrolling
 

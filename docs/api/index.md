@@ -214,7 +214,8 @@ CI.
   `align` edge, so server and hydration renders match. Guide:
   [server rendering](/guide/server-rendering).
 - **`keptRow(v, plan, key)`** (main entry) tells an adapter where to keep a focused row while it is
-  outside the plan: `{ index, start }` or `null`.
+  outside the plan: `{ index, start, offset }` or `null`. Adapters position it at `offset`
+  (list space) inside a `position: relative` list.
 
 ### Behaviour
 

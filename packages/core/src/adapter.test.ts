@@ -30,8 +30,8 @@ describe('keptRow', () => {
     const plan = h.v.plan()
     expect(plan.start).toBeGreaterThan(3)
     // Content space: header, padding, then items with gaps (like getItemRect).
-    expect(keptRow(h.v, plan, h.keys[3]!)).toEqual({ index: 3, start: 100 + 10 + 3 * 54 })
-    expect(keptRow(h.v, plan, h.keys[499]!)).toEqual({ index: 499, start: 100 + 10 + 499 * 54 })
+    expect(keptRow(h.v, plan, h.keys[3]!)).toEqual({ index: 3, start: 100 + 10 + 3 * 54, offset: 10 + 3 * 54 })
+    expect(keptRow(h.v, plan, h.keys[499]!)).toEqual({ index: 499, start: 100 + 10 + 499 * 54, offset: 10 + 499 * 54 })
     expect(keptRow(h.v, plan, h.keys[3]!)!.start).toBe(h.v.getItemRect(h.keys[3]!)!.start)
   })
 

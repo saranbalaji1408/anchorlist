@@ -138,8 +138,10 @@ for (const margin of [0, MARGIN]) {
         return { position: row?.style.position, focus: !!row?.contains(document.activeElement) }
       })
       expect(state).toEqual({ position: 'absolute', focus: true })
-      // Not checked: its position is off by the list container's offset in the page (a known limit).
       expect(await a.offset()).toBeGreaterThan(10000)
+      // At its own position below the page header: content space minus the page scroll.
+      const rect = (await d.getItemRect('m2'))!
+      expect(Math.abs((await a.start('m2')) - (rect.start - (await a.offset())))).toBeLessThanOrEqual(1)
     })
 
     test('pins to the bottom of the page and follows appends (align end)', async ({ d, page }) => {
