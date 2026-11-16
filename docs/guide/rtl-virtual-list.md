@@ -74,7 +74,7 @@ ignored (it is always horizontal).
 
 ## Size
 
-`@anchorlist/core/rtl` is a separate entry. It adds 517 B gzip to an app that already uses the
+`@anchorlist/core/rtl` is a separate entry. It adds 509 B gzip to an app that already uses the
 list (budget 600 B, checked in CI).
 
 ## How it is tested

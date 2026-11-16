@@ -307,11 +307,11 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | main entry, everything (`*`) | 5702 B | 6500 B |
 | React chat path (core + react) | 5710 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
-| `@anchorlist/core/animate` | 758 B | 800 B |
+| `@anchorlist/core/animate` | 789 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
 | `@anchorlist/core/ssr` | 379 B | 400 B |
-| `@anchorlist/core/window` (shared scroller chunk external) | 343 B | 600 B |
-| `@anchorlist/core/rtl` (shared scroller chunk external) | 517 B | 600 B |
+| `@anchorlist/core/window` (shared scroller chunk external) | 428 B | 600 B |
+| `@anchorlist/core/rtl` (shared scroller chunk external) | 509 B | 600 B |
 | `@anchorlist/react/horizontal` (react and core external) | 189 B | 300 B |
 
 The budgets live in `.size-limit.js`. An entry that ignores a relative chunk (`./scroller.js`)
