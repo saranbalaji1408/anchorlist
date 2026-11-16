@@ -90,9 +90,15 @@ for (const margin of [0, MARGIN]) {
         const ends = await Promise.all(keys.map((k) => a.end(k)))
         expect(Math.min(...starts), `above ${height}`).toBeLessThanOrEqual(0)
         expect(Math.max(...ends), `above ${height}`).toBeGreaterThanOrEqual(view)
-        const key = await rowFrom(page, 1)
-        const rect = (await d.getItemRect(key))!
-        expect(Math.abs((await a.start(key)) - (rect.start - (await a.offset()))), `above ${height}`).toBeLessThanOrEqual(1)
+        // The engine's rect of the row being read matches the DOM once the host has committed the
+        // render the resize requested. With React 18 under load (WebKit) that commit can land a
+        // few frames later; the rows above already cover the viewport meanwhile.
+        const mismatch = async (): Promise<number> => {
+          const key = await rowFrom(page, 1)
+          const rect = (await d.getItemRect(key))!
+          return Math.abs((await a.start(key)) - (rect.start - (await a.offset())))
+        }
+        await expect.poll(mismatch, { message: `above ${height}`, timeout: 2000 }).toBeLessThanOrEqual(1)
       }
     })
 
