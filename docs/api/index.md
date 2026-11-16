@@ -224,7 +224,7 @@ stays one-dimensional; the returned `Lanes` object adapts the host:
 
 Give the list `position: relative`. Padding is not supported (use a header or footer). A change
 before the viewport that is not a whole grid row, or any change for masonry, can move later items
-to other lanes; the anchor item keeps its main-axis position. 1,365 B gzip (budget 1.5 kB). Full
+to other lanes; the anchor item keeps its main-axis position. 1,425 B gzip (budget 1.5 kB). Full
 contract: [`API.md`](https://github.com/saranbalaji1408/anchorlist/blob/main/packages/core/API.md#lanes).
 
 ### Opt-in entries

@@ -44,7 +44,12 @@ export interface Lanes {
   options(options: VirtualizerOptions): VirtualizerOptions
   /** The items to render for `range`: whole rows for a grid, `range` itself for masonry. Pure. */
   range(range: Range, count: number): Range
-  /** Records the committed items. Call in the commit phase, before `commit(plan)`. */
+  /**
+   * Records the committed items. Call in the commit phase, before `commit(plan)`.
+   * Keys are compared with the previous call's `getKey`, which must keep
+   * returning the keys it returned then (pass a new `getKey` over new items
+   * rather than mutating the items in place).
+   */
   sync(options: VirtualizerOptions): void
   /** Position of item `index` (lays out lazily up to it). */
   position(index: number): LanePosition
@@ -56,6 +61,8 @@ export interface Lanes {
 interface Strategy {
   /** Items changed from index `from` on; -1 when the items changed structurally. */
   invalidate(from: number): void
+  /** Number of items laid out (from index 0). */
+  laid(): number
   /** Lays out items up to `to` and returns its position. */
   place(i: number): LanePosition
   /** Main-axis end of the layout through item `to` (gaps excluded), in px. */
@@ -112,6 +119,11 @@ function lanes(
       const was = count
       const k = (i: number): Key | undefined => (i >= 0 && i < o.count ? o.getKey(i) : undefined)
       const sameStart = k(0) === first
+      // First changed key in the laid-out prefix: a reorder or a swap inside the
+      // list keeps both edge keys. Items after the prefix are laid out lazily.
+      const laid = Math.min(layout.laid(), was, o.count)
+      let d = 0
+      while (d < laid && getKey(d) === o.getKey(d)) d++
       getKey = o.getKey
       estimate = o.estimateSize ?? (() => DEFAULT_SIZE)
       count = o.count
@@ -127,7 +139,8 @@ function lanes(
           measured.clear()
           live.forEach((v, key) => measured.set(key, v))
         }
-      } else if (count !== was) layout.invalidate(was - 1)
+      } else if (d < laid) layout.invalidate(d)
+      else if (count !== was) layout.invalidate(was - 1)
       first = k(0)
       last = k(count - 1)
     },
@@ -249,6 +262,7 @@ export function grid(options: LanesOptions): Lanes {
       invalidate(from) {
         done = Math.max(0, Math.min(done, Math.floor(from / n)))
       },
+      laid: () => done * n,
       place(i) {
         // Lay out first: it may replace `top`.
         const row = layOut(i)
@@ -316,6 +330,7 @@ export function masonry(options: LanesOptions): Lanes {
       invalidate(from) {
         done = Math.max(0, Math.min(done, from))
       },
+      laid: () => done,
       place(i) {
         place(i)
         return { start: start[i]!, lane: lane[i]! }

@@ -56,6 +56,7 @@ type Cmd =
   | { t: 'prepend' | 'append'; sizes: number[] }
   | { t: 'trimStart' | 'trimEnd'; k: number }
   | { t: 'replace'; sizes: number[] }
+  | { t: 'swap'; a: number; b: number }
   | { t: 'measure'; at: number; size: number }
   | { t: 'probe'; at: number[] }
 
@@ -65,6 +66,7 @@ const cmd: fc.Arbitrary<Cmd> = fc.oneof(
   fc.record({ t: fc.constantFrom('prepend' as const, 'append' as const), sizes }),
   fc.record({ t: fc.constantFrom('trimStart' as const, 'trimEnd' as const), k: fc.nat(20) }),
   { weight: 1, arbitrary: fc.record({ t: fc.constant('replace' as const), sizes }) },
+  { weight: 2, arbitrary: fc.record({ t: fc.constant('swap' as const), a: fc.nat(), b: fc.nat() }) },
   { weight: 4, arbitrary: fc.record({ t: fc.constant('measure' as const), at: fc.nat(), size }) },
   { weight: 4, arbitrary: fc.record({ t: fc.constant('probe' as const), at: fc.array(fc.nat(), { maxLength: 8 }) }) },
 )
@@ -94,6 +96,12 @@ function check(
         else if (c.t === 'trimStart') items = items.slice(Math.min(c.k, items.length))
         else if (c.t === 'trimEnd') items = items.slice(0, Math.max(0, items.length - c.k))
         else if (c.t === 'replace') items = fresh(c.sizes)
+        else if (c.t === 'swap' && items.length > 3) {
+          // Two items inside the list trade places: both edge keys and the count stay.
+          const [i, j] = [1 + (c.a % (items.length - 2)), 1 + (c.b % (items.length - 2))]
+          items = items.slice()
+          ;[items[i], items[j]] = [items[j]!, items[i]!]
+        }
         if (c.t !== 'measure' && c.t !== 'probe') lanes.sync(options())
         if (!items.length) continue
         if (c.t === 'measure') {
@@ -195,6 +203,21 @@ describe('masonry', () => {
       const extra = spacers[spacers.length - 1]![1] - truth
       expect(extra).toBeGreaterThanOrEqual(0)
       expect(extra).toBeLessThanOrEqual(100)
+    }
+  })
+
+  it('re-lays out from the first changed key when items inside the list are reordered', () => {
+    for (const [make, ref] of [[masonry, refMasonry], [grid, refGrid]] as const) {
+      const lanes = make({ lanes: 2, gap: 4 })
+      const est: Record<string, number> = { a: 10, b: 50, c: 20, d: 30, e: 40, f: 60 }
+      const sync = (keys: string[]) => lanes.sync({ count: keys.length, getKey: (i) => keys[i]!, estimateSize: (i) => est[keys[i]!]! })
+      sync(['a', 'b', 'c', 'd', 'e', 'f'])
+      lanes.position(5)
+      // b and e trade places: same count, same first and last key.
+      const keys = ['a', 'e', 'c', 'd', 'b', 'f']
+      sync(keys)
+      const expected = ref(keys.map((k) => est[k]!), 2, 4)
+      keys.forEach((_, i) => expect(lanes.position(i)).toEqual(expected[i]))
     }
   })
 
