@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config'
+import core from './packages/core/package.json' with { type: 'json' }
 
 export default defineConfig({
+  // Same injection as packages/core/tsdown.config.ts, for tests that import the core source.
+  define: { __VERSION__: JSON.stringify(core.version) },
   test: {
     projects: [
       {

@@ -29,6 +29,13 @@ const builtFiles = (pkg: string): string[] => {
 
 const startsWithDirective = (file: string): boolean => existsSync(file) && DIRECTIVE.test(readFileSync(file, 'utf8'))
 
+describe('core VERSION in built output', () => {
+  it('is injected from package.json', () => {
+    const { version } = JSON.parse(readFileSync(join(root, 'packages/core/package.json'), 'utf8')) as { version: string }
+    expect(readFileSync(join(root, 'packages/core/dist/index.js'), 'utf8')).toContain(`const VERSION = ${JSON.stringify(version)}`)
+  })
+})
+
 describe("'use client' directive in built output", () => {
   for (const pkg of ['react', 'anchorlist']) {
     it(`starts every JS entry and chunk of ${pkg}`, () => {
