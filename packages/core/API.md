@@ -225,6 +225,7 @@ interface Scroller<E> {
   listen(handler: (event: ScrollerEvent) => void): () => void
   now(): number; frame(cb): () => void; timeout(cb, ms): () => void
   readonly touchWebKit: boolean
+  readonly inputTarget?: EventTarget           // where input outside the container arrives (window for windowScroller)
 }
 ```
 
@@ -247,7 +248,7 @@ interface Scroller<E> {
   no end inset: for a fixed bar at the end of the window (a chat composer), render a spacer of its
   size after the list (page content after the list acts as a footer). React's sticky overlay sticks
   at `top: 0`, under a fixed bar of `scrollMargin` px. It listens to `scroll` and
-  `resize` on `window` and to input events on the document element. It accepts
+  `resize` on `window` and to input events on the document element. Its `inputTarget` is `window`. It accepts
   `ElementScrollerOptions` (`element` is ignored), so it can be used wherever an `elementScroller`
   factory is expected. Budget: 0.6 kB gzip on top of the list entry.
 - `rtlScroller({ element, list, content? })` from `@anchorlist/core/rtl`: a horizontal scroller for
@@ -459,7 +460,7 @@ function animateToKey(
   options?: ScrollToOptions & {
     duration?: number
     easing?: (t) => number
-    scroller?: Pick<Scroller, 'offset' | 'setOffset' | 'viewport' | 'scrollSize'>
+    scroller?: Pick<Scroller, 'offset' | 'setOffset' | 'viewport' | 'scrollSize' | 'inputTarget'>
     signal?: AbortSignal
   },
 ): Promise<boolean>
@@ -471,8 +472,10 @@ function animateToKey(
   lands exactly and locks while sizes settle. Default: 400 ms, ease in-out cubic.
 - Frames write the offset like a user scroll, so the engine keeps the visible rows anchored while
   rows mount on the way.
-- `wheel`, `touchstart`, `pointerdown` or `keydown` on the element, `signal`, or a newer animation
-  on the same element cancel it (resolves `false`). An unknown key, a key removed on the way, or a
+- `wheel`, `touchstart`, `pointerdown` or `keydown` on the element or on the scroller's
+  `inputTarget` (the window for `windowScroller`, so input anywhere on the page counts), `signal`, or
+  a newer animation on the same element cancel it (resolves `false`). Input is watched from the first
+  frame, so the event that started the animation (a keyboard shortcut) does not cancel it. An unknown key, a key removed on the way, or a
   container detached on the way (the list unmounted) resolve `false`.
 - `element` is the list's container: it receives the input listeners, and its detachment ends the
   animation. Offsets go through `scroller` (default: `element`'s vertical `scrollTop`). Pass a

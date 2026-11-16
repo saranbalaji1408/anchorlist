@@ -65,6 +65,8 @@ describe('windowScroller', () => {
     expect(sc.scrollSize()).toBe(5000)
     expect(sc.measure(row as never)).toEqual({ start: 340, size: 42 })
     expect(sc.listStart()).toBe(300)
+    // Input outside the list scrolls the page too: animateToKey also listens there.
+    expect(sc.inputTarget).toBe(window)
     sc.setSpacers(10, 20)
     expect(list.style).toEqual({ paddingTop: '10px', paddingBottom: '20px' })
     sc.translate(-5)

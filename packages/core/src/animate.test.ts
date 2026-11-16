@@ -6,7 +6,7 @@ import type { Key } from './types'
 const VIEWPORT = 500
 
 /** A scroll container element backed by the harness's simulated scroller. */
-function element(h: Harness): HTMLElement & { fire(type: string): void } {
+function element(h: Harness): HTMLElement & { fire(type: string): void; listeners: Map<string, Set<() => void>> } {
   const listeners = new Map<string, Set<() => void>>()
   return {
     get scrollTop() {
@@ -33,7 +33,7 @@ function element(h: Harness): HTMLElement & { fire(type: string): void } {
       listeners.get(type)?.forEach((fn) => fn())
     },
     listeners,
-  } as unknown as HTMLElement & { fire(type: string): void }
+  } as unknown as HTMLElement & { fire(type: string): void; listeners: Map<string, Set<() => void>> }
 }
 
 let now = 0
@@ -141,6 +141,33 @@ describe('animateToKey', () => {
     await run(h)
     await expect(fourth).resolves.toBe(true)
     expect(h.visualStart(h.keys[10]!)).toBeCloseTo(0, 0)
+  })
+
+  it("is cancelled by input on the scroller's input target (the window) and stops listening there", async () => {
+    const h = mount({ keys: keysOf(3000), size, viewport: VIEWPORT })
+    await h.settle()
+    const el = element(h)
+    // The window of a page that scrolls: input outside the list arrives here.
+    const win = element(h)
+    const done = animateToKey(h.v, el, h.keys[2000]!, { scroller: { ...h.sim, inputTarget: win } })
+    await run(h, 3)
+    expect([...win.listeners.keys()]).toEqual(['wheel', 'touchstart', 'pointerdown', 'keydown'])
+    expect(win.listeners.has('scroll')).toBe(false)
+    win.fire('keydown')
+    await expect(done).resolves.toBe(false)
+    for (const target of [el, win]) for (const fns of target.listeners.values()) expect(fns.size).toBe(0)
+  })
+
+  it('is not cancelled by the input event that started it', async () => {
+    const h = mount({ keys: keysOf(3000), size, viewport: VIEWPORT })
+    await h.settle()
+    const el = element(h)
+    let done: Promise<boolean> | undefined
+    // A keyboard shortcut: the keydown is still propagating when the animation starts.
+    el.addEventListener('keydown', () => (done = animateToKey(h.v, el, h.keys[2000]!)))
+    el.fire('keydown')
+    await run(h)
+    await expect(done).resolves.toBe(true)
   })
 
   it('jumps at once with prefers-reduced-motion or duration 0, and rejects unknown keys', async () => {

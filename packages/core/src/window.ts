@@ -44,6 +44,8 @@ export function windowScroller({ list, content = list, axis: ax = VERTICAL, scro
       return { start: at(e), size: e.getBoundingClientRect()[ax.size] }
     },
     listStart: () => at(list),
+    // Wheel and keys outside the list and the page scrollbar scroll the window too.
+    inputTarget: window,
     listen(handler) {
       // Touch and wheel events bubble to the document element; scroll and resize are dispatched on the window.
       const off = base.listen(handler)

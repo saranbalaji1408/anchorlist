@@ -120,6 +120,30 @@ for (const margin of [0, MARGIN]) {
       expect(Math.abs(await a.start('m600'))).toBeLessThanOrEqual(1)
     })
 
+    test('input anywhere on the page cancels an animation where it is', async ({ d, page }) => {
+      const a = axis(page)
+      await d.mount({ items: makeItems(1000, 'm', rng(62), 40, 160), align: 'start', layout: 'window', scrollMargin: margin })
+      // Outside the list, so only the window sees it: a wheel over the page, a key with nothing focused.
+      for (const input of ['wheel', 'keydown'] as const) {
+        const [landed] = await Promise.all([
+          d.animateToKey('m800', { duration: 1500 }),
+          (async () => {
+            await d.frames(6)
+            await page.evaluate((input) => {
+              const init = { bubbles: true, cancelable: true }
+              document.body.dispatchEvent(input === 'wheel' ? new WheelEvent(input, { ...init, deltaY: 10 }) : new KeyboardEvent(input, { ...init, key: 'Shift' }))
+            }, input)
+          })(),
+        ])
+        expect(landed, input).toBe(false)
+        const at = await a.offset()
+        expect(at, input).toBeGreaterThan(0)
+        await d.frames(5)
+        expect(Math.abs((await a.offset()) - at), input).toBeLessThanOrEqual(1)
+        expect(await d.isMounted('m800'), input).toBe(false)
+      }
+    })
+
     test('keeps a focused row mounted and focused when the page scrolls far away', async ({ d, page }) => {
       const a = axis(page)
       await d.mount({ items: makeItems(1000, 'm', rng(61), 40, 160), align: 'start', layout: 'window', scrollMargin: margin })

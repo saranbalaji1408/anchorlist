@@ -75,6 +75,11 @@ export interface Scroller<E = unknown> {
   timeout(cb: () => void, ms: number): () => void
   /** True on touch WebKit (iOS, iPadOS), where writing the offset during momentum stops the fling. */
   readonly touchWebKit: boolean
+  /**
+   * Where user input that scrolls it arrives when that is not the scroll
+   * container: `window` for `windowScroller`. `animateToKey` cancels on input there too.
+   */
+  readonly inputTarget?: EventTarget
 }
 
 /** DOM property names for one scroll axis, so the maths stays 1-D. */

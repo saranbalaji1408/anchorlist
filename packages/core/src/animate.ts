@@ -15,7 +15,7 @@ export interface AnimateOptions extends ScrollToOptions {
    * `rtlScroller({ element, list: element })` for a right-to-left one, or
    * `elementScroller({ element, list: element, axis: HORIZONTAL })`.
    */
-  scroller?: Pick<Scroller, 'offset' | 'setOffset' | 'viewport' | 'scrollSize'>
+  scroller?: Pick<Scroller, 'offset' | 'setOffset' | 'viewport' | 'scrollSize' | 'inputTarget'>
   /** Aborting cancels the animation (the promise resolves `false`). */
   signal?: AbortSignal
 }
@@ -34,9 +34,11 @@ const running = new WeakMap<object, () => void>()
  *
  * Each frame scrolls like a user would, so the engine keeps the content
  * anchored while rows mount. User input on the container (`wheel`,
- * `touchstart`, `pointerdown`, `keydown`), `signal`, or a new animation on
- * the same container cancels it, and so does detaching the container (the
- * list unmounted). With `prefers-reduced-motion: reduce` it jumps at once.
+ * `touchstart`, `pointerdown`, `keydown`) or on the scroller's `inputTarget`
+ * (the window for `windowScroller`), `signal`, or a new animation on the same
+ * container cancels it, and so does detaching the container (the list
+ * unmounted). Input is watched from the first frame, so the event that
+ * started the animation never cancels it. With `prefers-reduced-motion: reduce` it jumps at once.
  *
  * @returns Resolves `true` once landed, `false` if the key is unknown or the
  *   animation was cancelled.
@@ -67,13 +69,16 @@ export function animateToKey(
     if (duration <= 0 || (typeof matchMedia == 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches))
       return resolve(land())
     const types = ['wheel', 'touchstart', 'pointerdown', 'keydown']
+    // Never `scroll`: every frame writes the offset, which dispatches it.
+    const on = (m: 'addEventListener' | 'removeEventListener'): void =>
+      [element, sc.inputTarget].forEach((e) => types.forEach((t) => e?.[m](t, stop, { passive: true })))
     const start = performance.now()
     /** Eased progress at the previous frame. */
     let done = 0
     let id = 0
     const finish = (landed: boolean): void => {
       cancelAnimationFrame(id)
-      types.forEach((t) => element.removeEventListener(t, stop))
+      on('removeEventListener')
       signal?.removeEventListener('abort', stop)
       if (running.get(element) === stop) running.delete(element)
       resolve(landed)
@@ -85,6 +90,8 @@ export function animateToKey(
       // A removed key or an unmounted list (detached container) ends it unlanded.
       if (!r || !element.isConnected) return finish(false)
       if (t >= 1) return finish(land())
+      // From the first frame: the event that started the animation may still be propagating.
+      if (!done) on('addEventListener')
       const viewport = sc.viewport()
       const target = Math.min(Math.max(r.start + offset + (r.size - viewport) * ALIGN[align], 0), sc.scrollSize() - viewport)
       const e = easing(t)
@@ -94,7 +101,6 @@ export function animateToKey(
       done = e
       id = requestAnimationFrame(frame)
     }
-    types.forEach((t) => element.addEventListener(t, stop, { passive: true }))
     signal?.addEventListener('abort', stop)
     running.set(element, stop)
     id = requestAnimationFrame(frame)

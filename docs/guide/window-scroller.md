@@ -118,7 +118,7 @@ v.attach(windowScroller({ list, content, scrollMargin: 56 }))
 ## Size
 
 `@anchorlist/core/window` is a separate entry, so apps that don't use it don't pay for it. It
-adds 343 B gzip to an app that already uses the list (budget 600 B, checked in CI). It reuses the
+adds 354 B gzip to an app that already uses the list (budget 600 B, checked in CI). It reuses the
 list's `elementScroller` code.
 
 ## How it is tested

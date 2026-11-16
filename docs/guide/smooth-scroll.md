@@ -57,7 +57,8 @@ way.
 ## Cancelling and reduced motion
 
 - A `wheel`, `touchstart`, `pointerdown` or `keydown` on the scroll container stops the
-  animation where it is, as the user expects.
+  animation where it is, as the user expects. With a `windowScroller`, the same input anywhere on
+  the page stops it. The event that started the animation (a keyboard shortcut, say) does not.
 - A new `animateToKey` on the same container replaces the running one.
 - If the item is removed on the way, or the list unmounts, it stops and resolves `false`.
 - With `prefers-reduced-motion: reduce`, it jumps at once instead of animating.
@@ -71,7 +72,7 @@ and writes the offset the way the list does.
 
 ## Size
 
-`@anchorlist/core/animate` is a separate entry of 758 B gzip (budget 800 B). Lists that only
+`@anchorlist/core/animate` is a separate entry of 789 B gzip (budget 800 B). Lists that only
 jump don't load it.
 
 ## How it is tested
