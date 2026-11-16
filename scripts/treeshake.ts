@@ -93,6 +93,24 @@ await check('react', 'AnchorList', /^(react|react-dom|@anchorlist\/core)(\/|$)/)
 // Likewise for the Vue package.
 await check('vue', 'AnchorList', /^(vue|@anchorlist\/core)(\/|$)/)
 
+// Svelte: the components ship as `.svelte` files, so the check bundles their
+// compiled JavaScript (`dist/.size`, from `pnpm build`). An optional entry is
+// its own module plus the components it re-exports.
+{
+  const dir = join(root, 'packages', 'svelte')
+  const size = join(dir, 'dist', '.size')
+  const optional = optionalEntries(dir)
+  const ids = (await included(join(size, 'index.js'), 'AnchorList', /^(svelte|@anchorlist\/core)(\/|$)/)).map((id) => id.replace(/\\/g, '/'))
+  for (const name of optional) {
+    const own = [`${name}.js`, ...Array.from(readFileSync(join(size, `${name}.js`), 'utf8').matchAll(/from\s+['"]\.\/([^'"]+\.svelte\.js)['"]/g), (m) => m[1]!)]
+    for (const file of own) {
+      const hit = ids.find((id) => id.endsWith(`/packages/svelte/dist/.size/${file}`))
+      if (hit) failures.push(`svelte dist: { AnchorList } includes the "${name}" entry (${hit})`)
+    }
+  }
+  checked.push(`{ AnchorList } excludes ${optional.map((n) => `svelte/${n}`).join(', ')}`)
+}
+
 if (failures.length) {
   console.error(failures.join('\n'))
   process.exit(1)
