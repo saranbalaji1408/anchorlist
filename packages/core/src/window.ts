@@ -27,16 +27,15 @@ export interface WindowScrollerOptions {
  * like the list's header and footer: the scroll range is the whole document.
  * Accepts `ElementScrollerOptions` too (`element` is ignored), so it can be
  * passed wherever an `elementScroller` factory is expected. Sets
- * `overflow-anchor: none` on `content`, so the browser's own scroll anchoring
- * never picks a row.
+ * `overflow-anchor: none` on `content` while attached (restored on detach), so
+ * the browser's own scroll anchoring never picks a row.
  */
 export function windowScroller({ list, content = list, axis: ax = VERTICAL, scrollMargin: m = 0 }: WindowScrollerOptions): Scroller<Element> {
   const root = document.documentElement
   // The document element scrolls the window in standards mode; its client size is the viewport.
   const base = elementScroller({ element: root, list, content, axis: ax })
   const at = (e: Element): number => e.getBoundingClientRect()[ax.start] - m
-  // The document keeps browser scroll anchoring; it must not pick rows, which the engine anchors.
-  content.style.overflowAnchor = 'none'
+  const style = content.style
   return {
     ...base,
     viewport: () => root[ax.client] - m,
@@ -51,9 +50,14 @@ export function windowScroller({ list, content = list, axis: ax = VERTICAL, scro
       const fn = (e: Event): void => handler(e.type as ScrollerEvent)
       const types = ['scroll', 'resize']
       types.forEach((t) => window.addEventListener(t, fn, { passive: true }))
+      // The document keeps browser scroll anchoring; it must not pick rows, which the engine
+      // anchors. Listening spans attach to detach, so the app's own value comes back on detach.
+      const anchor = style.overflowAnchor
+      style.overflowAnchor = 'none'
       return () => {
         off()
         types.forEach((t) => window.removeEventListener(t, fn))
+        style.overflowAnchor = anchor
       }
     },
   }

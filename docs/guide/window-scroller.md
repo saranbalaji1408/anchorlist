@@ -109,7 +109,7 @@ v.attach(windowScroller({ list, content, scrollMargin: 56 }))
 
 - `list` is the element that directly contains the rows; `content` wraps the list's own header
   and footer (default `list`).
-- It sets `overflow-anchor: none` on `content`, so the browser's own scroll anchoring stays on
+- It sets `overflow-anchor: none` on `content` while the list is attached (and restores your value on detach), so the browser's own scroll anchoring stays on
   for the rest of the page but leaves the rows alone. If you wrap `windowScroller`, keep that
   style on an ancestor of the rows.
 - It listens to `scroll` and `resize` on `window`, and to input events on the document element.

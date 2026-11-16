@@ -173,7 +173,7 @@ returns -1.
   (`anchorlist/window`): the page scrolls instead of a container, and page content around the list
   acts as its header and footer. `scrollMargin` (px, default 0, read at creation) is the size of
   fixed UI covering the start of the window, like CSS `scroll-padding`; it is not the list's offset
-  in the page, which is measured. It sets `overflow-anchor: none` on `content`. An `align: 'start'`
+  in the page, which is measured. It sets `overflow-anchor: none` on `content` while attached (restored on detach). An `align: 'start'`
   list that mounts on an already scrolled page keeps the page in place. It accepts
   `ElementScrollerOptions` (`element` is ignored), so it can be passed as a `scroller` factory.
   379 B gzip on top of the list (budget 600 B). Guide: [window scroller](/guide/window-scroller).

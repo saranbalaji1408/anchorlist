@@ -237,7 +237,7 @@ interface Scroller<E> {
   of the window, like CSS `scroll-padding`: the viewport starts after it, so anchoring,
   `scrollToKey` alignment and the visible range ignore what it covers. Unlike the `scrollMargin` of
   some other virtualizers it is **not** the list's offset in the page: that is measured, so do not
-  pass it. It sets `overflow-anchor: none` on `content`; the scroller element is the document
+  pass it. It sets `overflow-anchor: none` on `content` while attached (restored on detach); the scroller element is the document
   element, so the browser's own anchoring stays on for the rest of the page. If you wrap
   `windowScroller`, keep that style on an ancestor of the rows. On attach, an `align: 'start'` list
   on a page that is already scrolled keeps the page where it is and anchors to the item at the
