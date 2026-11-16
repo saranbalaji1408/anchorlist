@@ -1,4 +1,4 @@
-import { expect, still, test } from '../src/harness'
+import { expect, expectFramework, still, test } from '../src/harness'
 
 /**
  * 100k items through the framework adapter, timed in the page (framework
@@ -93,8 +93,7 @@ test.describe('100k items', () => {
     if (test.info().project.name.endsWith('-vue')) {
       await page.goto('../vue-prod/')
       await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
-      // A missing build falls back to the React fixture's index.html: make sure this is Vue 3.
-      expect(await page.evaluate(() => window.__driver.frameworkVersion())).toMatch(/^3\./)
+      await expectFramework(page)
     }
     const cdp = await page.context().newCDPSession(page)
     const heap = async (): Promise<number> => {
