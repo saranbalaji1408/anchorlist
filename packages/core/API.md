@@ -316,7 +316,7 @@ offsets track the average lane end. Item sizes are kept by key, so they survive 
 change of item count that is not a whole number of grid rows, or any change for masonry, re-lays
 out the items after it (they can change lanes). The anchor item keeps its main-axis position.
 
-React: `<LanesList lanes={lanes} … />` from `@anchorlist/react/lanes` takes every `AnchorList` prop and does all of the above except widening grid ranges: it renders the plan, and a partial grid row only ever appears at the edge of the overscan. `AnchorList` itself does not grow. Budget: 1.5 kB gzip (core), 0.4 kB (React).
+React: `<LanesList lanes={lanes} … />` from `@anchorlist/react/lanes` takes every `AnchorList` prop and does all of the above, grid rows included: it hands `lanes.range` to `AnchorList` through an internal prop, so a grid always renders whole rows. Budget: 1.5 kB gzip (core), 0.4 kB (React).
 
 ## Behaviour
 

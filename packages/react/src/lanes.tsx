@@ -1,7 +1,7 @@
 import { elementScroller, type VirtualizerOptions } from '@anchorlist/core'
 import type { Lanes } from '@anchorlist/core/lanes'
 import { forwardRef, type ForwardedRef, type ReactElement, type RefAttributes } from 'react'
-import { AnchorList, type AnchorListHandle, type AnchorListProps } from './AnchorList'
+import { AnchorList, type AnchorListHandle, type AnchorListProps, type InternalProps } from './AnchorList'
 import { useLayoutEffect } from './effect'
 
 /** Props of {@link LanesList}: those of `AnchorList`, plus the lane layout. */
@@ -20,15 +20,20 @@ function Sync({ lanes, options }: { lanes: Lanes; options: VirtualizerOptions })
   return null
 }
 
+/** `AnchorList` with its internal props (not exported from the package). */
+const List = AnchorList as <T>(props: AnchorListProps<T> & InternalProps & RefAttributes<AnchorListHandle>) => ReactElement | null
+
 function LanesListImpl<T>(props: LanesListProps<T>, ref: ForwardedRef<AnchorListHandle>): ReactElement {
   const { lanes, items, getKey, scroller = elementScroller } = props
   const options: VirtualizerOptions = { ...props, count: items.length, getKey: (i) => getKey(items[i]!) }
   return (
     <>
       <Sync lanes={lanes} options={options} />
-      <AnchorList<T>
+      <List<T>
         ref={ref}
         {...props}
+        // Whole rows for a grid: the lanes contract renders `lanes.range(plan, count)`.
+        mapRange={lanes.range}
         // The lanes' estimates, and no gap or padding.
         {...lanes.options(options)}
         getKey={getKey}
@@ -51,8 +56,7 @@ function LanesListImpl<T>(props: LanesListProps<T>, ref: ForwardedRef<AnchorList
  * (for example `horizontal()` with `grid({ lanes, horizontal: true })`, or
  * `windowScroller`) is wrapped by the lanes. Keep `overscan` (default 400)
  * at least as large as the largest item: masonry items sit up to one item
- * away from their position on the engine's axis, and a grid row at the edge of
- * the overscan may be rendered in part.
+ * away from their position on the engine's axis. A grid renders whole rows.
  *
  * @example
  * ```tsx

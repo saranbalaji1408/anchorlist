@@ -192,6 +192,20 @@ for (const kind of ['grid', 'masonry'] as Kind[]) {
       expect(Math.abs((await size()) - before) / before).toBeLessThan(0.05)
     })
 
+    if (kind === 'grid')
+      test('renders whole rows when a row is taller than the overscan', async ({ d, page }) => {
+        const items = makeItems(600, 'm', rng(68), 120, 200)
+        await mount(d, items, { overscan: 20 })
+        for (let step = 0; step < 6; step++) {
+          const indices = (await cells(page)).map((c) => items.findIndex((m) => m.id === c.key)).sort((x, y) => x - y)
+          expect(indices[0]! % LANES, `step ${step}`).toBe(0)
+          expect(indices.length % LANES, `step ${step}`).toBe(0)
+          expect(indices, `step ${step}`).toEqual(indices.map((_, j) => indices[0]! + j))
+          await axis(page).scrollBy(997)
+          await d.frames(2)
+        }
+      })
+
     test('scrolls to a key and pins to the end (align end)', async ({ d, page }) => {
       const a = axis(page)
       const items = makeItems(300, 'm', rng(64), 40, 200)

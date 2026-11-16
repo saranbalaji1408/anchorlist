@@ -262,6 +262,25 @@ describe('LanesList', () => {
     expect(row.style.width).toBe('calc((100% - 4px) / 2)')
   })
 
+  it('renders whole grid rows, even at the edge of a small overscan', async () => {
+    const lanes = grid({ lanes: 3, gap: 8 })
+    for (let i = 0; i < 300; i++) layout.sizes.set(`i${i}`, 170)
+    const whole = (): void => {
+      const indices = keys().map((k) => Number(k.slice(1)))
+      expect(indices[0]! % 3).toBe(0)
+      expect(indices.length % 3).toBe(0)
+      expect(indices).toEqual(indices.map((_, j) => indices[0]! + j))
+    }
+    await render(<LanesList<Item> getKey={getKey} renderItem={renderItem} scrollerProps={{ id: 'sc' }} items={make(300, 'i')} lanes={lanes} overscan={0} />)
+    whole()
+    await act(async () => {
+      scroller().scrollTop = 40 * 178 + 90
+      scroller().dispatchEvent(new Event('scroll'))
+    })
+    expect(keys()[0]).not.toBe('i0')
+    whole()
+  })
+
   it('wraps a custom scroller and forwards the handle', async () => {
     const lanes = grid({ lanes: 4 })
     const base = vi.fn(elementScroller)
