@@ -148,7 +148,9 @@ Sticky items (for example group headers) stay in normal flow. The adapter render
   one. Screen readers read each header once, in its row.
 
 React: `StickyItem` from `@anchorlist/react/sticky`, returned from `AnchorList`'s `sticky` prop.
-It shifts the copy with `translateY`: vertical lists only for now.
+It shifts the copy with `translateY`. Not supported yet: `windowScroller`, horizontal and
+right-to-left lists (`stickyState` measures rows against the scroll container's top edge); use the
+default `elementScroller` on a vertical list.
 
 ## createVirtualizer
 
