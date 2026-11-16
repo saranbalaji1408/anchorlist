@@ -3,7 +3,7 @@ import { elementScroller, HORIZONTAL, type ElementScrollerOptions } from '@ancho
 import { grid, masonry } from '@anchorlist/core/lanes'
 import { initialPlan } from '@anchorlist/core/ssr'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createApp, createSSRApp, h, nextTick, reactive, shallowRef, type App, type VNodeChild } from 'vue'
+import { createApp, createSSRApp, h, isReactive, nextTick, reactive, shallowRef, type App, type VNodeChild } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { installLayout, type TestLayout } from '../../react/src/testLayout'
 import { horizontal } from './horizontal'
@@ -366,9 +366,9 @@ describe('LanesList re-lays out after a reorder', () => {
 
 describe('LanesList renders', () => {
   it('scrolling without a data change does not re-render LanesList', async () => {
-    // LanesList's render syncs the lanes, which reads keys over the laid-out prefix through the
-    // reactive items: those reads must not make scrolling re-render it. `lanes.options` runs once
-    // per LanesList render (the inner list's render does not call it).
+    // LanesList's render syncs the lanes, which read keys over the laid-out prefix: scrolling must not
+    // re-render it. `lanes.options` runs once per LanesList render (the inner list's render does not
+    // call it).
     const list = reactive(make(10_000, 'i'))
     list.forEach((it, i) => layout.sizes.set(it.id, 30 + (i % 7) * 15))
     const lanes = masonry({ lanes: 3 })
@@ -383,5 +383,24 @@ describe('LanesList renders', () => {
     // The list did scroll and re-render its rows, but LanesList did not render again.
     expect(seen.size).toBeGreaterThan(10)
     expect(options.mock.calls.length - before).toBe(0)
+  })
+
+  it('a scroll render reads the reactive items for the rendered rows only, not the laid-out prefix', async () => {
+    // The lanes' sync walks the keys of every laid-out item. Through the reactive array, each read is
+    // a tracked proxy read on the scroll path (O(laid)); LanesList hands the lanes the raw array.
+    const list = reactive(make(10_000, 'i'))
+    list.forEach((it, i) => layout.sizes.set(it.id, 30 + (i % 7) * 15))
+    let reads = 0
+    const counted = (item: Item): string => {
+      if (isReactive(item)) reads++
+      return item.id
+    }
+    await render({ items: list, lanes: masonry({ lanes: 3 }), getKey: counted }, {}, LanesList)
+    // Scroll far, so that thousands of items are laid out.
+    for (let step = 1; step <= 20; step++) await scrollTo(step * 4000)
+    reads = 0
+    await scrollTo(20 * 4000 + 600)
+    expect(keys().length).toBeLessThan(100)
+    expect(reads).toBeLessThan(300)
   })
 })

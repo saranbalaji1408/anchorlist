@@ -1,6 +1,6 @@
 import { elementScroller, type ElementScrollerOptions, type Plan, type VirtualizerOptions } from '@anchorlist/core'
 import type { Lanes } from '@anchorlist/core/lanes'
-import { camelize, defineComponent, h, type PublicProps, type SetupContext, type SlotsType, type VNode } from 'vue'
+import { camelize, defineComponent, h, toRaw, type PublicProps, type SetupContext, type SlotsType, type VNode } from 'vue'
 import { AnchorList, type AnchorListHandle, type AnchorListProps, type AnchorListSlots } from './AnchorList'
 
 /** Props of {@link LanesList}: those of `AnchorList`, plus the lane layout. */
@@ -57,7 +57,10 @@ export const LanesList: <T>(
       const o: Record<string, unknown> = {}
       for (const k in attrs) o[camelize(k)] = attrs[k]
       const { items, getKey, scroller = elementScroller } = o as unknown as AnchorListProps<unknown>
-      const options: VirtualizerOptions = { ...o, count: items.length, getKey: (i) => getKey(items[i]) }
+      // The lanes read the keys of every laid-out item on each sync: through the raw array, so that a
+      // scroll render does not read (and track) them all through the reactive proxy.
+      const raw = toRaw(items)
+      const options: VirtualizerOptions = { ...o, count: items.length, getKey: (i) => getKey(raw[i]) }
       // Hands the items to the lanes before the list plans: its plan reads the lanes' estimates, so a new
       // count, lane layout or gap is laid out first. A Vue render is always committed, and the list
       // commits after this render, in the same flush.
