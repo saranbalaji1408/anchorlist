@@ -23,22 +23,25 @@
 <script lang="ts" module>
   // Core options: everything else goes to the scroll container.
   const OPTIONS = new Set(
-    'estimateSize align overscan gap paddingStart paddingEnd hasMoreStart hasMoreEnd startThreshold endThreshold onStartReached onEndReached atEdgeThreshold follow onRangeChange onAtEdgeChange initialSnapshot maxCachedSizes'.split(
+    'estimateSize align overscan gap paddingStart paddingEnd hasMoreStart hasMoreEnd startThreshold endThreshold onStartReached onEndReached atEdgeThreshold follow onRangeChange onAtEdgeChange initialSnapshot maxCachedSizes initialRect initialPlan'.split(
       ' ',
     ),
   )
 </script>
 
 <script lang="ts" generics="T">
-  import type { VirtualizerOptions, VisibleRange } from '@anchorlist/core'
+  import { elementScroller, type ElementScrollerOptions, type VirtualizerOptions, type VisibleRange } from '@anchorlist/core'
   import { createAnchorList } from './createAnchorList.svelte.js'
   import type { AnchorListHandle, AnchorListProps } from './types.js'
 
-  const { items, getKey, children, header, footer, sticky, rowClass, ...rest }: AnchorListProps<T> = $props()
+  const { items, getKey, children, header, footer, sticky, rowClass, busy, scroller, ...rest }: AnchorListProps<T> = $props()
 
-  let element: HTMLElement | undefined = $state()
+  let element: HTMLDivElement | undefined = $state()
   let content: HTMLElement | undefined = $state()
   let list: HTMLElement | undefined = $state()
+  // The container's overflow as set when attaching. Rendered in the style
+  // attribute so that a changed `style` prop keeps it.
+  let overflow: string | undefined = $state()
 
   const al = createAnchorList(
     () => {
@@ -49,9 +52,30 @@
       return { ...rest, count: all.length, getKey: (i: number) => key(all[i]!) } as VirtualizerOptions
     },
     () => element && list && content && { element, list, content },
+    // Read on mount.
+    (e: ElementScrollerOptions) => {
+      const s = (scroller ?? elementScroller)(e)
+      const { style } = e.element as HTMLElement
+      overflow = `overflow-x:${style.overflowX};overflow-y:${scroller ? style.overflowY : 'auto'}`
+      return s
+    },
   )
   const v = al.virtualizer
-  const rows = $derived(items.slice(al.plan.start, al.plan.end + 1))
+  // The focused row stays mounted outside the range, out of flow, in the same
+  // keyed block as the rows so that Svelte never moves its node (see keptRow).
+  // A horizontal list keeps it at its inline start (content space either way).
+  const kept = $derived.by(() => {
+    const k = al.kept
+    const x = list?.style.flexDirection == 'row'
+    return k && { item: items[k.index]!, i: k.index, style: `position:absolute;${x ? 'height' : 'width'}:100%;${x ? 'inset-inline-start' : 'top'}:${k.start}px` }
+  })
+  // Items, never wrappers, so that unchanged rows are not updated.
+  const rows = $derived.by(() => {
+    const { start, end } = al.plan
+    const r = items.slice(start, end + 1)
+    if (kept) r[kept.i < start ? 'unshift' : 'push'](kept.item)
+    return r
+  })
   const attrs = $derived(Object.fromEntries(Object.entries(rest).filter(([k]) => !OPTIONS.has(k))))
 
   let range: VisibleRange = $state.raw(v.getVisibleRange())
@@ -67,24 +91,42 @@
   export const getTotalSize: AnchorListHandle['getTotalSize'] = v.getTotalSize
   export const indexOf: AnchorListHandle['indexOf'] = v.indexOf
   export const subscribe: AnchorListHandle['subscribe'] = v.subscribe
+  export const getElement: AnchorListHandle['getElement'] = () => element!
 </script>
 
-<div {...attrs} bind:this={element} style:overflow-y="auto" style:overflow-anchor="none">
+<div
+  {...attrs}
+  bind:this={element}
+  style="{attrs.style ?? ''};{overflow ?? (scroller ? '' : 'overflow-y:auto')};overflow-anchor:none;position:relative"
+>
   {#if sticky}
-    <div style="position: sticky; top: 0; height: 0; z-index: 1">{@render sticky(range)}</div>
+    <div style="position:sticky;top:0;height:0;z-index:1">{@render sticky(range)}</div>
   {/if}
   <div bind:this={content}>
     {@render header?.()}
     <div
       bind:this={list}
       role="list"
+      aria-busy={busy}
       style:display="flex"
       style:flex-direction="column"
       style:gap={rest.gap ? `${rest.gap}px` : undefined}
+      onfocusout={() => {
+        // Focus that leaves the window stays in the row: keep it.
+        if (document.hasFocus()) al.focused = null
+      }}
     >
       {#each rows as item (getKey(item))}
         <!-- `flow-root` keeps the children's margins inside the measured border box. -->
-        <div role="listitem" data-key={getKey(item)} class={rowClass} style="display: flow-root">{@render children?.(item)}</div>
+        <div
+          role="listitem"
+          data-key={getKey(item)}
+          class={rowClass}
+          style={item === kept?.item ? kept.style : 'display:flow-root'}
+          onfocusin={() => (al.focused = getKey(item))}
+        >
+          {@render children?.(item)}
+        </div>
       {/each}
     </div>
     {@render footer?.()}
