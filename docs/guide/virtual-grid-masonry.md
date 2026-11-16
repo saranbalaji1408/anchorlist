@@ -122,7 +122,7 @@ if (!attached) v.attach(lanes.scroller(elementScroller(els)))    // once
 v.commit(plan)
 ```
 
-The engine stays one-dimensional. A grid reports each row's size on the row's first item, and
+The engine stays one-dimensional. A grid reports each row's size on the row's last item, and
 masonry reports each item's share of the main axis, so anchoring, edges and scrolling need no
 special case. See the [API reference](/api/#lanes) for the full contract.
 

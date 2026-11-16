@@ -2,8 +2,9 @@ import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { grid, masonry, type Lanes } from './lanes'
 import type { Scroller } from './scroller'
+import { simulatedScroller } from './simulatedScroller'
 import type { Key } from './types'
-import type { VirtualizerOptions } from './virtualizer'
+import { createVirtualizer, type VirtualizerOptions } from './virtualizer'
 
 interface El {
   size: number
@@ -220,12 +221,12 @@ describe('grid', () => {
     check((n, g) => grid({ lanes: n, gap: g }), refGrid)
   })
 
-  it('puts each row’s size on its first item, so engine offsets are row offsets', () => {
+  it('puts each row’s size on its last item, so every item’s engine offset is its row’s offset', () => {
     const lanes = grid({ lanes: 3, gap: 5, horizontal: true })
     const sizes = [10, 40, 20, 30, 5]
     const o: VirtualizerOptions = { count: 5, getKey: (i) => i, estimateSize: (i) => sizes[i]! }
     const est = lanes.options(o).estimateSize!
-    expect([0, 1, 2, 3, 4].map(est)).toEqual([45, 0, 0, 35, 0])
+    expect([0, 1, 2, 3, 4].map(est)).toEqual([0, 0, 45, 0, 35])
     lanes.sync(o)
     const { base, spacers } = fakeScroller()
     const sc = lanes.scroller(base)
@@ -237,11 +238,11 @@ describe('grid', () => {
       top: 'calc((100% - 10px) / 3 * 1 + 5px)',
       height: 'calc((100% - 10px) / 3)',
     })
-    // The first item reports its row's live size: the tallest mounted item, plus the gap.
+    // The last item reports its row's live size: the tallest mounted item, plus the gap.
     els[2]!.size = 70
-    expect(sc.measure(els[0]!).size).toBe(75)
+    expect(sc.measure(els[0]!).size).toBe(0)
     expect(sc.measure(els[1]!).size).toBe(0)
-    sc.measure(els[2]!)
+    expect(sc.measure(els[2]!).size).toBe(75)
     sc.setSpacers(0, 0)
     expect(els[3]!.style.insetInlineStart).toBe('75px')
     expect(spacers[spacers.length - 1]).toEqual([0, 105])
@@ -249,6 +250,31 @@ describe('grid', () => {
     expect(lanes.range({ start: 4, end: 4 }, 5)).toEqual({ start: 3, end: 4 })
     expect(lanes.range({ start: 1, end: 3 }, 5)).toEqual({ start: 0, end: 4 })
     expect(lanes.range({ start: 0, end: -1 }, 0)).toEqual({ start: 0, end: -1 })
+  })
+
+  it('puts the size of a partial last row on its last item, which moves when items are appended', () => {
+    const lanes = grid({ lanes: 3 })
+    const est = (count: number) => lanes.options({ count, getKey: (i) => i, estimateSize: () => 10 }).estimateSize!
+    expect([0, 1, 2, 3, 4].map(est(5))).toEqual([0, 0, 10, 0, 10])
+    expect([0, 1, 2, 3, 4, 5].map(est(6))).toEqual([0, 0, 10, 0, 0, 10])
+  })
+
+  it('gives a non-first item its row origin in the engine: scrollToKey and getItemRect', () => {
+    const lanes = grid({ lanes: 3, gap: 10 })
+    const options = lanes.options({ count: 30, getKey: (i) => `k${i}`, estimateSize: () => 100, overscan: 0 })
+    // A host that renders nothing: the engine works from the shares alone.
+    const v = createVirtualizer(options, { render: () => v.commit(v.plan(options)) })
+    v.commit(v.plan(options))
+    const sim = simulatedScroller({ viewport: 200 })
+    v.attach(sim)
+    // Item 7 is in row 2 (lane 1): rows are 110 px apart.
+    expect(v.getItemRect('k7')).toMatchObject({ start: 220, size: 0 })
+    expect(v.getItemRect('k8')).toMatchObject({ start: 220, size: 110 })
+    v.scrollToKey('k7')
+    sim.tick()
+    expect(sim.offset()).toBe(220)
+    const { start, end } = v.plan(options)
+    expect(lanes.range({ start, end }, 30).start).toBeLessThanOrEqual(6)
   })
 
   it('leaves unmounted and unknown elements alone and forgets removed sizes', () => {

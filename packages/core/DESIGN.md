@@ -245,8 +245,10 @@ has no room). The seam is the `Scroller`: `lanes.scroller()` wraps it.
 - **Shares.** The engine measures each item through `measure()`, which returns the item's real
   start (so anchoring holds the real element still) and its *share* of the main axis instead of
   its size. A grid gives the row's size (its tallest item, read live from the mounted siblings,
-  plus the gap) to the row's first item and 0 to the rest, so the engine's `SizeIndex` holds the
-  row sizes and its offsets equal the layout. Masonry gives `(size + gap) / lanes`, which depends
+  plus the gap) to the row's last item and 0 to the rest, so the engine's `SizeIndex` holds the
+  row sizes and every item's offset is its row's offset in the layout. The last item of a partial
+  last row carries it, so an append that fills that row moves the share to the new last item; the
+  old one is corrected when it is measured again. Masonry gives `(size + gap) / lanes`, which depends
   only on the item itself (no ordering issues inside a pass), and the engine offset of item `i` is
   the average lane end before it. With shortest-lane placement every item starts between that
   average minus one item size and the average, so an overscan of one item size covers it.
@@ -264,7 +266,7 @@ has no room). The seam is the `Scroller`: `lanes.scroller()` wraps it.
   after-spacer: layout extent through the end of the longest run of consecutive mounted indices
   (an item kept mounted for focus is a single index apart and the engine's after-spacer already
   counts it) plus the engine's after-spacer.
-- **Rows.** `range()` widens a grid plan to whole rows, so a row's first item and its siblings
+- **Rows.** `range()` widens a grid plan to whole rows, so a row's last item and its siblings
   are mounted together. Extra mounted items outside the plan are measured and positioned like the
   others. React's `LanesList` passes `range` to `AnchorList` as an internal `mapRange` prop
   (about 20 B in `@anchorlist/react`).

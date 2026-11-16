@@ -310,8 +310,9 @@ v.commit(plan)
 - Give the list `position: relative`. Keep `overscan` at least as large as the largest item:
   masonry items start up to one item before or after their share's position.
 
-Shares: a grid reports each row's size plus the gap on the row's first item and 0 on the others,
-so engine offsets are exactly row offsets. Masonry reports `(size + gap) / lanes`, so engine
+Shares: a grid reports each row's size plus the gap on the row's last item and 0 on the others,
+so every item's engine offset is its row's offset (`scrollToKey` and `getItemRect` of any item in
+a row land on the row). Masonry reports `(size + gap) / lanes`, so engine
 offsets track the average lane end. Item sizes are kept by key, so they survive prepends, but a
 change of item count that is not a whole number of grid rows, or any change for masonry, re-lays
 out the items after it (they can change lanes). The anchor item keeps its main-axis position.

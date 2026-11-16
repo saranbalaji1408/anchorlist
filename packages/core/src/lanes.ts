@@ -213,9 +213,9 @@ function lanes(
 /**
  * A grid of `lanes` columns (rows when horizontal). Items fill rows in index
  * order; a row is as tall as its tallest item. The engine sees each row's
- * size (plus the gap) on the row's first item and 0 on the others, so its
- * `SizeIndex` holds exactly the row sizes and its offsets are the rows'
- * offsets. Row offsets are laid out lazily, up to the last row needed.
+ * size (plus the gap) on the row's last item and 0 on the others, so its
+ * `SizeIndex` holds exactly the row sizes and every item's offset is its
+ * row's offset. Row offsets are laid out lazily, up to the last row needed.
  *
  * Inserting or removing a number of items that is not a multiple of `lanes`
  * before the viewport reflows the rows after it; the anchor item keeps its
@@ -258,7 +258,8 @@ export function grid(options: LanesOptions): Lanes {
         const row = layOut(to)
         return top[row]! + rowSizes[row]!
       },
-      share: (i, live, c) => (i % n ? 0 : rowSize(i / n, live, c) + g),
+      // On the row's last item, so every item of the row has the row's origin as its engine offset.
+      share: (i, live, c) => (i < Math.min(i - (i % n) + n, c) - 1 ? 0 : rowSize(Math.floor(i / n), live, c) + g),
       range: (r, c) => (r.end < r.start ? r : { start: r.start - (r.start % n), end: Math.min(c - 1, r.end - (r.end % n) + n - 1) }),
     }
   })
