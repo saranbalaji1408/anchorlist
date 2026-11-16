@@ -55,6 +55,8 @@ export function installDriver(container: HTMLElement): void {
     store.lanes = l && (l.kind === 'grid' ? grid : masonry)({ lanes: l.lanes, gap: l.gap ?? 0, horizontal: store.horizontal })
   }
 
+  let lastUpdateMs = 0
+
   const driver: Driver = {
     ...dom,
     async mount(config) {
@@ -71,8 +73,11 @@ export function installDriver(container: HTMLElement): void {
     async update(patch) {
       // Both modes are rendered and committed before this returns (Svelte has no transitions of state).
       if (patch.items) patch = { ...patch, items: intern(patch.items) }
+      // Timed from here: the render and commit, not the interning above.
+      const t = performance.now()
       store.state = { ...store.state, ...patch }
       flushSync()
+      lastUpdateMs = performance.now() - t
     },
     setItemHeight(id, height) {
       store.heights.set(id, height)
@@ -89,6 +94,7 @@ export function installDriver(container: HTMLElement): void {
     renders: () => ({ ...store.renders }),
     rendersWithoutScroller: () => [...store.withoutScroller],
     frameworkVersion: () => version,
+    lastUpdateMs: () => lastUpdateMs,
     animateToKey(key, o) {
       const element = handle().getElement()
       const { layout, scrollMargin } = store.config
