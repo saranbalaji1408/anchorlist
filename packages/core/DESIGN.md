@@ -340,9 +340,9 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 
 | Entry | Size | Budget |
 | --- | --- | --- |
-| `{ createVirtualizer, elementScroller }` | 4495 B | 4500 B |
-| main entry, everything (`*`) | 5702 B | 6500 B |
-| React chat path (core + react) | 5710 B | 5800 B |
+| `{ createVirtualizer, elementScroller }` | 4496 B | 4500 B |
+| main entry, everything (`*`) | 5701 B | 6500 B |
+| React chat path (core + react) | 5725 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
 | `@anchorlist/core/animate` | 789 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
@@ -350,8 +350,8 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | `@anchorlist/core/window` (shared scroller chunk external) | 428 B | 600 B |
 | `@anchorlist/core/rtl` (shared scroller chunk external) | 509 B | 600 B |
 | `@anchorlist/react/horizontal` (react and core external) | 189 B | 300 B |
-| `@anchorlist/core/lanes` | 1305 B | 1500 B |
-| `@anchorlist/react/lanes` (react, core and the shared list chunk external) | 377 B | 400 B |
+| `@anchorlist/core/lanes` | 1365 B | 1500 B |
+| `@anchorlist/react/lanes` (react, core and the shared list chunk external) | 358 B | 400 B |
 
 `pnpm size` also runs `scripts/treeshake.ts`, which bundles the list import (from the sources and from `dist`) and fails if any optional entry (`/window`, `/rtl`, `/lanes`, and any later one listed in `exports`) contributes code. It does the same for `AnchorList` from `@anchorlist/react` against the React package's optional entries (`/horizontal`, `/lanes`).
 
