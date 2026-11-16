@@ -190,7 +190,7 @@ export default [
     path: 'packages/svelte/dist/.size/sticky.js',
     import: '*',
     ignore: ['svelte', '@anchorlist/core'],
-    limit: '0.65 kB',
+    limit: '0.75 kB',
     gzip: true,
   },
   {

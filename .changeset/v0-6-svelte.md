@@ -15,3 +15,5 @@ Add `@anchorlist/svelte`, Svelte 5.18+ (runes) bindings for `@anchorlist/core`.
 - Packaged with `@sveltejs/package`; the components ship as `.svelte` files with TypeScript stripped and generic typings.
 
 Size budget: Svelte main entry budget 2.1 kB (was 1.8 kB): parity features; compiled Svelte output larger than JSX; user decision 2026-11-16.
+
+/sticky budget 0.75 kB (was 0.65 kB before the sticky overlay moved out of main); user decision 2026-11-16.
