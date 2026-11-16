@@ -30,7 +30,7 @@
 </script>
 
 <script lang="ts" generics="T">
-  import { elementScroller, type ElementScrollerOptions, type Scroller, type VirtualizerOptions } from '@anchorlist/core'
+  import { elementScroller, type ElementScrollerOptions, type VirtualizerOptions } from '@anchorlist/core'
   import { createAnchorList } from './createAnchorList.svelte.js'
   import type { AnchorListHandle, AnchorListProps } from './types.js'
 
@@ -42,7 +42,6 @@
   // The container's overflow as set when attaching. Rendered in the style
   // attribute so that a changed `style` prop keeps it.
   let overflow: string | undefined = $state()
-  let sc: Scroller<Element>
 
   const al = createAnchorList(
     () => {
@@ -55,7 +54,7 @@
     () => element && list && content && { element, list, content },
     // Read on mount.
     (e: ElementScrollerOptions) => {
-      const s = (sc = (scroller ?? elementScroller)(e))
+      const s = (scroller ?? elementScroller)(e)
       const { style } = e.element as HTMLElement
       overflow = `overflow-x:${style.overflowX};overflow-y:${scroller ? style.overflowY : 'auto'}`
       return s
@@ -65,18 +64,13 @@
   const v = al.virtualizer
   // The focused row stays mounted outside the range, out of flow, in the same
   // keyed block as the rows so that Svelte never moves its node (see keptRow).
-  // A horizontal list keeps it at its inline start (content space either way).
+  // It sits at `offset` in the list (list space, any scroller); a horizontal
+  // list keeps it at its inline start.
   const kept = $derived.by(() => {
     const k = al.kept
     if (!k) return k
     const x = list!.style.flexDirection == 'row'
-    // `k.start` is in the scroller's content space (the page for a window
-    // scroller); the row's containing block is the container. Rebase from the
-    // list's start in one to its start in the other (a no-op when the
-    // container is the scroller).
-    const e = element!
-    const at = x ? k.start : k.start - sc.listStart() - sc.offset() + list!.getBoundingClientRect().top - e.getBoundingClientRect().top + e.scrollTop
-    return { item: items[k.index]!, i: k.index, style: `position:absolute;${x ? 'height' : 'width'}:100%;${x ? 'inset-inline-start' : 'top'}:${at}px` }
+    return { item: items[k.index]!, i: k.index, style: `position:absolute;${x ? 'height' : 'width'}:100%;${x ? 'inset-inline-start' : 'top'}:${k.offset}px` }
   })
   // Items, never wrappers, so that unchanged rows are not updated.
   const rows = $derived.by(() => {
@@ -114,6 +108,7 @@
       aria-busy={busy}
       style:display="flex"
       style:flex-direction="column"
+      style:position="relative"
       style:gap={rest.gap ? `${rest.gap}px` : undefined}
       onfocusout={() => {
         // Focus that leaves the window stays in the row: keep it.
