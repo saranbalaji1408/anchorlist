@@ -9,10 +9,18 @@ test.describe('animateToKey', () => {
       await d.mount({ items: makeItems(3000, 'm', rng(81)), align: 'start' })
       expect(await d.isMounted('m2000')).toBe(false)
       await d.startSampler(['scrollTop'])
+      const t = Date.now()
       expect(await d.animateToKey('m2000', { align, duration: 400 })).toBe(true)
+      const elapsed = Date.now() - t
       const samples = (await d.stopSampler()).map((s) => s[0]!)
-      // Painted in many steps, always moving forward.
-      expect(samples.length).toBeGreaterThan(8)
+      // Animated over its duration, not a jump. The progress is time-based, so a slow machine
+      // paints fewer frames (4 on a loaded CI WebKit) of the same motion: count positions between
+      // the start and the target, not frames.
+      expect(elapsed).toBeGreaterThanOrEqual(350)
+      const first = samples[0]!
+      const last = samples[samples.length - 1]!
+      expect(samples.filter((v) => v > first + 1 && v < last - 1).length).toBeGreaterThanOrEqual(1)
+      // Always moving forward.
       for (let i = 1; i < samples.length; i++) expect(samples[i]!).toBeGreaterThanOrEqual(samples[i - 1]! - 1)
       await d.frames(3)
       const row = await d.rowRect('m2000')
