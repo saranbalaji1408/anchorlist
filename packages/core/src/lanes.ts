@@ -183,15 +183,24 @@ function lanes(
           return { start: box.start, size: layout.share(i, live, count) }
         },
         setSpacers(before, after) {
-          let hi = -1
+          const mounted: number[] = []
           items.forEach((_, e) => {
             const i = index(e)
             if (i < 0) return
-            hi = Math.max(hi, i)
+            mounted.push(i)
             put(e, i)
           })
           // Items are out of flow: the list's size is the layout through the
-          // last mounted item, plus the engine's estimate of everything after it.
+          // last rendered item, plus the engine's size of everything after it.
+          // That is the end of the longest run of consecutive indices: an item
+          // kept mounted outside the range (focus) is a single index apart, and
+          // the engine's `after` already counts it.
+          mounted.sort((a, b) => a - b)
+          let hi = -1
+          for (let k = 0, run = 0, best = 0; k < mounted.length; k++) {
+            run = k && mounted[k]! - mounted[k - 1]! < 2 ? run + 1 : 1
+            if (run > best) [best, hi] = [run, mounted[k]!]
+          }
           if (hi < 0) base.setSpacers(before, after)
           else base.setSpacers(0, layout.extent(hi) + after)
         },

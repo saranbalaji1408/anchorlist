@@ -166,6 +166,32 @@ for (const kind of ['grid', 'masonry'] as Kind[]) {
       expect(cell.bottom).toBeLessThan(0)
     })
 
+    test('keeps the scroll size when a focused item is kept mounted after the rendered items', async ({ d, page }) => {
+      const a = axis(page)
+      const items = makeItems(600, 'm', rng(67), 40, 200)
+      await mount(d, items)
+      await d.scrollToEdge('end')
+      await d.frames(4)
+      const key = items[590]!.id
+      await page.evaluate((key) => {
+        const el = document.querySelector<HTMLElement>(`#scroller [data-key="${key}"]`)!.firstElementChild as HTMLElement
+        el.tabIndex = -1
+        el.focus({ preventScroll: true })
+      }, key)
+      const size = async (): Promise<number> => (await a.max()) + (await a.viewport())
+      const before = await size()
+      await d.scrollToEdge('start')
+      await d.frames(4)
+      const state = await page.evaluate((key) => {
+        const row = document.querySelector<HTMLElement>(`#scroller [data-key="${key}"]`)
+        return { position: row?.style.position, focus: !!row?.contains(document.activeElement) }
+      }, key)
+      expect(state).toEqual({ position: 'absolute', focus: true })
+      // The kept item after the rendered ones is not counted twice: the scroll size stays put
+      // (within the difference between the lanes' layout and the engine's shares).
+      expect(Math.abs((await size()) - before) / before).toBeLessThan(0.05)
+    })
+
     test('scrolls to a key and pins to the end (align end)', async ({ d, page }) => {
       const a = axis(page)
       const items = makeItems(300, 'm', rng(64), 40, 200)

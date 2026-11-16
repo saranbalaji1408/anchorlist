@@ -161,6 +161,23 @@ describe('masonry', () => {
     expect(lanes.range({ start: 1, end: 2 }, 4)).toEqual({ start: 1, end: 2 })
   })
 
+  it('sizes the list from the rendered run, not from a kept item far after it', () => {
+    const lanes = masonry({ lanes: 2 })
+    lanes.sync({ count: 1000, getKey: (i) => i, estimateSize: () => 100 })
+    const { base, spacers } = fakeScroller()
+    const sc = lanes.scroller(base)
+    // Rows 0-9 (items 0-19) are rendered, and the focused item 500 is kept mounted.
+    const kept: El = { size: 100, start: 0, style: {} }
+    sc.setIndex(kept, 500, 1000)
+    for (let i = 0; i < 20; i++) sc.setIndex({ size: 100, start: 0, style: {} }, i, 1000)
+    // The engine's size after item 19: 980 items with a share of 50 px each.
+    sc.setSpacers(0, 980 * 50)
+    // Rows 0-9 (1000 px) plus everything after them: 50,000 px, the true size.
+    expect(spacers[spacers.length - 1]).toEqual([0, 1000 + 980 * 50])
+    // The kept item is still positioned in its lane (row 250).
+    expect(kept.style.top).toBe('25000px')
+  })
+
   it('lays out lazily: only up to the item that is needed', () => {
     const lanes = masonry({ lanes: 3 })
     let reads = 0
