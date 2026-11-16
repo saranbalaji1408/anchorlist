@@ -42,7 +42,22 @@
       "svelte": "./dist/index.js",
       "import": "./dist/index.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./sticky": {
+      "types": "./dist/sticky.d.ts",
+      "svelte": "./dist/sticky.js",
+      "import": "./dist/sticky.js"
+    },
+    "./horizontal": {
+      "types": "./dist/horizontal.d.ts",
+      "svelte": "./dist/horizontal.js",
+      "import": "./dist/horizontal.js"
+    },
+    "./lanes": {
+      "types": "./dist/lanes.d.ts",
+      "svelte": "./dist/lanes.js",
+      "import": "./dist/lanes.js"
+    }
   },
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
