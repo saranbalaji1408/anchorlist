@@ -176,7 +176,7 @@ returns -1.
   in the page, which is measured. It sets `overflow-anchor: none` on `content` while attached (restored on detach). An `align: 'start'`
   list that mounts on an already scrolled page keeps the page in place. It accepts
   `ElementScrollerOptions` (`element` is ignored), so it can be passed as a `scroller` factory.
-  379 B gzip on top of the list (budget 600 B). Guide: [window scroller](/guide/window-scroller).
+  391 B gzip on top of the list (budget 600 B). Guide: [window scroller](/guide/window-scroller).
 - `rtlScroller({ element, list, content? })` from `@anchorlist/core/rtl` (`anchorlist/rtl`): a
   horizontal scroller for a `direction: rtl` container. The start edge is the right edge, the
   spacers are `paddingRight` (before) and `paddingLeft` (after), and the offset is normalised to
@@ -198,12 +198,12 @@ CI.
 | --- | --- | --- |
 | `@anchorlist/core/sticky` | `stickyState(scroller, range, isSticky, size, axis?)`: `{ index, offset }` of the stuck item | 423 B (500 B) |
 | `@anchorlist/react/sticky` | `StickyItem` (core part included) | 794 B (800 B) |
-| `@anchorlist/core/animate` | `animateToKey(v, element, key, options?)`: `Promise<boolean>` | 742 B (800 B) |
+| `@anchorlist/core/animate` | `animateToKey(v, element, key, options?)`: `Promise<boolean>` | 758 B (800 B) |
 | `@anchorlist/core/snapshot` | `takeSnapshot(v, getKey, count, limit = 100)`, `snapshotEstimate(snapshot, getKey, estimateSize?)` | 385 B (500 B) |
-| `@anchorlist/core/ssr` | `initialPlan(v, options)` | 368 B (400 B) |
+| `@anchorlist/core/ssr` | `initialPlan(v, options)` | 379 B (400 B) |
 
 - **`animateToKey`** recomputes the target every frame and lands through `scrollToKey`. Options:
-  `align`, `offset`, `duration` (400 ms), `easing`, `axis`, `signal`. User input, `signal`, a newer
+  `align`, `offset`, `duration` (400 ms), `easing`, `scroller`, `signal`. User input, `signal`, a newer
   animation, a removed key or an unmounted list cancel it (resolves `false`); it jumps under
   `prefers-reduced-motion`. Guide: [smooth scroll](/guide/smooth-scroll).
 - **`takeSnapshot`** is `getSnapshot()` plus `sizes: [key, size][]` for measured items around the

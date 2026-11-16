@@ -74,7 +74,7 @@ mounted row.
 | Smooth scroll to any item | `animateToKey` from `anchorlist/animate`, lands exactly, respects reduced motion |
 | Server rendering | Opt-in: `initialRect` + `initialPlan` from `anchorlist/ssr`, no hydration mismatch |
 | Accessibility | `aria-posinset` / `aria-setsize` written on rows; the focused row stays mounted; `busy` sets `aria-busy` |
-| Size | Hard gzip budgets in CI: React chat path (core + react) ≤ 5.8 kB, currently 5.66 kB; `@anchorlist/react` alone ≤ 1.3 kB, currently 1.24 kB |
+| Size | Hard gzip budgets in CI: React chat path (core + react) ≤ 5.8 kB, currently 5.7 kB; `@anchorlist/react` alone ≤ 1.3 kB, currently 1.25 kB |
 | Dependencies | Zero runtime dependencies in core; React is a peer dependency |
 
 ## How it compares

@@ -33,9 +33,10 @@ export function Feed({ posts }) {
 }
 ```
 
-- `initialRect` is the viewport size to assume before the list is attached. Only `height` is
-  read.
-- `initialPlan` renders the rows that fill `initialRect.height` from the `align` edge, sized by
+- `initialRect` is the viewport size to assume before the list is attached. The larger of
+  `width` and `height` is read, so it serves vertical and horizontal lists alike (at worst a few
+  extra rows).
+- `initialPlan` renders the rows that fill that size from the `align` edge, sized by
   `estimateSize` (default 48 px). It is deterministic, so the server render and the hydration
   render produce the same rows and React adopts the server markup without a mismatch.
 - After hydration the engine takes over: it measures the rows, writes the spacers and the scroll
@@ -72,13 +73,14 @@ hydration.
 
 ## Limits
 
-- Vertical lists only (`initialRect.height`).
+- `initialPlan` fills the larger side of `initialRect`, which can render a few more rows than a
+  wide, short horizontal list needs.
 - Layout effects don't run on the server; anchorlist uses a passive effect where there is no DOM,
   so React doesn't warn.
 
 ## Size
 
-`@anchorlist/core/ssr` is a separate entry of 368 B gzip (budget 400 B).
+`@anchorlist/core/ssr` is a separate entry of 379 B gzip (budget 400 B).
 
 ## How it is tested
 

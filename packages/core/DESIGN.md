@@ -304,13 +304,13 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | Entry | Size | Budget |
 | --- | --- | --- |
 | `{ createVirtualizer, elementScroller }` | 4496 B | 4500 B |
-| main entry, everything (`*`) | 5670 B | 6500 B |
-| React chat path (core + react) | 5663 B | 5800 B |
+| main entry, everything (`*`) | 5700 B | 6500 B |
+| React chat path (core + react) | 5702 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
 | `@anchorlist/core/animate` | 758 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
 | `@anchorlist/core/ssr` | 379 B | 400 B |
-| `@anchorlist/core/window` (shared scroller chunk external) | 379 B | 600 B |
+| `@anchorlist/core/window` (shared scroller chunk external) | 391 B | 600 B |
 | `@anchorlist/core/rtl` (shared scroller chunk external) | 567 B | 600 B |
 | `@anchorlist/react/horizontal` (react and core external) | 189 B | 300 B |
 

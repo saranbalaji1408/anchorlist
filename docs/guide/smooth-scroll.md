@@ -64,12 +64,14 @@ way.
 
 ## Limits
 
-`element` must be the scroll container itself. `axis` selects `scrollLeft` for a horizontal
-list, but right-to-left offsets are not handled yet.
+`element` must be the scroll container itself. For a window-scrolled, horizontal or
+right-to-left list, pass the same kind of scroller as the list's in the `scroller` option (for
+example `windowScroller({ list })` or `rtlScroller({ element, list })`), so the animation reads
+and writes the offset the way the list does.
 
 ## Size
 
-`@anchorlist/core/animate` is a separate entry of 742 B gzip (budget 800 B). Lists that only
+`@anchorlist/core/animate` is a separate entry of 758 B gzip (budget 800 B). Lists that only
 jump don't load it.
 
 ## How it is tested

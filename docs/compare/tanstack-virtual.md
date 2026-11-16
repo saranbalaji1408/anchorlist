@@ -32,8 +32,8 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | Edge triggers (load more) | `onStartReached` / `onEndReached` | Not built in; usually derived from the rendered range |
 | iOS momentum-safe corrections | Deferred through a transform | Not documented |
 | Restore scroll position | `getSnapshot` / `initialSnapshot` (key-based) | `initialOffset` (pixel-based) |
-| Window scrolling | Planned (v0.3) | Yes |
-| Horizontal | Core yes (no RTL normalisation yet) | Yes |
+| Window scrolling | `windowScroller` (`anchorlist/window`) | Yes |
+| Horizontal | `horizontal()` (`anchorlist/horizontal`); right-to-left with `rtlScroller` | Yes |
 | Grid / masonry | Planned (v0.4) | Yes (lanes, or two virtualizers) |
 | Sticky items | `StickyItem` (`anchorlist/sticky`) | Yes, via custom range extraction |
 | Smooth scroll to an unrendered item | `animateToKey` (`anchorlist/animate`) | `scrollToIndex` with `behavior: 'smooth'` |
@@ -47,10 +47,10 @@ anchorlist enforces gzip size budgets in CI with size-limit:
 
 | Entry | Size (min + gzip) |
 | --- | --- |
-| `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.50 kB (4,498 B) |
-| `@anchorlist/core` main entry, everything | ≤ 6.5 kB budget, currently 5.67 kB |
-| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.19 kB |
-| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.63 kB |
+| `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.50 kB (4,496 B) |
+| `@anchorlist/core` main entry, everything | ≤ 6.5 kB budget, currently 5.7 kB |
+| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.25 kB |
+| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.7 kB |
 
 Sticky items, smooth scrolling, snapshot sizes and server rendering are separate entries, so a
 list that doesn't use them doesn't load them.
