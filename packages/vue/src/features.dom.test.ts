@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 import { elementScroller, HORIZONTAL, type ElementScrollerOptions } from '@anchorlist/core'
-import { grid } from '@anchorlist/core/lanes'
+import { grid, masonry } from '@anchorlist/core/lanes'
 import { initialPlan } from '@anchorlist/core/ssr'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createApp, createSSRApp, h, nextTick, shallowRef, type App, type VNodeChild } from 'vue'
+import { createApp, createSSRApp, h, nextTick, reactive, shallowRef, type App, type VNodeChild } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { installLayout, type TestLayout } from '../../react/src/testLayout'
 import { horizontal } from './horizontal'
@@ -331,4 +331,35 @@ describe('LanesList', () => {
     expect(lanes.position(3)).toMatchObject({ lane: 0 })
     expect(lanes.position(3).start).toBe(lanes.position(0).start + 50)
   })
+})
+
+describe('LanesList re-lays out after a reorder', () => {
+  /** Naive masonry over sizes: each item goes to the lane that ends first. */
+  const ref = (sizes: number[], n: number): number[] => {
+    const ends = new Array<number>(n).fill(0)
+    return sizes.map((s) => {
+      const lane = ends.indexOf(Math.min(...ends))
+      const start = ends[lane]!
+      ends[lane] = start + s
+      return start
+    })
+  }
+  for (const mode of ['in place', 'new array'] as const)
+    it(`follows a swap of two inner items (${mode})`, async () => {
+      const sizes = [30, 90, 40, 60, 120, 50, 70, 35, 80, 45]
+      const list = reactive(make(10, 'i'))
+      list.forEach((it, i) => layout.sizes.set(it.id, sizes[i]!))
+      const lanes = masonry({ lanes: 2 })
+      await render({ items: list, lanes }, {}, LanesList)
+      const swapped = list.slice()
+      ;[swapped[1], swapped[4]] = [swapped[4]!, swapped[1]!]
+      if (mode === 'in place') {
+        const t = list[1]!
+        list[1] = list[4]!
+        list[4] = t
+        await flush()
+      } else await render({ items: reactive(swapped), lanes }, {}, LanesList)
+      const want = ref(swapped.map((it) => layout.sizes.get(it.id)!), 2)
+      expect(swapped.map((_, i) => lanes.position(i).start)).toEqual(want)
+    })
 })

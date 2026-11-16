@@ -159,6 +159,11 @@ const lanes = masonry({ lanes: 3, gap: 8 })
 </template>
 ```
 
+Changing the reactive `items` array in place (a swap, or replacing an item) re-lays out the lanes when
+the list re-renders for it. A change that only touches items outside the rendered range re-renders
+nothing, as with a plain `AnchorList`, so the lanes pick it up at the next render. To apply such a
+change at once, assign a new array.
+
 ## Headless
 
 `useAnchorList(options, elements, scroller?)` returns `[virtualizer, plan]` for custom markup. Call

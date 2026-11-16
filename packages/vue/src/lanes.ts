@@ -8,7 +8,10 @@ export interface LanesListProps<T> extends AnchorListProps<T> {
   /**
    * The lane layout from `@anchorlist/core/lanes`: `grid({ lanes: 3 })` or
    * `masonry({ lanes: 3, gap: 8 })`. Create it once per list (for example in
-   * `setup()`); it is read on mount.
+   * `setup()`); it is read on mount. An in-place change to `items` re-lays out
+   * the lanes when the list re-renders for it; one that only touches items
+   * outside the rendered range waits for the next render (assign a new array to
+   * apply it at once).
    */
   lanes: Lanes
 }
@@ -55,8 +58,9 @@ export const LanesList: <T>(
       for (const k in attrs) o[camelize(k)] = attrs[k]
       const { items, getKey, scroller = elementScroller } = o as unknown as AnchorListProps<unknown>
       const options: VirtualizerOptions = { ...o, count: items.length, getKey: (i) => getKey(items[i]) }
-      // Hands the items to the lanes before the list's commit: a Vue render is always committed, and the
-      // list commits after this render, in the same flush.
+      // Hands the items to the lanes before the list plans: its plan reads the lanes' estimates, so a new
+      // count, lane layout or gap is laid out first. A Vue render is always committed, and the list
+      // commits after this render, in the same flush.
       lanes.sync(options)
       return h(
         AnchorList as never,
@@ -64,8 +68,10 @@ export const LanesList: <T>(
           ...attrs,
           // The lanes' estimates, and no gap or padding; `count` is not a list prop, and `getKey` takes items.
           ...lanes.options(options),
-          // Whole rows for a grid: the lanes contract renders `lanes.range(plan, count)`.
-          mapRange: (p: Plan): Plan => ({ ...p, ...lanes.range(p, p.options.count) }),
+          // Syncs again in the list's own render, which also runs alone for an in-place change to rendered
+          // items (a swap) that this render does not read; still before the list's commit. Whole rows for
+          // a grid: the lanes contract renders `lanes.range(plan, count)`.
+          mapRange: (p: Plan): Plan => (lanes.sync(options), { ...p, ...lanes.range(p, p.options.count) }),
           count: undefined,
           getKey,
           ref: setList,
