@@ -340,9 +340,9 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 
 | Entry | Size | Budget |
 | --- | --- | --- |
-| `{ createVirtualizer, elementScroller }` | 4496 B | 4500 B |
-| main entry, everything (`*`) | 5701 B | 6500 B |
-| React chat path (core + react) | 5725 B | 5800 B |
+| `{ createVirtualizer, elementScroller }` | 4495 B | 4500 B |
+| main entry, everything (`*`) | 5702 B | 6500 B |
+| React chat path (core + react) | 5726 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
 | `@anchorlist/core/animate` | 789 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
