@@ -14,3 +14,4 @@ Add `@anchorlist/vue`, Vue 3.3+ bindings for `@anchorlist/core`.
 - The headless `useAnchorList(options, elements, scroller?)` composable returns `[virtualizer, plan]` for custom markup.
 - Generic component typing: `item` in the default slot is typed from `items` in templates checked by `vue-tsc`.
 - Vue main entry budget 1.4 kB (was 1.3 kB): runtime prop declaration is Vue-only, about 190 B; user decision 2026-11-16. The sticky range overlay moved to `@anchorlist/vue/sticky` (budget 0.95 kB, core included).
+- Vue main entry budget 1.45 kB (was 1.4 kB): v0.4 adapter contract (keptRow offset, mapRange), +10 B; user decision 2026-11-16.

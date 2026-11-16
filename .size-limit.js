@@ -125,7 +125,7 @@ export default [
     path: 'packages/vue/dist/index.js',
     import: '*',
     ignore: ['vue', '@anchorlist/core'],
-    limit: '1.4 kB',
+    limit: '1.45 kB',
     gzip: true,
   },
   {
