@@ -94,16 +94,21 @@ const callbacks = {
  * id (when unchanged) keeps object identity like an immutable app store does,
  * so rows can skip re-rendering.
  */
-const interned = new Map<string, Item>()
+let interned = new Map<string, Item>()
 /** The items of the last render. */
 let current: Item[] = []
-const intern = (items: Item[]): Item[] =>
-  items.map((m) => {
+/** Keeps only the current ids, so items that left the list can be collected. */
+const intern = (items: Item[]): Item[] => {
+  const next = new Map<string, Item>()
+  const out = items.map((m) => {
     const prev = interned.get(m.id)
-    if (prev && prev.height === m.height && prev.text === m.text && prev.mine === m.mine && prev.header === m.header) return prev
-    interned.set(m.id, m)
-    return m
+    const item = prev && prev.height === m.height && prev.text === m.text && prev.mine === m.mine && prev.header === m.header ? prev : m
+    next.set(m.id, item)
+    return item
   })
+  interned = next
+  return out
+}
 
 // ------------------------------------------------------------------ driver
 
