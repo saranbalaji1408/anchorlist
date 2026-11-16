@@ -303,9 +303,9 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 
 | Entry | Size | Budget |
 | --- | --- | --- |
-| `{ createVirtualizer, elementScroller }` | 4496 B | 4500 B |
-| main entry, everything (`*`) | 5701 B | 6500 B |
-| React chat path (core + react) | 5704 B | 5800 B |
+| `{ createVirtualizer, elementScroller }` | 4495 B | 4500 B |
+| main entry, everything (`*`) | 5702 B | 6500 B |
+| React chat path (core + react) | 5710 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
 | `@anchorlist/core/animate` | 758 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
@@ -319,7 +319,7 @@ keeps that import in the measured bundle; `modifyRolldownConfig` writes it as `.
 By default @size-limit/rolldown writes it as a path from its temporary directory to the
 checkout, and sizes then moved by about 50 B with where the repository was cloned.
 
-The list entry has 4 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
+The list entry has 5 B of headroom, so any engine addition must remove bytes elsewhere. The v0.2
 features therefore live outside `createVirtualizer`: adapter helpers in the main entry
 (`keptRow`, tree-shaken from the list entry) and opt-in entries (`/sticky`, `/animate`,
 `/snapshot`, `/ssr`) that import nothing at runtime, so the build shares no chunk with the main

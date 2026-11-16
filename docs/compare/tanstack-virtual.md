@@ -47,7 +47,7 @@ anchorlist enforces gzip size budgets in CI with size-limit:
 
 | Entry | Size (min + gzip) |
 | --- | --- |
-| `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.50 kB (4,496 B) |
+| `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.50 kB (4,495 B) |
 | `@anchorlist/core` main entry, everything | ≤ 6.5 kB budget, currently 5.7 kB |
 | `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.25 kB |
 | React chat path (core + react) | ≤ 5.8 kB budget, currently 5.7 kB |
