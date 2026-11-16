@@ -115,8 +115,10 @@ v.attach(windowScroller({ list, content, scrollMargin: 56 }))
   for the rest of the page but leaves the rows alone. If you wrap `windowScroller`, keep that
   style on an ancestor of the rows.
 - It listens to `scroll` and `resize` on `window`, and to input events on the document element.
-- Page content above the list may change size: the list follows. Other layout changes on the
-  page don't remeasure the rows.
+- Page content above the list may change size. Inside `content` it is followed at once. Outside
+  `content` it is followed when the document's size changes; when it doesn't (for example with
+  `html { height: 100% }`, or growth above matched by shrinking below), the list catches up on the
+  next scroll. Other layout changes on the page don't remeasure the rows.
 - `axis: HORIZONTAL` makes a horizontal list that scrolls with the page.
 
 ## Size
