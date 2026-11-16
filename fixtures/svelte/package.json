@@ -7,7 +7,7 @@
   "description": "Svelte fixture for the shared scenarios, served at /svelte/ by the React fixture's preview server.",
   "scripts": {
     "dev": "vite",
-    "build:dev": "vite build --mode development",
+    "build:dev": "vite build --mode development && vite build --mode development --ssr src/ssr.ts",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
   },
   "dependencies": {
