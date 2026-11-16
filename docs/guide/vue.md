@@ -177,8 +177,10 @@ The Vue fixture runs the same end-to-end scenarios as React in Chromium, WebKit 
 anchoring through prepends, trims and resizes, chat pinning, `scrollToKey`, sticky items, focus
 preservation, `aria-busy`, smooth scrolling, server rendering and hydration, window, horizontal and
 right-to-left lists, and grid and masonry lanes. The React transitions scenario is skipped on Vue
-(it has no Vue equivalent), and the performance scenario checks timings but not the heap, because
-the scenarios run a Vue development build, which holds memory until a later collection. Unit tests run against Vue 3.3,
+(it has no Vue equivalent). The heap check of the performance scenario runs on a production build
+of the Vue fixture: the development build is excluded because Vue's development mode keeps about
+22 MB per 100 updates that only a later collection releases. The adapter has no development-only
+code, so anything it retained would show up in the production build too. Unit tests run against Vue 3.3,
 the supported minimum, and the current Vue.
 
 ## Related
