@@ -140,7 +140,10 @@ See [window scroller](/guide/window-scroller), [horizontal list](/guide/horizont
 ## Grid and masonry
 
 `LanesList` from `@anchorlist/vue/lanes` takes every `AnchorList` prop and slot plus `lanes`, a
-layout from `@anchorlist/core/lanes`. The lanes own the gap. Create the layout once per list.
+layout from `@anchorlist/core/lanes`. The lanes own the gap. Create the layout once per list. See
+[virtual grid and masonry](/guide/virtual-grid-masonry) for the options and limits; as with React,
+lanes under `windowScroller` or `horizontal()` are expected to work but are not yet covered by
+tests.
 
 ```vue
 <script setup lang="ts">
@@ -160,3 +163,26 @@ const lanes = masonry({ lanes: 3, gap: 8 })
 
 `useAnchorList(options, elements, scroller?)` returns `[virtualizer, plan]` for custom markup. Call
 it in `setup()` and call `plan()` in the render function only.
+
+## Size
+
+Sizes are min + gzip, checked in CI. `@anchorlist/vue` is 1,410 B with Vue and the core external
+(budget 1.45 kB), and the Vue chat path (core + `AnchorList`) is 5,704 B (budget 5.8 kB). The opt-in
+entries are separate: `/sticky` 905 B (950 B), `/horizontal` 189 B (300 B) and `/lanes` 431 B
+(450 B). A CI check confirms that `AnchorList` pulls in none of them.
+
+## How it is tested
+
+The Vue fixture runs the same end-to-end scenarios as React in Chromium, WebKit and Firefox:
+anchoring through prepends, trims and resizes, chat pinning, `scrollToKey`, sticky items, focus
+preservation, `aria-busy`, smooth scrolling, server rendering and hydration, window, horizontal and
+right-to-left lists, and grid and masonry lanes. The React transitions scenario is skipped on Vue
+(it has no Vue equivalent), and the performance scenario checks timings but not the heap, because
+the scenarios run a Vue development build, which holds memory until a later collection. Unit tests run against Vue 3.3,
+the supported minimum, and the current Vue.
+
+## Related
+
+- [Getting started](./getting-started) (React)
+- [Virtual grid and masonry](./virtual-grid-masonry)
+- [API reference: Vue](/api/#vue)
