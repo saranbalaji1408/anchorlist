@@ -38,7 +38,9 @@ export function keptRow(v: Virtualizer, plan: Plan, key: Key | null | undefined)
   // The committed position: content space is the scroll container's scrolled padding box.
   // Item 0 starts at paddingStart in list space, which gives the list's own start. Before
   // a change at index 0 is committed, fall back to content space for that one render.
+  // Only with a row to keep: then the list is not empty and getKey(0) is safe.
+  if (!r) return null
   const k0 = o.getKey(0)
   const r0 = !v.indexOf(k0) && v.getItemRect(k0)
-  return r ? { index: i, start: r.start, offset: r0 ? r.start - r0.start + (o.paddingStart ?? 0) : r.start } : null
+  return { index: i, start: r.start, offset: r0 ? r.start - r0.start + (o.paddingStart ?? 0) : r.start }
 }

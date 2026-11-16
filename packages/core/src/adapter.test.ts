@@ -22,6 +22,15 @@ describe('keptRow', () => {
     expect(keptRow(h.v, plan, 'nope')).toBeNull()
   })
 
+  it('never reads a key of an empty list', async () => {
+    const h = mount({ keys: keysOf(500), size: () => 50, viewport: 500 })
+    await h.settle()
+    const getKey = (i: number): Key => {
+      throw new Error(`getKey(${i}) on an empty list`)
+    }
+    expect(keptRow(h.v, h.v.plan({ ...opts(0), getKey }), h.keys[3]!)).toBeNull()
+  })
+
   it('returns the index and content-space start of a row outside the range', async () => {
     const h = mount({ keys: keysOf(500), size: () => 50, viewport: 500, gap: 4, header: 100, options: { paddingStart: 10, estimateSize: () => 50 } })
     await h.settle()
