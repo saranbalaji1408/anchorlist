@@ -9,7 +9,7 @@ import { installLayout, type TestLayout } from '../../react/src/testLayout'
 import { horizontal } from './horizontal'
 import { AnchorList, type AnchorListHandle, type AnchorListProps } from './index'
 import { LanesList } from './lanes'
-import { StickyItem } from './sticky'
+import { StickyItem, StickyOverlay } from './sticky'
 
 interface Item {
   id: string
@@ -128,13 +128,40 @@ describe('focus preservation', () => {
   })
 })
 
+describe('resize callbacks', () => {
+  it('re-renders in a later task, never inside the ResizeObserver delivery', async () => {
+    let fire = (): void => undefined
+    const RO = globalThis.ResizeObserver
+    globalThis.ResizeObserver = class extends RO {
+      constructor(cb: ResizeObserverCallback) {
+        super(cb)
+        fire = () => cb([], this)
+      }
+    }
+    try {
+      await render({ items: make(500, 'i') })
+      const before = keys().length
+      layout.viewport = 1500
+      fire()
+      // Microtasks (Vue's flush) run before the browser delivers the next observations: no rows yet.
+      await flush()
+      expect(keys().length).toBe(before)
+      await new Promise((r) => setTimeout(r))
+      await flush()
+      expect(keys().length).toBeGreaterThan(before)
+    } finally {
+      globalThis.ResizeObserver = RO
+    }
+  })
+})
+
 describe('aria', () => {
   it('sets aria-busy on the list from busy', async () => {
     await render({ items: make(10, 'i'), busy: true })
     const list = scroller().querySelector('[role="list"]')!
     expect(list.getAttribute('aria-busy')).toBe('true')
     await render({ items: make(10, 'i') })
-    expect(list.hasAttribute('aria-busy')).toBe(false)
+    expect(list.getAttribute('aria-busy')).toBe('false')
   })
 })
 
@@ -218,7 +245,10 @@ describe('StickyItem', () => {
       { items },
       {
         default: (({ item }: { item: Item }) => h('span', item.id)) as Slots[string],
-        sticky: ((range: never) => h(StickyItem as never, { range, items, isSticky: isHeader }, { default: ({ item }: { item: Item }) => h('span', item.id) })) as Slots[string],
+        sticky: ((list: never) =>
+          h(StickyOverlay as never, { list }, {
+            default: (range: never) => h(StickyItem as never, { range, items, isSticky: isHeader }, { default: ({ item }: { item: Item }) => h('span', item.id) }),
+          })) as Slots[string],
       },
     )
   })

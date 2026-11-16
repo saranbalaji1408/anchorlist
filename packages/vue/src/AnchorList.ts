@@ -1,9 +1,7 @@
-import { keptRow, type ElementScrollerOptions, type Key, type Scroller, type Virtualizer, type VirtualizerOptions, type VisibleRange } from '@anchorlist/core'
+import { keptRow, type ElementScrollerOptions, type Key, type Scroller, type Virtualizer, type VirtualizerOptions } from '@anchorlist/core'
 import {
   defineComponent,
   h,
-  onBeforeUnmount,
-  shallowRef,
   type ComponentPropsOptions,
   type PublicProps,
   type SetupContext,
@@ -84,14 +82,15 @@ export interface AnchorListSlots<T> {
   /** Rendered below the rows, inside the scroll content. It may change size at any time. */
   footer?: () => VNodeChild
   /**
-   * Overlay pinned to the top of the viewport (for example a date pill),
-   * rendered from the visible range. It re-renders only when that range changes.
+   * Rendered first inside the scroll container, with the virtualizer. Put a
+   * `StickyOverlay` from `@anchorlist/vue/sticky` here: an overlay pinned to
+   * the top of the viewport (for example a date pill or sticky group headers),
+   * rendered from the visible range.
    */
-  sticky?: (range: VisibleRange) => VNodeChild
+  sticky?: (list: Virtualizer) => VNodeChild
 }
 
 const ROW: StyleValue = { display: 'flow-root' }
-const STICKY: StyleValue = { position: 'sticky', top: 0, height: 0, zIndex: 1 }
 
 /** One row. Its props never include the index, so prepends and trims skip it. */
 const Row = /*#__PURE__*/ defineComponent({
@@ -106,16 +105,6 @@ const Row = /*#__PURE__*/ defineComponent({
     // `focusin` bubbles from the row's content, unlike `focus`.
     const onFocusin = (): void => (p.f as (k: Key) => void)(p.k as Key)
     return () => h('div', { ref, role: 'listitem', 'data-key': p.k, class: p.c, style: p.st, onFocusin }, (p.s as Slots).default?.({ item: p.item }))
-  },
-})
-
-const Sticky = /*#__PURE__*/ defineComponent({
-  props: ['v', 's'],
-  setup(p) {
-    const v = p.v as Virtualizer
-    const range = shallowRef(v.getVisibleRange())
-    onBeforeUnmount(v.subscribe(() => (range.value = v.getVisibleRange())))
-    return () => h('div', { style: STICKY }, (p.s as Slots).sticky?.(range.value))
   },
 })
 
@@ -220,7 +209,7 @@ export const AnchorList: <T>(
         // custom one, `flexDirection` below) are left out or read back, so a re-render keeps them.
         { ref: setElement, style: { overflowAnchor: 'none', position: 'relative', ...(!props.scroller && { overflowY: 'auto' }) } },
         [
-          slots.sticky && h(Sticky, { v, s: slots }),
+          slots.sticky?.(v),
           h('div', { ref: setContent }, [
             slots.header?.(),
             h(
@@ -228,8 +217,9 @@ export const AnchorList: <T>(
               {
                 ref: setList,
                 role: 'list',
-                'aria-busy': props.busy || undefined,
-                style: { display: 'flex', flexDirection: x ? 'row' : 'column', gap: gap ? `${gap}px` : undefined },
+                // `aria-busy="false"` when not busy: the ARIA default, written explicitly.
+                'aria-busy': props.busy,
+                style: { display: 'flex', flexDirection: x ? 'row' : 'column', gap: gap && `${gap}px` },
                 // Focus that leaves the window stays in the row: keep it.
                 onFocusout: () => {
                   if (document.hasFocus()) focused = null
@@ -243,5 +233,5 @@ export const AnchorList: <T>(
       )
     }
   },
-  { name: 'AnchorList', props: PROPS as never },
+  { props: PROPS as never },
 ) as never

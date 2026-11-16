@@ -36,32 +36,45 @@ import { AnchorList } from '@anchorlist/vue'
 - **Props:** `items`, `get-key`, `row-class`, `busy`, `scroller`, plus every core option (`align`, `gap`,
   `overscan`, `follow`, `has-more-start`, `initial-snapshot`, `initial-rect`, `initial-plan`, ...).
 - **Events:** `@start-reached`, `@end-reached`, `@range-change`, `@at-edge-change`.
-- **Slots:** `default` (`{ item }`), `header`, `footer` and `sticky` (receives the visible range).
+- **Slots:** `default` (`{ item }`), `header`, `footer` and `sticky` (receives the virtualizer; render a
+  `StickyOverlay` from `@anchorlist/vue/sticky` there).
 - **Attributes** (`class`, `style`, `id`, `aria-label`, `dir`, ...) go to the scroll container.
 - **Template ref** (`AnchorListHandle`): `scrollToKey`, `scrollToIndex`, `scrollToEdge`, `isAtEdge`,
   `getSnapshot`, `getVisibleRange`, `getItemRect`, `getTotalSize`, `indexOf`, `subscribe`, and the
   scroll container as `element`.
 - Rows get no index, so a prepend re-renders no mounted row. Keep items immutable.
 
-## Sticky headers
+## Sticky overlay and sticky headers
 
-`StickyItem` from `@anchorlist/vue/sticky` keeps the last header scrolled past at the top, as an
-`aria-hidden`, `inert` copy (see [sticky group headers](/guide/sticky-headers)).
+`@anchorlist/vue/sticky` holds the sticky overlay, so lists without one stay smaller.
+`StickyOverlay` is pinned to the top of the viewport and renders its slot from the visible range,
+for example a date pill:
+
+```vue
+<template #sticky="list">
+  <StickyOverlay :list="list" v-slot="range"><DatePill :at="range.startKey" /></StickyOverlay>
+</template>
+```
+
+`StickyItem` inside it keeps the last header scrolled past at the top, as an `aria-hidden`, `inert`
+copy (see [sticky group headers](/guide/sticky-headers)).
 
 ```vue
 <script setup lang="ts">
 import { AnchorList } from '@anchorlist/vue'
-import { StickyItem } from '@anchorlist/vue/sticky'
+import { StickyItem, StickyOverlay } from '@anchorlist/vue/sticky'
 const isHeader = (row: Row) => row.kind === 'header'
 </script>
 
 <template>
   <AnchorList style="height: 600px" :items="rows" :get-key="(r) => r.id">
     <template #default="{ item }"><RowView :row="item" /></template>
-    <template #sticky="range">
-      <StickyItem :range="range" :items="rows" :is-sticky="isHeader" v-slot="{ item }">
-        <RowView :row="item" />
-      </StickyItem>
+    <template #sticky="list">
+      <StickyOverlay :list="list" v-slot="range">
+        <StickyItem :range="range" :items="rows" :is-sticky="isHeader" v-slot="{ item }">
+          <RowView :row="item" />
+        </StickyItem>
+      </StickyOverlay>
     </template>
   </AnchorList>
 </template>

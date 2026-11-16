@@ -41,22 +41,39 @@ export function useAnchorList(
   let attached = false
   let syncing = false
   let again = false
+  let committing = false
+  let timer: ReturnType<typeof setTimeout> | 0 = 0
 
   const commit = (): void => {
     const plan = rendered
     if (!plan || plan === committed) return
-    if (!attached) {
-      const e = elements()
-      if (!e) return
-      v.attach(scroller(e))
-      attached = true
+    committing = true
+    try {
+      if (!attached) {
+        const e = elements()
+        if (!e) return
+        v.attach(scroller(e))
+        attached = true
+      }
+      committed = plan
+      v.commit(plan)
+    } finally {
+      committing = false
     }
-    committed = plan
-    v.commit(plan)
   }
 
   const v = createVirtualizer(options(), {
     render(sync) {
+      // From a resize callback (outside a commit, not sync): re-render in a later task, as React's
+      // scheduler does. Vue's microtask flush would mount rows inside the ResizeObserver delivery,
+      // which browsers report as an undelivered-notifications error.
+      if (!sync && !committing) {
+        timer ||= setTimeout(() => {
+          timer = 0
+          version.value++
+        })
+        return
+      }
       version.value++
       if (syncing) again = true
       else if (sync) {
@@ -81,6 +98,7 @@ export function useAnchorList(
 
   onMounted(commit)
   onUpdated(commit)
+  // A pending deferred re-render after unmount only bumps an unobserved ref.
   onBeforeUnmount(() => v.destroy())
 
   const plan = (): Plan => {

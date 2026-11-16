@@ -1,4 +1,4 @@
-import { elementScroller, HORIZONTAL, type FollowContext, type VisibleRange } from '@anchorlist/core'
+import { elementScroller, HORIZONTAL, type FollowContext, type Virtualizer, type VisibleRange } from '@anchorlist/core'
 import { animateToKey } from '@anchorlist/core/animate'
 import { grid, masonry, type Lanes } from '@anchorlist/core/lanes'
 import { rtlScroller } from '@anchorlist/core/rtl'
@@ -8,7 +8,7 @@ import { windowScroller } from '@anchorlist/core/window'
 import { AnchorList, type AnchorListHandle, type AnchorListProps } from '@anchorlist/vue'
 import { horizontal as horizontalLayout } from '@anchorlist/vue/horizontal'
 import { LanesList } from '@anchorlist/vue/lanes'
-import { StickyItem } from '@anchorlist/vue/sticky'
+import { StickyItem, StickyOverlay } from '@anchorlist/vue/sticky'
 import { createApp, createSSRApp, defineComponent, h, nextTick, reactive, shallowRef, version, type App, type Component, type PropType, type VNodeChild } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { createDom } from '../../../scenarios/src/dom'
@@ -179,8 +179,13 @@ export function installDriver(container: HTMLElement): void {
           default: renderItem,
           ...(s.header === null ? {} : { header: () => h('div', { style: { [size]: `${s.header}px`, background: '#eef' } }, 'header') }),
           ...(s.footer === null ? {} : { footer: () => h('div', { style: { [size]: `${s.footer}px`, background: '#efe' } }, 'footer') }),
-          ...(s.sticky ? { sticky: pill } : {}),
-          ...(s.stickyItems ? { sticky: (range: VisibleRange) => h(StickyItem<Item>, { range, items, isSticky: isHeader }, { default: renderStuck }) } : {}),
+          ...(s.sticky ? { sticky: (list: Virtualizer) => h(StickyOverlay, { list }, { default: pill }) } : {}),
+          ...(s.stickyItems
+            ? {
+                sticky: (list: Virtualizer) =>
+                  h(StickyOverlay, { list }, { default: (range: VisibleRange) => h(StickyItem<Item>, { range, items, isSticky: isHeader }, { default: renderStuck }) }),
+              }
+            : {}),
         }
         return h('main', { style: layout === 'window' ? { paddingTop: `${margin}px` } : undefined }, [
           layout === 'window' && margin > 0

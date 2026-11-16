@@ -1,4 +1,4 @@
-import type { VisibleRange } from '@anchorlist/core'
+import type { Virtualizer, VisibleRange } from '@anchorlist/core'
 import { stickyState } from '@anchorlist/core/sticky'
 import {
   defineComponent,
@@ -14,9 +14,47 @@ import {
   type VNodeChild,
 } from 'vue'
 
+/** Props of {@link StickyOverlay}. */
+export interface StickyOverlayProps {
+  /** The virtualizer passed to the `sticky` slot of `AnchorList`. */
+  list: Pick<Virtualizer, 'subscribe' | 'getVisibleRange'>
+}
+
+/** Slots of {@link StickyOverlay}. */
+export interface StickyOverlaySlots {
+  /** The overlay content, rendered from the visible range. */
+  default?: (range: VisibleRange) => VNodeChild
+}
+
+const STICKY = { position: 'sticky', top: 0, height: 0, zIndex: 1 } as const
+
+/**
+ * Overlay pinned to the top of the viewport (for example a date pill),
+ * rendered from the visible range. It re-renders only when that range
+ * changes. Render it in the `sticky` slot of `AnchorList`:
+ *
+ * ```vue
+ * <template #sticky="list">
+ *   <StickyOverlay :list="list" v-slot="range"><DatePill :at="range.startKey" /></StickyOverlay>
+ * </template>
+ * ```
+ */
+export const StickyOverlay: (
+  props: StickyOverlayProps & PublicProps,
+  ctx?: Omit<SetupContext<never[], SlotsType<StickyOverlaySlots>>, 'expose'>,
+) => VNode = /*#__PURE__*/ defineComponent(
+  (props: StickyOverlayProps, { slots }) => {
+    const v = props.list
+    const range = shallowRef(v.getVisibleRange())
+    onBeforeUnmount(v.subscribe(() => (range.value = v.getVisibleRange())))
+    return () => h('div', { style: STICKY }, slots.default?.(range.value))
+  },
+  { props: ['list'] },
+) as never
+
 /** Props of {@link StickyItem}. */
 export interface StickyItemProps<T> {
-  /** The visible range passed to the `sticky` slot of `AnchorList`. */
+  /** The visible range from `StickyOverlay`. */
   range: VisibleRange
   /** The list's items (the same array as `AnchorList`'s `items`). */
   items: readonly T[]
@@ -37,13 +75,15 @@ export interface StickyItemSlots<T> {
 /**
  * Sticky items (for example group headers) for `AnchorList`: the last sticky
  * item scrolled past stays at the top of the viewport until the next one
- * pushes it out. Render it in the `sticky` slot:
+ * pushes it out. Render it in a `StickyOverlay`:
  *
  * ```vue
  * <AnchorList :items="rows" :get-key="(r) => r.id">
  *   <template #default="{ item }"><Row :row="item" /></template>
- *   <template #sticky="range">
- *     <StickyItem :range="range" :items="rows" :is-sticky="isHeader" v-slot="{ item }"><Row :row="item" /></StickyItem>
+ *   <template #sticky="list">
+ *     <StickyOverlay :list="list" v-slot="range">
+ *       <StickyItem :range="range" :items="rows" :is-sticky="isHeader" v-slot="{ item }"><Row :row="item" /></StickyItem>
+ *     </StickyOverlay>
  *   </template>
  * </AnchorList>
  * ```

@@ -125,7 +125,7 @@ export default [
     path: 'packages/vue/dist/index.js',
     import: '*',
     ignore: ['vue', '@anchorlist/core'],
-    limit: '1.3 kB',
+    limit: '1.4 kB',
     gzip: true,
   },
   {
@@ -149,7 +149,7 @@ export default [
     path: 'packages/vue/dist/sticky.js',
     import: '*',
     ignore: ['vue'],
-    limit: '0.8 kB',
+    limit: '0.95 kB',
     gzip: true,
   },
   {

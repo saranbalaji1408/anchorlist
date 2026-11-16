@@ -1,7 +1,7 @@
 # @anchorlist/vue
 
 Vue 3 bindings for [`@anchorlist/core`](https://www.npmjs.com/package/@anchorlist/core): a virtual list that keeps the row being read
-in place while items are prepended, appended, trimmed, removed or resized. About 1.5 kB gzip on top
+in place while items are prepended, appended, trimmed, removed or resized. About 1.4 kB gzip on top
 of the core.
 
 Start with the [`anchorlist`](https://www.npmjs.com/package/anchorlist) landing page for an overview.
@@ -34,7 +34,8 @@ import { AnchorList } from '@anchorlist/vue'
   `initialPlan`, ...). Core callbacks are events: `@start-reached`,
   `@end-reached`, `@range-change`, `@at-edge-change`. `class`, `style` and other attributes go to
   the scroll container.
-- **Slots:** `default` (`{ item }`), `header`, `footer`, and `sticky` (receives the visible range).
+- **Slots:** `default` (`{ item }`), `header`, `footer`, and `sticky` (receives the virtualizer: render
+  a `StickyOverlay` from `@anchorlist/vue/sticky` there).
 - **Template ref:** `scrollToKey`, `scrollToIndex`, `scrollToEdge`, `isAtEdge`, `getSnapshot`,
   `getVisibleRange`, `getItemRect`, `getTotalSize`, `indexOf`, `subscribe`, and the scroll container
   as `element` (type it with `AnchorListHandle`).
@@ -42,8 +43,8 @@ import { AnchorList } from '@anchorlist/vue'
 - **Scrollers** (`scroller`, read on mount): `windowScroller` from `@anchorlist/core/window`,
   `horizontal()` from `@anchorlist/vue/horizontal`, `horizontal(rtlScroller)` for right-to-left.
 - **Server rendering:** `initialRect` with `initialPlan` from `@anchorlist/core/ssr`.
-- **Opt-in entries:** `StickyItem` (`@anchorlist/vue/sticky`, sticky group headers in the `sticky`
-  slot), `horizontal` (`@anchorlist/vue/horizontal`) and `LanesList` (`@anchorlist/vue/lanes`, grid
+- **Opt-in entries:** `StickyOverlay` and `StickyItem` (`@anchorlist/vue/sticky`: an overlay
+  rendered from the visible range, and sticky group headers), `horizontal` (`@anchorlist/vue/horizontal`) and `LanesList` (`@anchorlist/vue/lanes`, grid
   and masonry with `@anchorlist/core/lanes`).
 - **Rows get no index**, so a prepend re-renders no mounted row. A row re-renders when its item
   changes or when reactive state read in the slot changes. Keep items immutable.

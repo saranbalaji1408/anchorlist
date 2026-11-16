@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createApp, defineComponent, h, nextTick, shallowRef, version, type App, type VNodeChild } from 'vue'
 import { installLayout, type TestLayout } from '../../react/src/testLayout'
 import { AnchorList, type AnchorListHandle, type AnchorListProps, useAnchorList } from './index'
+import { StickyOverlay } from './sticky'
 
 interface Item {
   id: string
@@ -227,8 +228,11 @@ describe('imperative handle', () => {
     expect(top('i250') + 25).toBe(300)
   })
 
-  it('renders the sticky slot from the visible range', async () => {
-    await render({ items: make(100, 'i') }, { sticky: ((r: { startKey: string | null }) => h('span', { 'data-testid': 'pill' }, String(r.startKey))) as Slots[string] })
+  it('renders a StickyOverlay in the sticky slot from the visible range', async () => {
+    const renderPill = (r: { startKey: string | null }): VNodeChild => h('span', { 'data-testid': 'pill' }, String(r.startKey))
+    await render({ items: make(100, 'i') }, { sticky: ((list: never) => h(StickyOverlay as never, { list }, { default: renderPill })) as Slots[string] })
+    // The overlay is the scroll container's first child, pinned with position: sticky.
+    expect((scroller().firstElementChild as HTMLElement).style.position).toBe('sticky')
     const pill = (): string | null | undefined => document.querySelector('[data-testid="pill"]')?.textContent
     expect(pill()).toBe('i0')
     handle.value!.scrollToKey('i40')
