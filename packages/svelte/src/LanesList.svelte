@@ -19,7 +19,7 @@
   ```
 -->
 <script lang="ts" generics="T">
-  import { elementScroller, type ElementScrollerOptions, type VirtualizerOptions } from '@anchorlist/core'
+  import { elementScroller, type ElementScrollerOptions, type Plan, type VirtualizerOptions } from '@anchorlist/core'
   import AnchorList from './AnchorList.svelte'
   import type { LanesListProps } from './lanesTypes.js'
   import type { AnchorListHandle as H } from './types.js'
@@ -44,6 +44,9 @@
     return lanes.scroller((props.scroller ?? elementScroller)(e))
   }
 
+  // Whole grid rows; masonry renders the plan's range.
+  const rows = (p: Plan) => lanes.range(p, p.options.count)
+
   export const scrollToKey: H['scrollToKey'] = (...a) => list.scrollToKey(...a)
   export const scrollToIndex: H['scrollToIndex'] = (...a) => list.scrollToIndex(...a)
   export const scrollToEdge: H['scrollToEdge'] = (...a) => list.scrollToEdge(...a)
@@ -57,4 +60,4 @@
   export const getElement: H['getElement'] = () => list.getElement()
 </script>
 
-<AnchorList bind:this={list} {...props} {...laneOptions} {scroller} />
+<AnchorList bind:this={list} {...props} {...laneOptions} {scroller} {rows} />

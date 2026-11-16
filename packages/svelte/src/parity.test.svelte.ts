@@ -110,6 +110,19 @@ describe('focus preservation', () => {
     expect(el.getAttribute('data-index')).toBe('120')
   })
 
+  it('places the kept row in the container when the scroller content space is the page (window scroller)', async () => {
+    // The list starts 300 px down the scroller's content, as on a page below other content.
+    const page = (e: ElementScrollerOptions): ReturnType<typeof elementScroller> => {
+      const s = elementScroller(e)
+      return { ...s, listStart: () => s.listStart() + 300 }
+    }
+    await render({ items: make(500, 'i'), scroller: page })
+    focus('i3')
+    await scrollTo(200 * 50)
+    expect(instance!.getItemRect('i3')!.start).toBe(450)
+    expect(row('i3')!.style.top).toBe('150px')
+  })
+
   it('lets the row unmount once focus leaves the list', async () => {
     await render({ items: make(500, 'i') })
     focus('i3').blur()
@@ -274,6 +287,22 @@ describe('StickyItem', () => {
   })
 })
 
+describe('StickyOverlay', () => {
+  it('pins its content to the viewport top and renders it from the visible range', async () => {
+    const app = mount(Sticky, { target: container, props: { items: make(100, 'i'), isSticky: () => false, pill: true } })
+    flushSync()
+    await tick()
+    const pill = (): HTMLElement => document.querySelector('[data-testid="pill"]')!
+    expect(pill().textContent).toBe('i0')
+    expect(pill().parentElement!.style.position).toBe('sticky')
+    expect(pill().parentElement!.parentElement).toBe(scroller())
+    await scrollTo(40 * 50)
+    await tick()
+    expect(pill().textContent).toBe('i40')
+    unmount(app)
+  })
+})
+
 describe('LanesList', () => {
   it('positions the items in lanes, syncing the lanes before each commit', async () => {
     const lanes = grid({ lanes: 2 })
@@ -293,6 +322,13 @@ describe('LanesList', () => {
     expect(a.style.position).toBe('absolute')
     expect(a.style.top).toBe(b.style.top)
     expect(a.style.getPropertyValue('inset-inline-start')).not.toBe(b.style.getPropertyValue('inset-inline-start'))
+    // Whole grid rows: rendering starts and ends on a row boundary.
+    for (const top of [1234, 2345, 3456]) {
+      await scrollTo(top)
+      const k = keys().map((x) => Number(x.slice(1)))
+      expect(k[0]! % 2, `first at ${top}`).toBe(0)
+      expect(k[k.length - 1]! % 2, `last at ${top}`).toBe(1)
+    }
     unmount(app)
   })
 })

@@ -30,11 +30,11 @@
 </script>
 
 <script lang="ts" generics="T">
-  import { elementScroller, type ElementScrollerOptions, type VirtualizerOptions, type VisibleRange } from '@anchorlist/core'
+  import { elementScroller, type ElementScrollerOptions, type Scroller, type VirtualizerOptions } from '@anchorlist/core'
   import { createAnchorList } from './createAnchorList.svelte.js'
   import type { AnchorListHandle, AnchorListProps } from './types.js'
 
-  const { items, getKey, children, header, footer, sticky, rowClass, busy, scroller, ...rest }: AnchorListProps<T> = $props()
+  const { items, getKey, children, header, footer, sticky, rowClass, busy, scroller, rows: toRows, ...rest }: AnchorListProps<T> = $props()
 
   let element: HTMLDivElement | undefined = $state()
   let content: HTMLElement | undefined = $state()
@@ -42,6 +42,7 @@
   // The container's overflow as set when attaching. Rendered in the style
   // attribute so that a changed `style` prop keeps it.
   let overflow: string | undefined = $state()
+  let sc: Scroller<Element>
 
   const al = createAnchorList(
     () => {
@@ -54,11 +55,12 @@
     () => element && list && content && { element, list, content },
     // Read on mount.
     (e: ElementScrollerOptions) => {
-      const s = (scroller ?? elementScroller)(e)
+      const s = (sc = (scroller ?? elementScroller)(e))
       const { style } = e.element as HTMLElement
       overflow = `overflow-x:${style.overflowX};overflow-y:${scroller ? style.overflowY : 'auto'}`
       return s
     },
+    (p) => toRows?.(p) ?? p,
   )
   const v = al.virtualizer
   // The focused row stays mounted outside the range, out of flow, in the same
@@ -66,20 +68,24 @@
   // A horizontal list keeps it at its inline start (content space either way).
   const kept = $derived.by(() => {
     const k = al.kept
-    const x = list?.style.flexDirection == 'row'
-    return k && { item: items[k.index]!, i: k.index, style: `position:absolute;${x ? 'height' : 'width'}:100%;${x ? 'inset-inline-start' : 'top'}:${k.start}px` }
+    if (!k) return k
+    const x = list!.style.flexDirection == 'row'
+    // `k.start` is in the scroller's content space (the page for a window
+    // scroller); the row's containing block is the container. Rebase from the
+    // list's start in one to its start in the other (a no-op when the
+    // container is the scroller).
+    const e = element!
+    const at = x ? k.start : k.start - sc.listStart() - sc.offset() + list!.getBoundingClientRect().top - e.getBoundingClientRect().top + e.scrollTop
+    return { item: items[k.index]!, i: k.index, style: `position:absolute;${x ? 'height' : 'width'}:100%;${x ? 'inset-inline-start' : 'top'}:${at}px` }
   })
   // Items, never wrappers, so that unchanged rows are not updated.
   const rows = $derived.by(() => {
-    const { start, end } = al.plan
+    const { start, end } = al.rows
     const r = items.slice(start, end + 1)
     if (kept) r[kept.i < start ? 'unshift' : 'push'](kept.item)
     return r
   })
   const attrs = $derived(Object.fromEntries(Object.entries(rest).filter(([k]) => !OPTIONS.has(k))))
-
-  let range: VisibleRange = $state.raw(v.getVisibleRange())
-  $effect(() => v.subscribe(() => (range = v.getVisibleRange())))
 
   export const scrollToKey: AnchorListHandle['scrollToKey'] = v.scrollToKey
   export const scrollToIndex: AnchorListHandle['scrollToIndex'] = v.scrollToIndex
@@ -99,9 +105,7 @@
   bind:this={element}
   style="{attrs.style ?? ''};{overflow ?? (scroller ? '' : 'overflow-y:auto')};overflow-anchor:none;position:relative"
 >
-  {#if sticky}
-    <div style="position:sticky;top:0;height:0;z-index:1">{@render sticky(range)}</div>
-  {/if}
+  {@render sticky?.(v)}
   <div bind:this={content}>
     {@render header?.()}
     <div

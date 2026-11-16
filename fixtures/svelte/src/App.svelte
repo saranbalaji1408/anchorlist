@@ -7,7 +7,7 @@
   import { AnchorList, type AnchorListProps } from '@anchorlist/svelte'
   import { horizontal as horizontalLayout } from '@anchorlist/svelte/horizontal'
   import { LanesList } from '@anchorlist/svelte/lanes'
-  import { StickyItem } from '@anchorlist/svelte/sticky'
+  import { StickyItem, StickyOverlay } from '@anchorlist/svelte/sticky'
   import type { Item } from '../../../scenarios/src/driver'
   import Bubble from './Bubble.svelte'
   import { store } from './store.svelte'
@@ -61,7 +61,7 @@
     scroller,
     header: s.header === null ? undefined : header,
     footer: s.footer === null ? undefined : footer,
-    sticky: s.stickyItems ? stuck : s.sticky ? pill : undefined,
+    sticky: s.stickyItems || s.sticky ? overlay : undefined,
   })
 </script>
 
@@ -91,13 +91,18 @@
 {#snippet footer()}
   <div style="{size}: {s.footer}px; background: #efe">footer</div>
 {/snippet}
-{#snippet pill(range: { startKey: string | number | null })}
-  <div data-testid="pill">{range.startKey}</div>
-{/snippet}
-{#snippet stuck(range: import('@anchorlist/core').VisibleRange)}
-  <StickyItem {range} items={s.items} isSticky={isHeader}>
-    {#snippet children(item)}
-      <div data-testid="stuck"><Bubble {item} /></div>
+{#snippet overlay(list: import('@anchorlist/core').Virtualizer)}
+  <StickyOverlay {list}>
+    {#snippet children(range)}
+      {#if s.stickyItems}
+        <StickyItem {range} items={s.items} isSticky={isHeader}>
+          {#snippet children(item)}
+            <div data-testid="stuck"><Bubble {item} /></div>
+          {/snippet}
+        </StickyItem>
+      {:else}
+        <div data-testid="pill">{range.startKey}</div>
+      {/if}
     {/snippet}
-  </StickyItem>
+  </StickyOverlay>
 {/snippet}

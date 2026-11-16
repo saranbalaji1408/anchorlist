@@ -223,21 +223,17 @@ describe('handle', () => {
     expect(typeof hd.subscribe(() => {})).toBe('function')
   })
 
-  it('renders the sticky snippet from the visible range', async () => {
-    const sticky = createRawSnippet((range: () => { startKey: string | number | null }) => ({
-      render: () => '<span data-testid="pill"></span>',
-      setup(node) {
-        $effect(() => void (node.textContent = String(range().startKey)))
+  it('renders the sticky snippet first in the scroll container, with the virtualizer', async () => {
+    let list: unknown
+    const sticky = createRawSnippet((v: () => unknown) => ({
+      render: () => '<i data-testid="overlay"></i>',
+      setup() {
+        list = v()
       },
     }))
     await render({ items: make(100, 'i'), sticky })
-    const pill = (): string | null | undefined => document.querySelector('[data-testid="pill"]')?.textContent
-    expect(pill()).toBe('i0')
-    instance!.scrollToKey('i40')
-    await tick()
-    await tick()
-    expect(pill()).toBe('i40')
-    expect(instance!.getVisibleRange()).toMatchObject({ startKey: 'i40', endKey: 'i51' })
+    expect(scroller().firstElementChild!.getAttribute('data-testid')).toBe('overlay')
+    expect((list as AnchorListHandle).getVisibleRange()).toEqual(instance!.getVisibleRange())
   })
 
   it('restores an initial snapshot on mount', async () => {

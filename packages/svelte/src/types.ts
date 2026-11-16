@@ -1,4 +1,4 @@
-import type { ElementScrollerOptions, Key, Scroller, Virtualizer, VirtualizerOptions, VisibleRange } from '@anchorlist/core'
+import type { ElementScrollerOptions, Key, Plan, Range, Scroller, Virtualizer, VirtualizerOptions } from '@anchorlist/core'
 import type { Snippet } from 'svelte'
 import type { HTMLAttributes } from 'svelte/elements'
 
@@ -53,10 +53,12 @@ export interface AnchorListProps<T> extends Options, Omit<HTMLAttributes<HTMLDiv
   /** Rendered below the rows, inside the scroll content. It may change size at any time. */
   footer?: Snippet | undefined
   /**
-   * Overlay pinned to the top of the viewport (for example a date pill),
-   * rendered from the visible range. It updates only when that range changes.
+   * Rendered first inside the scroll container, with the virtualizer. Put a
+   * `StickyOverlay` from `@anchorlist/svelte/sticky` here: an overlay pinned to
+   * the top of the viewport (for example a date pill or sticky group headers),
+   * rendered from the visible range.
    */
-  sticky?: Snippet<[range: VisibleRange]> | undefined
+  sticky?: Snippet<[list: Virtualizer]> | undefined
   /** Class of each row wrapper. Do not give rows margins; use `gap` instead. */
   rowClass?: string | undefined
   /** Sets `aria-busy` on the list, for example while a page of items is loading. */
@@ -72,4 +74,9 @@ export interface AnchorListProps<T> extends Options, Omit<HTMLAttributes<HTMLDiv
    *   list under `dir="rtl"` needs.
    */
   scroller?: ((elements: ElementScrollerOptions) => Scroller<Element>) | undefined
+  /**
+   * The rows to render for a plan, for layouts that render other rows than the
+   * plan's range (`LanesList` renders whole grid rows). Default: the plan's range.
+   */
+  rows?: ((plan: Plan) => Range) | undefined
 }

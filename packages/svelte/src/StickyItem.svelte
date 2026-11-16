@@ -2,15 +2,19 @@
   @component
   Sticky items (for example group headers) for `AnchorList`: the last sticky
   item scrolled past stays at the top of the viewport until the next one
-  pushes it out. Render it from the `sticky` snippet:
+  pushes it out. Render it in a `StickyOverlay`:
 
   ```svelte
   <AnchorList items={rows} {getKey}>
     {#snippet children(row)}<Row {row} />{/snippet}
-    {#snippet sticky(range)}
-      <StickyItem {range} items={rows} isSticky={isHeader}>
-        {#snippet children(row)}<Row {row} />{/snippet}
-      </StickyItem>
+    {#snippet sticky(list)}
+      <StickyOverlay {list}>
+        {#snippet children(range)}
+          <StickyItem {range} items={rows} isSticky={isHeader}>
+            {#snippet children(row)}<Row {row} />{/snippet}
+          </StickyItem>
+        {/snippet}
+      </StickyOverlay>
     {/snippet}
   </AnchorList>
   ```
@@ -30,9 +34,11 @@
   let el: HTMLDivElement
   let index = $state(-1)
 
+  // The index-based predicate, new only when `items` or `isSticky` change (see stickyState).
+  const sticky = $derived((i: number) => i < items.length && isSticky(items[i]!))
   const update = (): void => {
     // The `sticky` overlay sits directly inside the scroll container.
-    const s = stickyState(el.parentElement!.parentElement!, range, (i) => i < items.length && isSticky(items[i]!), el.offsetHeight)
+    const s = stickyState(el.parentElement!.parentElement!, range, sticky, el.offsetHeight)
     el.style.transform = `translateY(${s.offset}px)`
     index = s.index
   }

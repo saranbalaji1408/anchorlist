@@ -1,2 +1,3 @@
 export { default as StickyItem } from './StickyItem.svelte'
-export type { StickyItemProps } from './stickyTypes.js'
+export { default as StickyOverlay } from './StickyOverlay.svelte'
+export type { StickyItemProps, StickyOverlayProps } from './stickyTypes.js'
