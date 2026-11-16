@@ -363,3 +363,25 @@ describe('LanesList re-lays out after a reorder', () => {
       expect(swapped.map((_, i) => lanes.position(i).start)).toEqual(want)
     })
 })
+
+describe('LanesList renders', () => {
+  it('scrolling without a data change does not re-render LanesList', async () => {
+    // LanesList's render syncs the lanes, which reads keys over the laid-out prefix through the
+    // reactive items: those reads must not make scrolling re-render it. `lanes.options` runs once
+    // per LanesList render (the inner list's render does not call it).
+    const list = reactive(make(10_000, 'i'))
+    list.forEach((it, i) => layout.sizes.set(it.id, 30 + (i % 7) * 15))
+    const lanes = masonry({ lanes: 3 })
+    const options = vi.spyOn(lanes, 'options')
+    await render({ items: list, lanes }, {}, LanesList)
+    const before = options.mock.calls.length
+    const seen = new Set<string>()
+    for (let step = 1; step <= 20; step++) {
+      await scrollTo(step * 400)
+      seen.add(keys()[0]!)
+    }
+    // The list did scroll and re-render its rows, but LanesList did not render again.
+    expect(seen.size).toBeGreaterThan(10)
+    expect(options.mock.calls.length - before).toBe(0)
+  })
+})
