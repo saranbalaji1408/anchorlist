@@ -89,10 +89,12 @@ test.describe('100k items', () => {
     if (browserName !== 'chromium') return
     // Vue development builds keep about 22 MB per 100 updates past a forced GC (65 MB over the
     // measured cycles), which later collections release, so on Vue the check runs on the
-    // production build of the same fixture (served at `/vue-prod/`): 140-320 KB, as on React.
+    // production build of the same fixture (served at `/vue-prod/`): 75-350 KB, as on React.
     if (test.info().project.name.endsWith('-vue')) {
       await page.goto('../vue-prod/')
       await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
+      // A missing build falls back to the React fixture's index.html: make sure this is Vue 3.
+      expect(await page.evaluate(() => window.__driver.frameworkVersion())).toMatch(/^3\./)
     }
     const cdp = await page.context().newCDPSession(page)
     const heap = async (): Promise<number> => {
