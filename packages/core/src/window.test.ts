@@ -10,6 +10,7 @@ const fakeElement = (rect: { top?: number; left?: number; height?: number; width
   return {
     style: {} as Record<string, string>,
     listeners,
+    rect,
     getBoundingClientRect: () => ({ top: rect.top ?? 0, left: rect.left ?? 0, height: rect.height ?? 0, width: rect.width ?? 0 }),
     setAttribute: () => undefined,
     addEventListener: (type: string, fn: Listener) => void listeners.set(type, fn),
@@ -29,7 +30,8 @@ const stubWindow = () => {
     scrollWidth: 1200,
   }
   const win = new Map<string, Listener>()
-  const observed: unknown[] = []
+  /** Each ResizeObserver's callback and the elements it currently observes. */
+  const observers: Array<{ cb: () => void; els: Set<unknown> }> = []
   vi.stubGlobal('document', { documentElement: root })
   vi.stubGlobal('window', {
     addEventListener: (type: string, fn: Listener) => void win.set(type, fn),
@@ -38,14 +40,22 @@ const stubWindow = () => {
   vi.stubGlobal(
     'ResizeObserver',
     class {
-      observe(el: unknown) {
-        observed.push(el)
+      o: { cb: () => void; els: Set<unknown> }
+      constructor(cb: () => void) {
+        observers.push((this.o = { cb, els: new Set() }))
       }
-      unobserve() {}
-      disconnect() {}
+      observe(el: unknown) {
+        this.o.els.add(el)
+      }
+      unobserve(el: unknown) {
+        this.o.els.delete(el)
+      }
+      disconnect() {
+        this.o.els.clear()
+      }
     },
   )
-  return { root, win, observed }
+  return { root, win, observers }
 }
 
 describe('windowScroller', () => {
@@ -108,13 +118,14 @@ describe('windowScroller', () => {
   })
 
   it('listens to the window for scroll and resize, and to the document for input', () => {
-    const { root, win, observed } = stubWindow()
+    const { root, win, observers } = stubWindow()
     const list = fakeElement({})
     const content = fakeElement({})
     const sc = windowScroller({ element: {} as never, list: list as never, content: content as never } as never)
     const events: ScrollerEvent[] = []
     const off = sc.listen((e) => events.push(e))
-    expect(observed).toEqual([root, content, list])
+    // The document element is not observed with the rows: it resizes on any page change.
+    expect(observers.map((o) => [...o.els])).toEqual([[content, list], [root]])
     expect([...win.keys()]).toEqual(['scroll', 'resize'])
     expect([...root.listeners.keys()]).toEqual(['scroll', 'touchstart', 'touchend', 'touchcancel', 'wheel'])
     win.get('scroll')!({ type: 'scroll' })
@@ -125,6 +136,40 @@ describe('windowScroller', () => {
     off()
     expect(win.size).toBe(0)
     expect(root.listeners.size).toBe(0)
+    expect(observers.every((o) => o.els.size === 0)).toBe(true)
+  })
+
+  it('reports a document resize only when it moves the list or resizes the page outside the content', () => {
+    const { root, observers } = stubWindow()
+    const list = fakeElement({ top: 300, height: 2000 })
+    const content = fakeElement({ top: 280, height: 2100 })
+    const sc = windowScroller({ list: list as never, content: content as never })
+    const events: ScrollerEvent[] = []
+    sc.listen((e) => events.push(e))
+    const page = observers[1]!
+    // An unrelated change elsewhere on the page (a sidebar), and the observer's first call.
+    page.cb()
+    expect(events).toEqual([])
+    // The content grows with its rows: the content observer reports that, not this one.
+    content.rect.height = 2400
+    root.scrollHeight += 300
+    page.cb()
+    expect(events).toEqual([])
+    // Page content above the list grows: the list moves.
+    list.rect.top = 700
+    content.rect.top = 680
+    root.scrollHeight += 400
+    page.cb()
+    expect(events).toEqual(['resize'])
+    // A page footer grows: the scroll range changes outside the content.
+    root.scrollHeight += 50
+    page.cb()
+    expect(events).toEqual(['resize', 'resize'])
+    // A page scroll alone moves the list in the viewport, not in the page.
+    root.scrollTop = 100
+    list.rect.top = 600
+    page.cb()
+    expect(events).toEqual(['resize', 'resize'])
   })
 
   it('turns off browser scroll anchoring on the content while attached and restores it on detach', () => {

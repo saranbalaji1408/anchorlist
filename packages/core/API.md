@@ -248,7 +248,10 @@ interface Scroller<E> {
   no end inset: for a fixed bar at the end of the window (a chat composer), render a spacer of its
   size after the list (page content after the list acts as a footer). React's sticky overlay sticks
   at `top: 0`, under a fixed bar of `scrollMargin` px. It listens to `scroll` and
-  `resize` on `window` and to input events on the document element. Its `inputTarget` is `window`. It accepts
+  `resize` on `window` and to input events on the document element. Its `inputTarget` is `window`.
+  It observes rows, list and content, not the document element (which resizes on any page change);
+  a document resize only counts when it moves the list (page content above it changed size) or
+  changes the page's size outside `content`. It accepts
   `ElementScrollerOptions` (`element` is ignored), so it can be used wherever an `elementScroller`
   factory is expected. Budget: 0.6 kB gzip on top of the list entry.
 - `rtlScroller({ element, list, content? })` from `@anchorlist/core/rtl`: a horizontal scroller for

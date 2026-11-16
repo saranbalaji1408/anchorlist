@@ -73,6 +73,29 @@ for (const margin of [0, MARGIN]) {
       })
     })
 
+    test('follows the list when page content above it changes size', async ({ d, page }) => {
+      const a = axis(page)
+      // Page content above the list that grows and shrinks without the window resizing.
+      await d.mount({ items: makeItems(2000, 'm', rng(63), 40, 160), align: 'start', layout: 'window', scrollMargin: margin })
+      await page.evaluate(() => document.querySelector('#scroller')!.insertAdjacentHTML('beforebegin', '<div id="above" style="height:3000px"></div>'))
+      await a.scrollBy(9000)
+      await d.frames(3)
+      for (const height of [0, 2000, 500, 4000]) {
+        await page.evaluate((h) => void (document.querySelector<HTMLElement>('#above')!.style.height = `${h}px`), height)
+        await d.frames(4)
+        // The rows covering the viewport are mounted where the engine places them.
+        const view = await a.viewport()
+        const keys = await a.keys()
+        const starts = await Promise.all(keys.map((k) => a.start(k)))
+        const ends = await Promise.all(keys.map((k) => a.end(k)))
+        expect(Math.min(...starts), `above ${height}`).toBeLessThanOrEqual(0)
+        expect(Math.max(...ends), `above ${height}`).toBeGreaterThanOrEqual(view)
+        const key = await rowFrom(page, 1)
+        const rect = (await d.getItemRect(key))!
+        expect(Math.abs((await a.start(key)) - (rect.start - (await a.offset()))), `above ${height}`).toBeLessThanOrEqual(1)
+      }
+    })
+
     test('scrolls a key to the viewport start, below the scroll margin', async ({ d, page }) => {
       const a = axis(page)
       await d.mount({ items: makeItems(1000, 'm', rng(54), 40, 160), align: 'start', layout: 'window', scrollMargin: margin })

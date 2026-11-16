@@ -176,7 +176,7 @@ returns -1.
   in the page, which is measured. It sets `overflow-anchor: none` on `content` while attached (restored on detach). An `align: 'start'`
   list that mounts on an already scrolled page keeps the page in place. It accepts
   `ElementScrollerOptions` (`element` is ignored), so it can be passed as a `scroller` factory.
-  354 B gzip on top of the list (budget 600 B). Guide: [window scroller](/guide/window-scroller).
+  428 B gzip on top of the list (budget 600 B). Guide: [window scroller](/guide/window-scroller).
 - `rtlScroller({ element, list, content? })` from `@anchorlist/core/rtl` (`anchorlist/rtl`): a
   horizontal scroller for a `direction: rtl` container. The start edge is the right edge, the
   spacers are `paddingRight` (before) and `paddingLeft` (after), and the offset is normalised to

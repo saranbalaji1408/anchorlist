@@ -49,6 +49,15 @@ export function windowScroller({ list, content = list, axis: ax = VERTICAL, scro
     listen(handler) {
       // Touch and wheel events bubble to the document element; scroll and resize are dispatched on the window.
       const off = base.listen(handler)
+      // The base observes the scroll element, here the document element, which resizes on any
+      // page change and would remeasure every row. Rows, list and content stay observed and the
+      // window reports its own resize; the document element only reports a change that moves
+      // the list (page content above it) or resizes the page outside `content`.
+      base.unobserve(root)
+      const place = (): string => [at(list) + root[ax.offset], root[ax.scrollSize] - content.getBoundingClientRect()[ax.size]] + ''
+      let last = place()
+      const ro = new ResizeObserver(() => last != (last = place()) && handler('resize'))
+      ro.observe(root)
       const fn = (e: Event): void => handler(e.type as ScrollerEvent)
       const types = ['scroll', 'resize']
       types.forEach((t) => window.addEventListener(t, fn, { passive: true }))
@@ -58,6 +67,7 @@ export function windowScroller({ list, content = list, axis: ax = VERTICAL, scro
       style.overflowAnchor = 'none'
       return () => {
         off()
+        ro.disconnect()
         types.forEach((t) => window.removeEventListener(t, fn))
         style.overflowAnchor = anchor
       }

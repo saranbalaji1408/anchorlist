@@ -113,12 +113,14 @@ v.attach(windowScroller({ list, content, scrollMargin: 56 }))
   for the rest of the page but leaves the rows alone. If you wrap `windowScroller`, keep that
   style on an ancestor of the rows.
 - It listens to `scroll` and `resize` on `window`, and to input events on the document element.
+- Page content above the list may change size: the list follows. Other layout changes on the
+  page don't remeasure the rows.
 - `axis: HORIZONTAL` makes a horizontal list that scrolls with the page.
 
 ## Size
 
 `@anchorlist/core/window` is a separate entry, so apps that don't use it don't pay for it. It
-adds 354 B gzip to an app that already uses the list (budget 600 B, checked in CI). It reuses the
+adds 428 B gzip to an app that already uses the list (budget 600 B, checked in CI). It reuses the
 list's `elementScroller` code.
 
 ## How it is tested
@@ -127,7 +129,8 @@ End-to-end scenarios run the window scroller in Chromium, WebKit and Firefox, wi
 19, with and without a 56 px fixed bar: rows move exactly with the page scroll, only the rows near
 the window are mounted, a row stays still through prepends and resizes above it, `scrollToKey`
 lands below the bar, an end-aligned list pins to the bottom of the page and follows appends, and
-mounting on an already scrolled page keeps the page in place.
+mounting on an already scrolled page keeps the page in place. The list also follows page content
+above it that grows and shrinks, and a wheel or key anywhere on the page stops `animateToKey`.
 
 ## Related
 
