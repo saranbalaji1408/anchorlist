@@ -116,6 +116,8 @@ export function installDriver(container: HTMLElement): void {
   let app: App | null = null
   /** The root component of the last server render, hydrated by `hydrate()`. */
   let server: Component | undefined
+  /** Duration of the last `update` render and commit, in ms. */
+  let lastUpdateMs = 0
   const state = shallowRef<ListState>(DEFAULTS)
   let list: AnchorListHandle | null = null
   const setList = (r: unknown): void => void (list = r as AnchorListHandle | null)
@@ -219,8 +221,11 @@ export function installDriver(container: HTMLElement): void {
     async update(patch) {
       // Vue renders asynchronously: both modes are flushed before this resolves (before paint).
       if (patch.items) patch = { ...patch, items: intern(patch.items) }
+      // The render and commit only, not the interning above (the fixture's own O(n) work).
+      const t = performance.now()
       state.value = { ...state.value, ...patch }
       await nextTick()
+      lastUpdateMs = performance.now() - t
     },
     setItemHeight(id, height) {
       heights.set(id, height)
@@ -239,6 +244,7 @@ export function installDriver(container: HTMLElement): void {
     renders: () => ({ ...renders }),
     rendersWithoutScroller: () => [...withoutScroller],
     frameworkVersion: () => version,
+    lastUpdateMs: () => lastUpdateMs,
     animateToKey(key, o) {
       const element = handle().element
       const layout = mounted.layout
