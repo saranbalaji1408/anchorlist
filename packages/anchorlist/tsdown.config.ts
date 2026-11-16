@@ -8,6 +8,9 @@ const config: UserConfig = defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
+  // React Server Components: every entry is a client module. A banner keeps the
+  // directive the first statement of each built chunk (bundlers drop it from source).
+  banner: { js: "'use client'" },
 })
 
 export default config
