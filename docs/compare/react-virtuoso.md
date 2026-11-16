@@ -23,7 +23,7 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | | anchorlist v0.2 | react-virtuoso |
 | --- | --- | --- |
 | Model | Framework-agnostic core and a thin React component | React components |
-| Frameworks | React and Vue (Svelte planned) | React |
+| Frameworks | React, Vue and Svelte | React |
 | Dynamic heights | Measured from the DOM; estimate optional | Measured automatically |
 | Chat (start at the bottom) | `align: 'end'` | `initialTopMostItemIndex` / `alignToBottom` |
 | Follow new messages | `follow` (boolean or pure function) | `followOutput` |
@@ -65,7 +65,7 @@ Measured with the same tool and settings in the [benchmark](./benchmark#bundle-s
 - You remove or replace messages near the viewport (deletions, edits, de-duplication) and need
   the viewport to stay put even when the anchored message itself goes away.
 - Bundle size matters: the React chat path has a hard 5.8 kB gzip budget.
-- You plan to share one engine across React, Vue and Svelte.
+- You want one engine across React, Vue and Svelte.
 
 ## When to choose react-virtuoso
 

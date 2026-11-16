@@ -13,8 +13,8 @@ as they render, so you don't need a fixed row height.
 ::: tip Status
 v0.2 ships the framework-agnostic core (`@anchorlist/core`) and React bindings
 (`@anchorlist/react`), with sticky headers, focus preservation, smooth scrolling, snapshot sizes
-and server rendering. Vue 3 bindings are in [`@anchorlist/vue`](/guide/vue); Svelte bindings are
-planned.
+and server rendering. Vue 3 bindings are in [`@anchorlist/vue`](/guide/vue) and Svelte 5 bindings in
+[`@anchorlist/svelte`](/guide/svelte).
 :::
 
 ## Install

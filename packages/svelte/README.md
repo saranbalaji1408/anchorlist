@@ -1,7 +1,7 @@
 # @anchorlist/svelte
 
 Svelte 5 bindings for [`@anchorlist/core`](https://www.npmjs.com/package/@anchorlist/core): a virtual list that keeps the row being read
-in place while items are prepended, appended, trimmed, removed or resized. About 2.1 kB gzip on top
+in place while items are prepended, appended, trimmed, removed or resized. About 2 kB gzip on top
 of the core (compiled).
 
 Start with the [`anchorlist`](https://www.npmjs.com/package/anchorlist) landing page for an overview.

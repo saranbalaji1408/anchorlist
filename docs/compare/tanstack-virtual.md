@@ -23,7 +23,7 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | | anchorlist v0.2 | TanStack Virtual |
 | --- | --- | --- |
 | Model | Headless core with a React component | Headless (hooks/adapters, you render the DOM) |
-| Frameworks | React and Vue (Svelte planned) | React, Vue, Svelte, Solid, Angular, Lit and vanilla |
+| Frameworks | React, Vue and Svelte | React, Vue, Svelte, Solid, Angular, Lit and vanilla |
 | Pin to the end (chat, newest at the bottom) | Built in: `align: 'end'` | `anchorTo: 'end'` plus `scrollToIndex(last)` on mount |
 | Prepend without scroll jump | Built in, anchored to an item key | With `anchorTo: 'end'`, anchored to an item key |
 | Follow new items at the pinned edge | Built in, with a `follow` policy | `followOnAppend` |
@@ -70,7 +70,7 @@ Measured with the same tool and settings in the [benchmark](./benchmark#bundle-s
 
 ## When to choose TanStack Virtual
 
-- You need Svelte, Solid, Angular or Lit today.
+- You need Solid, Angular or Lit today.
 - You want full control over rendering and are happy to build anchoring yourself.
 
 ## Migrating

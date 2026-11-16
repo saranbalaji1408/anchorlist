@@ -56,5 +56,5 @@ npm install anchorlist
 - Comparisons: [TanStack Virtual alternative](/compare/tanstack-virtual),
   [react-virtuoso alternative](/compare/react-virtuoso), [chat benchmark](/compare/benchmark)
 
-anchorlist ships the framework-agnostic core with React and [Vue](/guide/vue) bindings. Svelte
-bindings are planned.
+anchorlist ships the framework-agnostic core with React, [Vue](/guide/vue) and [Svelte](/guide/svelte)
+bindings.
