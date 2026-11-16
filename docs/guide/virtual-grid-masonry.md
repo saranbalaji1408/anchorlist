@@ -45,6 +45,10 @@ export function ProductGrid({ products }) {
 positioned absolutely in their lane; each lane is an equal share of the container's width, so
 lanes follow width changes without a re-render. A grid always renders whole rows.
 
+Create the layout in a client component, as above: `grid()` and `masonry()` return an object with
+methods, which a Server Component cannot pass as a prop. See
+[React Server Components](./server-rendering#react-server-components).
+
 ## React masonry layout
 
 ```tsx
