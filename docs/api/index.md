@@ -14,6 +14,8 @@ description: API reference for anchorlist, @anchorlist/react and @anchorlist/cor
 | `@anchorlist/react/horizontal` | Opt-in [`horizontal()`](#horizontal) layout for `<AnchorList>`. Also `anchorlist/horizontal`. |
 | `@anchorlist/core/sticky`, `/animate`, `/snapshot`, `/ssr` | [Opt-in entries](#opt-in-entries): `stickyState`, `animateToKey`, `takeSnapshot` / `snapshotEstimate`, `initialPlan`. Also `anchorlist/sticky`, `anchorlist/animate`, `anchorlist/snapshot`, `anchorlist/ssr`. |
 | `@anchorlist/react/sticky` | [`StickyItem`](#stickyitem). Also `anchorlist/sticky`. |
+| `@anchorlist/vue` | Vue 3.3+ component and composable: [`AnchorList`, `useAnchorList`](#vue). |
+| `@anchorlist/vue/sticky`, `/horizontal`, `/lanes` | Opt-in [`StickyOverlay` / `StickyItem`, `horizontal()`, `LanesList`](#vue-entries) for Vue. |
 | `@anchorlist/core/lanes`, `@anchorlist/react/lanes` | [Lanes](#lanes) (`grid`, `masonry`) and [`<LanesList>`](#laneslist). Also `anchorlist/lanes`, which re-exports both. |
 
 All packages are ESM only, ship TypeScript declarations and target ES2020.
@@ -112,6 +114,41 @@ A lower-level hook for custom markup. It returns `[virtualizer, plan]`. Render r
 calls `virtualizer.measureElement(el, key)`. `elements()` returns `{ element, list, content?, axis? }`
 once they are mounted. `scroller` creates the scroller from them when attaching (default
 `elementScroller`). Most apps should use `<AnchorList>`.
+
+## Vue
+
+```ts
+import { AnchorList, useAnchorList, type AnchorListHandle } from '@anchorlist/vue'
+```
+
+`AnchorList` takes the same options as the React component, with Vue conventions. Guide:
+[Vue virtual list](/guide/vue).
+
+| React | Vue |
+| --- | --- |
+| `renderItem={(item) => ...}` | `default` scoped slot: `<template #default="{ item }">` |
+| `header`, `footer` props | `header`, `footer` slots |
+| `sticky={(range) => ...}` | `sticky` slot, which receives the virtualizer; render `StickyOverlay` in it |
+| `rowClassName` | `row-class` |
+| `onStartReached`, `onEndReached`, `onRangeChange`, `onAtEdgeChange` | the same props, or the events `@start-reached`, `@end-reached`, `@range-change`, `@at-edge-change` |
+| `className`, `style`, `scrollerProps` | attributes (`class`, `style`, `id`, `dir`, ...) go to the scroll container |
+| `ref` (`AnchorListHandle`) | template ref (`AnchorListHandle`): the same methods and `element` |
+
+`busy`, `scroller` and every core option (`align`, `gap`, `overscan`, `follow`, `initial-rect`,
+`initial-plan`, ...) work as in React; `align`, `initialSnapshot`, `maxCachedSizes` and `scroller`
+are read on mount. `useAnchorList(options, elements, scroller?)` returns `[virtualizer, plan]`; call
+it in `setup()` and `plan()` in the render function. Requires Vue 3.3 or later.
+
+### Vue entries
+
+| Entry | Exports | Size (budget) |
+| --- | --- | --- |
+| `@anchorlist/vue` | `AnchorList`, `useAnchorList` (vue and core external) | 1,410 B (1.45 kB) |
+| `@anchorlist/vue`, `useAnchorList` only | the composable alone | 390 B (500 B) |
+| Vue chat path | core + `AnchorList` | 5,704 B (5.8 kB) |
+| `@anchorlist/vue/sticky` | `StickyOverlay`, `StickyItem` (core part included) | 905 B (950 B) |
+| `@anchorlist/vue/horizontal` | `horizontal(base?)` | 189 B (300 B) |
+| `@anchorlist/vue/lanes` | `LanesList` (with `grid` / `masonry` from `@anchorlist/core/lanes`) | 431 B (450 B) |
 
 ## Core
 
