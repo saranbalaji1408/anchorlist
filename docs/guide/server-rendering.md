@@ -58,6 +58,12 @@ Server Component; use them in client files or outside React. Props you write you
 `renderItem` and `getKey`, are plain functions too, so in practice `AnchorList` is rendered from a
 client component, where any entry works.
 
+The same rule covers `scroller`. `windowScroller` from `anchorlist/window` and `rtlScroller` from
+`anchorlist/rtl` can be passed as they are. A scroller made by a call, such as `horizontal()`,
+`horizontal(rtlScroller)` or a wrapper like `(elements) => windowScroller({ ...elements,
+scrollMargin: 56 })`, is a plain function created where the call runs, so create it in a client
+component.
+
 ## Restoring a position
 
 With `initialSnapshot`, the server HTML starts at the snapshot's item instead of the edge, so a

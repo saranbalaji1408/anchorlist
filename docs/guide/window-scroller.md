@@ -18,7 +18,6 @@ reader don't move the row being read, and `align: 'end'` pins the list to the bo
 ```tsx
 import { AnchorList } from 'anchorlist'
 import { windowScroller } from 'anchorlist/window'
-// or: import { windowScroller } from '@anchorlist/core/window'
 
 const renderPost = (post) => <PostCard post={post} />
 
@@ -40,6 +39,9 @@ export function Feed({ posts, hasMore, loadMore }) {
 - With a custom `scroller`, `AnchorList` adds no `overflow` style to its container, so it is not a
   scroll container. Don't give it one.
 - `scroller` is read once, on mount.
+- From a Server Component, import `windowScroller` from `anchorlist/window` (a client reference),
+  not `@anchorlist/core/window`. A wrapper such as `belowAppBar` below is a new function, so define
+  it in a client component. See [React Server Components](./server-rendering#react-server-components).
 
 ## A fixed app bar: `scrollMargin`
 

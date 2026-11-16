@@ -39,6 +39,8 @@ export function Strip({ cards }) {
 lays the rows out in a row and puts `header`, the rows and `footer` side by side at their full
 width, then creates the scroller on the horizontal axis.
 
+- **Create the factory in a client component.** `horizontal()` runs where you call it, so a
+  Server Component cannot pass its result as a prop. See [React Server Components](./server-rendering#react-server-components).
 - **Give the container a width and a height.** Item sizes are widths, and `gap`, `paddingStart`
   and `paddingEnd` are horizontal too.
 - `align="start"` (default) pins the list to its left edge; `align="end"` pins it to the right

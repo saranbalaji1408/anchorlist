@@ -43,6 +43,8 @@ export function Strip({ cards }) {
   horizontal list. Use it for any horizontal list in an app that supports both.
 - The plain `horizontal()` scroller never mirrors. A horizontal list under `dir="rtl"` needs
   `rtlScroller`.
+- Create `horizontal(rtlScroller)` in a client component: a Server Component cannot pass the
+  result of a call as a prop. See [React Server Components](./server-rendering#react-server-components).
 - The direction is read on mount. If the app switches direction at runtime, remount the list, for
   example with `key={dir}`.
 
