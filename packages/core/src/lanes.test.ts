@@ -178,6 +178,25 @@ describe('masonry', () => {
     expect(kept.style.top).toBe('25000px')
   })
 
+  it('over-sizes the list by at most one item when the kept item is right after the rendered run', () => {
+    // A known 0.x limit: an adjacent kept item joins the run, and the engine's `after` counts it too.
+    for (const [lanes, perRow] of [[masonry({ lanes: 2 }), 2], [grid({ lanes: 3 }), 3]] as const) {
+      lanes.sync({ count: 1200, getKey: (i) => i, estimateSize: () => 100 })
+      const { base, spacers } = fakeScroller()
+      const sc = lanes.scroller(base)
+      // Rows 0-9 are rendered; the item right after them is kept mounted.
+      const rendered = 10 * perRow
+      for (let i = 0; i <= rendered; i++) sc.setIndex({ size: 100, start: 0, style: {} }, i, 1200)
+      // The engine's size after the last rendered item: one share per item for masonry, one row per row for a grid.
+      const after = perRow === 2 ? (1200 - rendered) * 50 : ((1200 - rendered) / 3) * 100
+      sc.setSpacers(0, after)
+      const truth = 10 * 100 + after
+      const extra = spacers[spacers.length - 1]![1] - truth
+      expect(extra).toBeGreaterThanOrEqual(0)
+      expect(extra).toBeLessThanOrEqual(100)
+    }
+  })
+
   it('lays out lazily: only up to the item that is needed', () => {
     const lanes = masonry({ lanes: 3 })
     let reads = 0
