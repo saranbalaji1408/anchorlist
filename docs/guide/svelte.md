@@ -166,7 +166,7 @@ the `kept` row as the list's only children, keyed by `getKey`, each with `data-k
 
 Sizes are min + gzip of the compiled output, checked in CI. `@anchorlist/svelte` is 2,042 B with
 Svelte and the core external (budget 2.1 kB), and the Svelte chat path (core + `AnchorList`) is
-6,272 B (budget 6.3 kB). The opt-in entries are separate: `/sticky` 737 B (750 B), `/horizontal`
+6,271 B (budget 6.3 kB). The opt-in entries are separate: `/sticky` 737 B (750 B), `/horizontal`
 301 B (350 B) and `/lanes` 659 B (750 B). A CI check confirms that `AnchorList` pulls in none of
 them.
 
