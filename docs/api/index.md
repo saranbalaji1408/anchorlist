@@ -187,7 +187,7 @@ Sizes of the compiled output.
 | Svelte chat path | core + `AnchorList` | 6,272 B (6.3 kB) |
 | `@anchorlist/svelte/sticky` | `StickyOverlay`, `StickyItem` (svelte and core external) | 737 B (750 B) |
 | `@anchorlist/svelte/horizontal` | `horizontal(base?)` | 301 B (350 B) |
-| `@anchorlist/svelte/lanes` | `LanesList` (with `grid` / `masonry` from `@anchorlist/core/lanes`) | 672 B (750 B) |
+| `@anchorlist/svelte/lanes` | `LanesList` (with `grid` / `masonry` from `@anchorlist/core/lanes`) | 659 B (750 B) |
 
 ## Core
 
