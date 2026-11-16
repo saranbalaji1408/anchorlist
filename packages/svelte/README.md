@@ -1,7 +1,7 @@
 # @anchorlist/svelte
 
 Svelte 5 bindings for [`@anchorlist/core`](https://www.npmjs.com/package/@anchorlist/core): a virtual list that keeps the row being read
-in place while items are prepended, appended, trimmed, removed or resized. About 1.6 kB gzip on top
+in place while items are prepended, appended, trimmed, removed or resized. About 2 kB gzip on top
 of the core (compiled).
 
 Start with the [`anchorlist`](https://www.npmjs.com/package/anchorlist) landing page for an overview.
@@ -27,15 +27,28 @@ Full documentation: https://saranbalaji1408.github.io/anchorlist/
 </AnchorList>
 ```
 
-- **Props:** `items`, `getKey(item)`, `rowClass`, plus every core option (`align`, `gap`, `overscan`,
-  `follow`, `hasMoreStart`, `onEndReached`, `initialSnapshot`, ...). Other attributes (`class`,
+- **Props:** `items`, `getKey(item)`, `rowClass`, `busy` (sets `aria-busy` on the list), `scroller`
+  (read on mount), plus every core option (`align`, `gap`, `overscan`, `follow`, `hasMoreStart`,
+  `onEndReached`, `initialSnapshot`, `initialRect`, `initialPlan`, ...). Other attributes (`class`,
   `style`, `id`, `aria-label`, event handlers) go to the scroll container.
 - **Snippets:** `children(item)`, `header`, `footer`, and `sticky(range)` (renders from the visible
   range).
 - **`bind:this`:** `scrollToKey`, `scrollToIndex`, `scrollToEdge`, `isAtEdge`, `getSnapshot`,
-  `getVisibleRange`, `getItemRect`, `getTotalSize`, `indexOf`, `subscribe`.
+  `getVisibleRange`, `getItemRect`, `getTotalSize`, `indexOf`, `subscribe`, and `getElement()` (the
+  scroll container, for example for `animateToKey` from `@anchorlist/core/animate`).
+- **Focus:** the row containing focus stays mounted (out of flow, at its own position) while it is
+  scrolled out of range, so keyboard focus is never lost.
 - **Rows get no index**, so a prepend updates no mounted row. A row updates when its item changes or
   when state read in the snippet changes. Keep items immutable (`$state.raw` or new objects).
-- **Headless:** `createAnchorList(options, elements)` returns `{ virtualizer, plan }` for custom
-  markup; render rows `plan.start..plan.end` as the list's children, each with `data-key={key}`.
+- **Layouts:** `scroller={horizontal()}` from `@anchorlist/svelte/horizontal` lays the list out on the
+  x axis (`horizontal(rtlScroller)` for right-to-left); `scroller={(e) => windowScroller(e)}` from
+  `@anchorlist/core/window` scrolls with the page; `LanesList` from `@anchorlist/svelte/lanes` takes
+  a `lanes` prop (`grid(...)` or `masonry(...)` from `@anchorlist/core/lanes`).
+- **Sticky items:** render `StickyItem` from `@anchorlist/svelte/sticky` in the `sticky` snippet
+  (`range`, `items`, `isSticky`, and a `children(item)` snippet for the stuck copy).
+- **Server rendering:** pass `initialRect` and `initialPlan` (from `@anchorlist/core/ssr`); the server
+  render and the hydration render produce the same rows.
+- **Headless:** `createAnchorList(options, elements, scroller?)` returns `{ virtualizer, plan, kept,
+  focused }` for custom markup; render rows `plan.start..plan.end` (and the `kept` row) as the list's
+  children, each with `data-key={key}`.
 - Requires Svelte 5.18 or later (runes).
