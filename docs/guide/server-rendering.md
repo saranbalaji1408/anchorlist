@@ -15,7 +15,6 @@ what viewport to assume.
 ```tsx
 import { AnchorList } from 'anchorlist'
 import { initialPlan } from 'anchorlist/ssr'
-// or: import { initialPlan } from '@anchorlist/core/ssr'
 
 const SCREEN = { width: 400, height: 800 }
 
@@ -46,6 +45,17 @@ A good `estimateSize` makes the server render closer to what the client shows. T
 renders more rows than fit; too high renders fewer.
 
 Server rendering is opt-in: lists that don't pass `initialPlan` carry none of its code.
+
+## React Server Components
+
+The `anchorlist` and `@anchorlist/react` entries are client modules (`'use client'`); the
+`@anchorlist/core` entries are not. A Server Component can only pass a function prop to
+`AnchorList` when it is a client reference, so import such functions from an `anchorlist/*` or
+`@anchorlist/react/*` entry: `initialPlan` from `anchorlist/ssr`, not `@anchorlist/core/ssr`.
+The `@anchorlist/core/*` entries export plain functions, which React refuses to serialise from a
+Server Component; use them in client files or outside React. Props you write yourself, such as
+`renderItem` and `getKey`, are plain functions too, so in practice `AnchorList` is rendered from a
+client component, where any entry works.
 
 ## Restoring a position
 
