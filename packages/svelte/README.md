@@ -36,7 +36,9 @@ Full documentation: https://saranbalaji1408.github.io/anchorlist/
   overlay pinned to the viewport top that renders from the visible range (a date pill).
 - **`bind:this`:** `scrollToKey`, `scrollToIndex`, `scrollToEdge`, `isAtEdge`, `getSnapshot`,
   `getVisibleRange`, `getItemRect`, `getTotalSize`, `indexOf`, `subscribe`, and `getElement()` (the
-  scroll container, for example for `animateToKey` from `@anchorlist/core/animate`).
+  scroll container, for example for `animateToKey` from `@anchorlist/core/animate`). The React and
+  Vue handles expose the container as an `element` property; Svelte component exports cannot be live
+  getters, so here it is a method.
 - **Focus:** the row containing focus stays mounted (out of flow, at its own position) while it is
   scrolled out of range, so keyboard focus is never lost.
 - **Rows get no index**, so a prepend updates no mounted row. A row updates when its item changes or

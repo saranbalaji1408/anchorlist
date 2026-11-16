@@ -45,7 +45,8 @@ All of these must pass before a change is considered done.
 - **Size budgets are hard limits** (`.size-limit.js`, gzip): core list entry 4.5 kB, core all
   6.5 kB, `@anchorlist/react` alone 1.3 kB, React chat path (core + react) 5.8 kB, `@anchorlist/vue`
   alone 1.45 kB (Vue's runtime prop declaration and the v0.4 adapter contract), Vue chat path 5.8 kB, `@anchorlist/svelte`
-  alone 1.8 kB (compiled). Do not raise a budget without an explicit decision recorded in the PR.
+  alone 2.1 kB (compiled; raised from 1.8 kB for parity, user decision 2026-11-16, recorded in the v0.6 changeset). Do not
+  raise a budget without an explicit decision recorded in the PR.
 - **Zero dependencies in core.** Framework packages may only depend on `@anchorlist/core` and peers.
 - TypeScript is strict with `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
   `verbatimModuleSyntax` and `isolatedDeclarations`: annotate exported values explicitly and use
