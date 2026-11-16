@@ -91,7 +91,8 @@ test.describe('100k items', () => {
     // measured cycles), which later collections release, so on Vue the check runs on the
     // production build of the same fixture (served at `/vue-prod/`): 75-350 KB, as on React.
     if (test.info().project.name.endsWith('-vue')) {
-      await page.goto('../vue-prod/')
+      // A 404 fails here at once, rather than after the driver wait times out.
+      expect((await page.goto('../vue-prod/'))?.status(), 'vue-prod is built').toBe(200)
       await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
       await expectFramework(page)
     }

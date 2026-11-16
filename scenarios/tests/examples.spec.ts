@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { BROWSER_NOTICE } from '../src/harness'
+import { BROWSER_NOTICE, expectFramework } from '../src/harness'
 
 const watchErrors = (page: Page): string[] => {
   const errors: string[] = []
@@ -34,10 +34,21 @@ const probe = (page: Page) => ({
   topOf: (key: string) => page.locator(`#scroller [data-key="${key}"]`).evaluate((el) => el.getBoundingClientRect().top),
 })
 
+/**
+ * Opens a README example. Example pages run no driver, so the framework check runs on the
+ * fixture's driver page first (the same build), then the example loads.
+ */
+async function openExample(page: Page, example: string): Promise<void> {
+  await page.goto('./')
+  await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
+  await expectFramework(page)
+  await page.goto(`./?example=${example}`)
+}
+
 test.describe('README examples', () => {
   test('chat: opens at the newest message, loads older pages without a jump, follows own messages', async ({ page }) => {
     const errors = watchErrors(page)
-    await page.goto('./?example=chat')
+    await openExample(page, 'chat')
     const p = probe(page)
     await expect(page.locator('#scroller [data-key]').first()).toBeVisible()
     expect(await p.distanceToEnd()).toBeLessThanOrEqual(1)
@@ -79,7 +90,7 @@ test.describe('README examples', () => {
 
   test('feed: opens at the top and appends pages near the end', async ({ page }) => {
     const errors = watchErrors(page)
-    await page.goto('./?example=feed')
+    await openExample(page, 'feed')
     const p = probe(page)
     await expect(page.locator('#scroller [data-key]').first()).toBeVisible()
     expect(await page.locator('#scroller').evaluate((el) => el.scrollTop)).toBe(0)
