@@ -53,8 +53,7 @@ const renderMessage = (m) => <Message message={m} /> // stable: module scope or 
 | [`@anchorlist/core`](packages/core) | Framework-agnostic engine, zero dependencies ([API](packages/core/API.md), [design](packages/core/DESIGN.md)) |
 | [`@anchorlist/react`](packages/react) | React 18 / 19 bindings |
 | [`@anchorlist/vue`](packages/vue) | Vue 3 bindings |
-
-Svelte bindings are planned.
+| [`@anchorlist/svelte`](packages/svelte) | Svelte 5 bindings |
 
 ## Comparisons
 

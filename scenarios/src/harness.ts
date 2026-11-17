@@ -41,6 +41,7 @@ export const BROWSER_NOTICE: RegExp = /scroll-linked positioning effect/
 const FRAMEWORKS: ReadonlyArray<readonly [suffix: string, version: RegExp]> = [
   ['-react18', /^18\./],
   ['-vue', /^3\./],
+  ['-svelte', /^5\./],
 ]
 
 /** Asserts that the loaded fixture page runs the framework of the current project. */

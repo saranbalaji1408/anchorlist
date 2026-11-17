@@ -88,7 +88,7 @@ test.describe('prepend (zero drift)', () => {
   })
 
   test('keeps the anchor through a prepend rendered in a transition (concurrent React)', async ({ d }) => {
-    test.skip(test.info().project.name.endsWith('-vue'), 'React transitions only')
+    test.skip(/-(vue|svelte)$/.test(test.info().project.name), 'React transitions only')
     const random = rng(31)
     const items = makeItems(80, 'm', random)
     await d.mount({ items, hasMoreStart: true })

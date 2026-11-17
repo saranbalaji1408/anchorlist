@@ -33,6 +33,7 @@ jobs:
           FUZZ_ITERATIONS: 10000
       - run: pnpm test:react18
       - run: pnpm test:vue33
+      - run: pnpm test:svelte-floor
       - run: pnpm size
 
   e2e:
@@ -47,6 +48,7 @@ jobs:
           - { name: React 19, suffix: '' }
           - { name: React 18, suffix: '-react18' }
           - { name: Vue, suffix: '-vue' }
+          - { name: Svelte, suffix: '-svelte' }
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

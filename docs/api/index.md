@@ -16,6 +16,8 @@ description: API reference for anchorlist, @anchorlist/react and @anchorlist/cor
 | `@anchorlist/react/sticky` | [`StickyItem`](#stickyitem). Also `anchorlist/sticky`. |
 | `@anchorlist/vue` | Vue 3.3+ component and composable: [`AnchorList`, `useAnchorList`](#vue). |
 | `@anchorlist/vue/sticky`, `/horizontal`, `/lanes` | Opt-in [`StickyOverlay` / `StickyItem`, `horizontal()`, `LanesList`](#vue-entries) for Vue. |
+| `@anchorlist/svelte` | Svelte 5.18+ component and headless binding: [`AnchorList`, `createAnchorList`](#svelte). |
+| `@anchorlist/svelte/sticky`, `/horizontal`, `/lanes` | Opt-in [`StickyOverlay` / `StickyItem`, `horizontal()`, `LanesList`](#svelte-entries) for Svelte. |
 | `@anchorlist/core/lanes`, `@anchorlist/react/lanes` | [Lanes](#lanes) (`grid`, `masonry`) and [`<LanesList>`](#laneslist). Also `anchorlist/lanes`, which re-exports both. |
 
 All packages are ESM only, ship TypeScript declarations and target ES2020.
@@ -149,6 +151,43 @@ it in `setup()` and `plan()` in the render function. Requires Vue 3.3 or later.
 | `@anchorlist/vue/sticky` | `StickyOverlay`, `StickyItem` (core part included) | 905 B (950 B) |
 | `@anchorlist/vue/horizontal` | `horizontal(base?)` | 189 B (300 B) |
 | `@anchorlist/vue/lanes` | `LanesList` (with `grid` / `masonry` from `@anchorlist/core/lanes`) | 395 B (450 B) |
+
+## Svelte
+
+```ts
+import { AnchorList, createAnchorList, type AnchorListHandle } from '@anchorlist/svelte'
+```
+
+`AnchorList` takes the same options as the React component, with Svelte conventions. Guide:
+[Svelte virtual list](/guide/svelte).
+
+| React | Svelte |
+| --- | --- |
+| `renderItem={(item) => ...}` | `children` snippet: `{#snippet children(item)}` |
+| `header`, `footer` props | `header`, `footer` snippets |
+| `sticky={(range) => ...}` | `sticky` snippet, which receives the virtualizer; render `StickyOverlay` in it |
+| `rowClassName` | `rowClass` |
+| `onStartReached`, `onEndReached`, `onRangeChange`, `onAtEdgeChange` | the same props |
+| `className`, `style`, `scrollerProps` | attributes (`class`, `style`, `id`, `dir`, ...) go to the scroll container |
+| `ref` (`AnchorListHandle`) with `element` | `bind:this` (`AnchorListHandle`): the same methods, and **`getElement()`** instead of `element` |
+
+`busy`, `scroller` and every core option work as in React; `align`, `initialSnapshot`,
+`maxCachedSizes` and `scroller` are read on mount. The container is a method, `getElement()`,
+because Svelte component exports can't be live getters. `createAnchorList(options, elements,
+scroller?)` returns `{ virtualizer, plan, rows, kept, focused }` for custom markup; call it during
+component initialisation. Requires Svelte 5.18 or later.
+
+### Svelte entries
+
+Sizes of the compiled output.
+
+| Entry | Exports | Size (budget) |
+| --- | --- | --- |
+| `@anchorlist/svelte` | `AnchorList`, `createAnchorList` (svelte and core external) | 2,042 B (2.1 kB) |
+| Svelte chat path | core + `AnchorList` | 6,271 B (6.3 kB) |
+| `@anchorlist/svelte/sticky` | `StickyOverlay`, `StickyItem` (svelte and core external) | 737 B (750 B) |
+| `@anchorlist/svelte/horizontal` | `horizontal(base?)` | 301 B (350 B) |
+| `@anchorlist/svelte/lanes` | `LanesList` (with `grid` / `masonry` from `@anchorlist/core/lanes`) | 659 B (750 B) |
 
 ## Core
 

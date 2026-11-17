@@ -21,6 +21,8 @@ export default defineConfig({
           include: ['packages/*/src/**/*.dom.test.tsx'],
         },
       },
+      // Svelte adapter tests (`*.test.svelte.ts`), with the Svelte compiler plugin.
+      'packages/svelte',
     ],
   },
 })

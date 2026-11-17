@@ -1,0 +1,23 @@
+{
+  "name": "@anchorlist/fixture-svelte",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Svelte fixture for the shared scenarios, served at /svelte/ by the React fixture's preview server.",
+  "scripts": {
+    "dev": "vite",
+    "build:dev": "vite build --mode development && vite build --mode development --ssr src/ssr.ts",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
+  },
+  "dependencies": {
+    "@anchorlist/core": "workspace:*",
+    "@anchorlist/svelte": "workspace:*",
+    "svelte": "^5.57.2"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "svelte-check": "^4.7.6",
+    "vite": "^8.3.4"
+  }
+}
