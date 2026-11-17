@@ -785,6 +785,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       timers.splice(0).forEach((t) => t!())
       sc?.translate((pending = 0))
       sc = null
+      touching = active = false
     },
 
     scrollToKey(key, o = {}) {
