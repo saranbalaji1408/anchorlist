@@ -1,0 +1,14 @@
+{
+  "name": "@anchorlist/fixture-vue33",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "The Vue unit tests, run against Vue 3.3 to verify the lower end of the ^3.3 peer range.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "vue": "3.3.13"
+  }
+}

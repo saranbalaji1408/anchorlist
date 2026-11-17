@@ -1,4 +1,4 @@
-import { expect, still, test } from '../src/harness'
+import { expect, expectFramework, still, test } from '../src/harness'
 
 /**
  * 100k items through the framework adapter, timed in the page (framework
@@ -87,6 +87,15 @@ test.describe('100k items', () => {
     // items with items of the same shape, so the heap must stay flat. Anything that keeps trimmed
     // items (an id-keyed cache that never evicts) grows by every prepended item.
     if (browserName !== 'chromium') return
+    // Vue development builds keep about 22 MB per 100 updates past a forced GC (65 MB over the
+    // measured cycles), which later collections release, so on Vue the check runs on the
+    // production build of the same fixture (served at `/vue-prod/`): 75-350 KB, as on React.
+    if (test.info().project.name.endsWith('-vue')) {
+      // A 404 fails here at once, rather than after the driver wait times out.
+      expect((await page.goto('../vue-prod/'))?.status(), 'vue-prod is built').toBe(200)
+      await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
+      await expectFramework(page)
+    }
     const cdp = await page.context().newCDPSession(page)
     const heap = async (): Promise<number> => {
       await cdp.send('HeapProfiler.collectGarbage')

@@ -52,8 +52,9 @@ const renderMessage = (m) => <Message message={m} /> // stable: module scope or 
 | [`anchorlist`](packages/anchorlist) | Re-exports core and React bindings |
 | [`@anchorlist/core`](packages/core) | Framework-agnostic engine, zero dependencies ([API](packages/core/API.md), [design](packages/core/DESIGN.md)) |
 | [`@anchorlist/react`](packages/react) | React 18 / 19 bindings |
+| [`@anchorlist/vue`](packages/vue) | Vue 3 bindings |
 
-Vue and Svelte bindings are planned.
+Svelte bindings are planned.
 
 ## Comparisons
 

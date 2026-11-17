@@ -1,5 +1,5 @@
 import { makeItems, rng } from '../src/data'
-import { expect, still, test } from '../src/harness'
+import { expect, still, test, TOLERANCE } from '../src/harness'
 
 const VIEWPORT = 600
 
@@ -13,7 +13,8 @@ test.describe('prepend (zero drift)', () => {
     const before = (await d.rowRect(anchor)).top
     await still(d, [`top:${anchor}`], async () => {
       await d.update({ items: [...makeItems(20, 'p', random), ...items] })
-      expect((await d.rowRect(anchor)).top).toBeCloseTo(before, 2)
+      // Firefox lays rows out in 1/60 px steps, so a prepend may shift by a fraction of a pixel.
+      expect(Math.abs((await d.rowRect(anchor)).top - before)).toBeLessThanOrEqual(TOLERANCE)
       await d.frames(6)
     })
   })
@@ -87,6 +88,7 @@ test.describe('prepend (zero drift)', () => {
   })
 
   test('keeps the anchor through a prepend rendered in a transition (concurrent React)', async ({ d }) => {
+    test.skip(test.info().project.name.endsWith('-vue'), 'React transitions only')
     const random = rng(31)
     const items = makeItems(80, 'm', random)
     await d.mount({ items, hasMoreStart: true })

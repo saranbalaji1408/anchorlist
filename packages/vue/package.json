@@ -1,0 +1,85 @@
+{
+  "name": "@anchorlist/vue",
+  "version": "0.0.0",
+  "description": "Vue 3 virtual list with stable scroll anchoring: virtualized chat lists and reverse infinite scroll without scroll jump, infinite feeds and dynamic heights.",
+  "keywords": [
+    "virtual list",
+    "virtualized list",
+    "virtual scroll",
+    "virtual scroller",
+    "windowing",
+    "infinite scroll",
+    "reverse infinite scroll",
+    "chat",
+    "chat list",
+    "scroll anchoring",
+    "dynamic height",
+    "variable height",
+    "typescript",
+    "vue",
+    "vue3",
+    "vue virtual list",
+    "vue virtual scroller",
+    "vue chat",
+    "vue component"
+  ],
+  "homepage": "https://saranbalaji1408.github.io/anchorlist/",
+  "bugs": {
+    "url": "https://github.com/saranbalaji1408/anchorlist/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saranbalaji1408/anchorlist.git",
+    "directory": "packages/vue"
+  },
+  "license": "MIT",
+  "author": "saranbalaji1408",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./sticky": {
+      "types": "./dist/sticky.d.ts",
+      "import": "./dist/sticky.js"
+    },
+    "./horizontal": {
+      "types": "./dist/horizontal.d.ts",
+      "import": "./dist/horizontal.js"
+    },
+    "./lanes": {
+      "types": "./dist/lanes.d.ts",
+      "import": "./dist/lanes.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@anchorlist/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "vue": "^3.5.43"
+  }
+}

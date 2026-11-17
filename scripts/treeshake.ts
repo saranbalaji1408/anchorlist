@@ -90,6 +90,8 @@ async function check(pkg: string, names: string, external: RegExp): Promise<void
 await check('core', 'createVirtualizer, elementScroller', /^$/)
 // React and the core are peers or dependencies of the React package: only its own code is checked.
 await check('react', 'AnchorList', /^(react|react-dom|@anchorlist\/core)(\/|$)/)
+// Likewise for the Vue package.
+await check('vue', 'AnchorList', /^(vue|@anchorlist\/core)(\/|$)/)
 
 if (failures.length) {
   console.error(failures.join('\n'))

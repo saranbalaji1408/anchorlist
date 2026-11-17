@@ -26,13 +26,17 @@ export default defineConfig({
   projects: browsers.flatMap(({ name, device }) => [
     { name, use: { ...device, baseURL: BASE } },
     { name: `${name}-react18`, use: { ...device, baseURL: `${BASE}react18/` } },
+    // The Vue fixture (`fixtures/vue`), built into the same preview server at `/vue/`.
+    { name: `${name}-vue`, use: { ...device, baseURL: `${BASE}vue/` } },
   ]),
   webServer: {
     // Builds the packages, then development builds of the fixture for React 19
     // and React 18 (StrictMode checks and React warnings on), served together.
     command:
-      'pnpm build && pnpm --filter @anchorlist/fixture-react build:dev && ' +
-      `pnpm --filter @anchorlist/fixture-react18 build:dev && pnpm --filter @anchorlist/fixture-react preview --port ${PORT} --strictPort`,
+      // `pnpm -C <dir> run <script>` fails on a missing script (`pnpm --filter` exits 0).
+      'pnpm build && pnpm -C fixtures/react run build:dev && ' +
+      'pnpm -C fixtures/react18 run build:dev && pnpm -C fixtures/vue run build:dev && pnpm -C fixtures/vue run build && ' +
+      `pnpm -C fixtures/react run preview --port ${PORT} --strictPort`,
     url: BASE,
     reuseExistingServer: !isCI,
     timeout: 180_000,

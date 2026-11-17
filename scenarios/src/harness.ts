@@ -33,6 +33,24 @@ export function spread(samples: number[][], col = 0): number {
 export const BROWSER_NOTICE: RegExp = /scroll-linked positioning effect/
 
 /**
+ * Framework version each fixture reports, by project-name suffix; projects without a suffix run
+ * React 19. A fixture path whose build is missing serves another app (or 404s), so checking the
+ * version makes such a project fail instead of silently testing a different framework.
+ * Fixtures for other frameworks add their suffix here (for example `['-svelte', /^5\./]`).
+ */
+const FRAMEWORKS: ReadonlyArray<readonly [suffix: string, version: RegExp]> = [
+  ['-react18', /^18\./],
+  ['-vue', /^3\./],
+]
+
+/** Asserts that the loaded fixture page runs the framework of the current project. */
+export async function expectFramework(page: Page): Promise<void> {
+  const project = base.info().project.name
+  const version = FRAMEWORKS.find(([suffix]) => project.endsWith(suffix))?.[1] ?? /^19\./
+  expect(await page.evaluate(() => window.__driver.frameworkVersion()), `${project} framework version`).toMatch(version)
+}
+
+/**
  * The scenario fixtures: `d` is the driver of a freshly loaded fixture page.
  * Console errors and page errors (including React warnings) fail the test.
  */
@@ -45,6 +63,7 @@ export const test = base.extend<{ d: RemoteDriver }>({
     })
     await page.goto('./')
     await page.waitForFunction(() => typeof window.__driver?.mount === 'function')
+    await expectFramework(page)
     await use(remote(page))
     expect(errors, 'console errors').toEqual([])
   },

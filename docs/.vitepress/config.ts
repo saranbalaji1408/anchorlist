@@ -11,7 +11,7 @@ const REPO_URL = 'https://github.com/saranbalaji1408/anchorlist'
 const SITE_NAME = 'anchorlist'
 const SITE_TITLE = 'anchorlist, a React virtual list with stable scroll anchoring'
 const SITE_DESCRIPTION =
-  'anchorlist is a tiny virtual list for React with stable scroll anchoring: chat lists and reverse infinite scroll without scroll jump, infinite feeds and dynamic item heights. Vue and Svelte bindings are planned.'
+  'anchorlist is a tiny virtual list for React and Vue with stable scroll anchoring: chat lists and reverse infinite scroll without scroll jump, infinite feeds and dynamic item heights. Svelte bindings are planned.'
 // TODO(og-image): replace the static placeholder with per-page build-time OG images
 // once a lightweight, maintained generator is chosen (e.g. satori + @resvg/resvg-js).
 const OG_IMAGE = `${SITE_URL}og.png`
@@ -23,11 +23,13 @@ const llmsPlugins = llmstxt({
   title: SITE_NAME,
   description: 'A virtual list for React with stable scroll anchoring (chat, reverse infinite scroll, feeds, dynamic heights).',
   details: [
-    'anchorlist v0.4 ships `@anchorlist/core` (framework-agnostic engine, zero dependencies) and',
-    '`@anchorlist/react`; the unscoped `anchorlist` package re-exports both.',
+    'anchorlist v0.5 ships `@anchorlist/core` (framework-agnostic engine, zero dependencies),',
+    '`@anchorlist/react` and `@anchorlist/vue`; the unscoped `anchorlist` package re-exports core and React.',
     "Use `align: 'end'` for chat (pinned to the newest item) and `align: 'start'` (default) for feeds.",
     'Pass `scroller={windowScroller}` (`anchorlist/window`) to scroll with the page, `scroller={horizontal()}`',
     '(`anchorlist/horizontal`) for a horizontal list and `horizontal(rtlScroller)` (`anchorlist/rtl`) for right-to-left.',
+    'Vue 3: `AnchorList` from `@anchorlist/vue` (rows in the default scoped slot, callbacks as events, handle via template ref);',
+    'opt-in `@anchorlist/vue/sticky`, `@anchorlist/vue/horizontal` and `@anchorlist/vue/lanes`.',
     'Grids and masonry: `<LanesList lanes={grid({ lanes: 4 })} />` or `masonry({ lanes: 3, gap: 8 })` from `anchorlist/lanes`;',
     'create the layout once per list (useState), keep `overscan` at least the largest item, and use a header instead of padding.',
     'Items need unique, stable keys; replace arrays instead of mutating them; never set scrollTop directly.',
@@ -68,7 +70,7 @@ function structuredData(pageData: PageData, url: string): HeadConfig[] {
       runtimePlatform: 'browser',
       version: pkg.version,
       keywords:
-        'virtual list, virtualized list, react virtual list, chat, reverse infinite scroll, infinite scroll, scroll anchoring, dynamic height, sticky headers, server rendering, window scroller, horizontal virtual list, rtl, virtual grid, masonry',
+        'virtual list, virtualized list, react virtual list, chat, reverse infinite scroll, infinite scroll, scroll anchoring, dynamic height, sticky headers, server rendering, window scroller, horizontal virtual list, rtl, virtual grid, masonry, vue virtual list',
     }),
   ]
 
@@ -187,6 +189,7 @@ export default defineConfig({
           { text: 'Horizontal list', link: '/guide/horizontal-list' },
           { text: 'Right-to-left (RTL)', link: '/guide/rtl-virtual-list' },
           { text: 'Grid and masonry', link: '/guide/virtual-grid-masonry' },
+          { text: 'Vue', link: '/guide/vue' },
         ],
       },
       {
