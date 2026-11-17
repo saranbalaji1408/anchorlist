@@ -9,7 +9,8 @@ import type { Plan, Virtualizer, VirtualizerOptions } from './virtualizer'
  * render therefore produce the same rows (no mismatch), and the engine takes
  * over on `attach()`, restoring the snapshot exactly.
  *
- * Vertical lists only for now (reads `height`). The server markup has no
+ * Fills the larger side of `initialRect`, so it serves vertical and horizontal
+ * lists (a wide vertical list renders a few extra rows). The server markup has no
  * spacers and no scroll offset, so before hydration the rows sit at the top.
  */
 export function initialPlan(v: Virtualizer, options: VirtualizerOptions): Plan {
@@ -17,7 +18,9 @@ export function initialPlan(v: Virtualizer, options: VirtualizerOptions): Plan {
   // A plan is only empty before attach or for an empty list (then the loop adds nothing).
   if (p.end >= p.start) return p
   const n = options.count
-  const h = options.initialRect?.height ?? 0
+  const r = options.initialRect
+  // The larger side covers the main axis of vertical and horizontal lists alike (at worst a few extra rows).
+  const h = r ? Math.max(r.width, r.height) : 0
   const s = options.initialSnapshot
   const at = s && !s.pinned && s.index >= 0 && s.index < n && options.getKey(s.index) === s.key ? s.index : -1
   const back = at < 0 && options.align === 'end'

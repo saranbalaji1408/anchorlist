@@ -26,6 +26,8 @@ const llmsPlugins = llmstxt({
     'anchorlist v0.2 ships `@anchorlist/core` (framework-agnostic engine, zero dependencies) and',
     '`@anchorlist/react`; the unscoped `anchorlist` package re-exports both.',
     "Use `align: 'end'` for chat (pinned to the newest item) and `align: 'start'` (default) for feeds.",
+    'Pass `scroller={windowScroller}` (`anchorlist/window`) to scroll with the page, `scroller={horizontal()}`',
+    '(`anchorlist/horizontal`) for a horizontal list and `horizontal(rtlScroller)` (`anchorlist/rtl`) for right-to-left.',
     'Items need unique, stable keys; replace arrays instead of mutating them; never set scrollTop directly.',
     'Keep `renderItem` stable (module scope or useCallback) so a prepend re-renders no mounted row.',
     'Opt-in entries: `anchorlist/sticky` (StickyItem), `anchorlist/animate` (animateToKey), `anchorlist/snapshot`',
@@ -64,7 +66,7 @@ function structuredData(pageData: PageData, url: string): HeadConfig[] {
       runtimePlatform: 'browser',
       version: pkg.version,
       keywords:
-        'virtual list, virtualized list, react virtual list, chat, reverse infinite scroll, infinite scroll, scroll anchoring, dynamic height, sticky headers, server rendering',
+        'virtual list, virtualized list, react virtual list, chat, reverse infinite scroll, infinite scroll, scroll anchoring, dynamic height, sticky headers, server rendering, window scroller, horizontal virtual list, rtl',
     }),
   ]
 
@@ -179,6 +181,9 @@ export default defineConfig({
           { text: 'Smooth scroll to an item', link: '/guide/smooth-scroll' },
           { text: 'Accessibility and focus', link: '/guide/accessibility' },
           { text: 'Server rendering', link: '/guide/server-rendering' },
+          { text: 'Window scroller', link: '/guide/window-scroller' },
+          { text: 'Horizontal list', link: '/guide/horizontal-list' },
+          { text: 'Right-to-left (RTL)', link: '/guide/rtl-virtual-list' },
         ],
       },
       {

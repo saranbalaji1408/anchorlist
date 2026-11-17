@@ -59,7 +59,8 @@ motion.
 
 ## Limits
 
-The kept focused row is positioned vertically; horizontal lists don't keep it yet.
+The kept focused row stays at its own position in vertical, horizontal, right-to-left and
+window-scrolled lists. Sticky items have their own [limits](/guide/sticky-headers#limits).
 
 ## How it is tested
 

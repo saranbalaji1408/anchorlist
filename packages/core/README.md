@@ -26,5 +26,10 @@ const v = createVirtualizer(options, { render: (sync) => rerender(sync) })
 // unmount:        v.destroy()
 ```
 
+Other scrollers are opt-in entries, so the list entry does not grow: `windowScroller` from
+`@anchorlist/core/window` scrolls with the page (with `scrollMargin` for a fixed app bar), and
+`rtlScroller` from `@anchorlist/core/rtl` normalises right-to-left horizontal lists. Pass
+`axis: HORIZONTAL` to `elementScroller` for a left-to-right horizontal list.
+
 See [API.md](./API.md) for the adapter contract and the full API, and [DESIGN.md](./DESIGN.md) for
 how it works.

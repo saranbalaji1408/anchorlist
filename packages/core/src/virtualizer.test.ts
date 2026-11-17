@@ -579,3 +579,35 @@ describe('robustness', () => {
     for (const key of h.mounted.keys()) expect(h.v.getItemRect(key)!.measured, String(key)).toBe(true)
   })
 })
+
+describe('attaching to an already scrolled scroller (a window list on a scrolled page)', () => {
+  it('keeps the offset when the list is below the viewport (align start)', async () => {
+    const h = mount({ keys: keysOf(200), size: sized, viewport: 500, header: 2000, offset: 800 })
+    await h.settle()
+    expect(h.sim.offset()).toBe(800)
+    expect(h.visualStart('k0')).toBeCloseTo(1200, 5)
+    expect(h.v.getSnapshot().pinned).toBe(false)
+  })
+
+  it('keeps the offset and anchors where the viewport is inside the list (align start)', async () => {
+    const h = mount({ keys: keysOf(300, 'k', 100), size: sized, viewport: 500, header: 100, footer: 4000, offset: 3000 })
+    await h.settle()
+    // The anchor is captured from estimates at the viewport; measuring the rows
+    // above it (never painted) only moves the offset by their estimate error.
+    expect(Math.abs(h.sim.offset() - 3000)).toBeLessThan(400)
+    const anchor = h.v.getSnapshot().key!
+    expect(h.mounted.has(anchor)).toBe(true)
+    expect(h.v.getSnapshot().pinned).toBe(false)
+    const before = h.visualStart(anchor)!
+    h.setKeys([...keysOf(20, 'k', 80), ...h.keys])
+    await h.settle()
+    expect(h.visualStart(anchor)).toBeCloseTo(before, 5)
+  })
+
+  it('still pins align end to the end edge', async () => {
+    const h = mount({ keys: keysOf(200), size: sized, viewport: 500, header: 2000, offset: 800, options: { align: 'end' } })
+    await h.settle()
+    expect(h.v.isAtEdge()).toBe(true)
+    expect(h.visualEnd('k199')).toBeCloseTo(500, 5)
+  })
+})

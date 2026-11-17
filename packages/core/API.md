@@ -148,7 +148,9 @@ Sticky items (for example group headers) stay in normal flow. The adapter render
   one. Screen readers read each header once, in its row.
 
 React: `StickyItem` from `@anchorlist/react/sticky`, returned from `AnchorList`'s `sticky` prop.
-It shifts the copy with `translateY`: vertical lists only for now.
+It shifts the copy with `translateY`. Not supported yet: `windowScroller`, horizontal and
+right-to-left lists (`stickyState` measures rows against the scroll container's top edge); use the
+default `elementScroller` on a vertical list.
 
 ## createVirtualizer
 
@@ -223,13 +225,49 @@ interface Scroller<E> {
   listen(handler: (event: ScrollerEvent) => void): () => void
   now(): number; frame(cb): () => void; timeout(cb, ms): () => void
   readonly touchWebKit: boolean
+  readonly inputTarget?: EventTarget           // where input outside the container arrives (window for windowScroller)
 }
 ```
 
 - `elementScroller({ element, list, content?, axis? })`: the DOM implementation. `axis` is `VERTICAL`
-  (default) or `HORIZONTAL` (left-to-right; RTL is not normalised in v0.1). It listens to `scroll`,
-  `touchstart`, `touchend`, `touchcancel` and `wheel` (passive), and observes the scroll container,
-  content wrapper, list and rows with one `ResizeObserver`.
+  (default) or `HORIZONTAL` (left-to-right; use `rtlScroller` for right-to-left). It listens to
+  `scroll`, `touchstart`, `touchend`, `touchcancel` and `wheel` (passive), and observes the scroll
+  container, content wrapper, list and rows with one `ResizeObserver`.
+- `windowScroller({ list, content?, axis?, scrollMargin? })` from `@anchorlist/core/window`: the
+  page scrolls instead of a container. The scroll range is the whole document, so page content
+  before and after the list acts like a header and footer (`content` should still wrap the list's
+  own header and footer). `scrollMargin` (px, default 0) is the size of fixed UI covering the start
+  of the window, like CSS `scroll-padding`: the viewport starts after it, so anchoring,
+  `scrollToKey` alignment and the visible range ignore what it covers. Unlike the `scrollMargin` of
+  some other virtualizers it is **not** the list's offset in the page: that is measured, so do not
+  pass it. It sets `overflow-anchor: none` on `content` while attached (restored on detach); the scroller element is the document
+  element, so the browser's own anchoring stays on for the rest of the page. If you wrap
+  `windowScroller`, keep that style on an ancestor of the rows. On attach, an `align: 'start'` list
+  on a page that is already scrolled keeps the page where it is and anchors to the item at the
+  viewport (or holds still when the list is below it), instead of scrolling to the top. There is
+  no end inset: for a fixed bar at the end of the window (a chat composer), render a spacer of its
+  size after the list (page content after the list acts as a footer). React's sticky overlay sticks
+  at `top: 0`, under a fixed bar of `scrollMargin` px. It listens to `scroll` and
+  `resize` on `window` and to input events on the document element. Its `inputTarget` is `window`.
+  It observes rows, list and content, not the document element (which resizes on any page change);
+  a document resize only counts when it moves the list (page content above it changed size) or
+  changes the page's size outside `content`. A move that leaves the document size unchanged (for
+  example with `html { height: 100% }`) is caught on the next scroll. It accepts
+  `ElementScrollerOptions` (`element` is ignored), so it can be used wherever an `elementScroller`
+  factory is expected. Budget: 0.6 kB gzip on top of the list entry.
+- `rtlScroller({ element, list, content? })` from `@anchorlist/core/rtl`: a horizontal scroller for
+  a container with `direction: rtl`. The start edge is the right edge, rows run leftwards and the
+  normalised offset grows leftwards. `scrollLeft` is normalised for all three browser conventions
+  (`negative`, the standard in current browsers; `reverse`; and `default`, with the maximum at the
+  start), detected once per call with a throwaway element (`rtlConvention()`). The list's spacers
+  are `paddingRight` (before) and `paddingLeft` (after). A left-to-right container gets a plain
+  horizontal `elementScroller`. The direction is read when the scroller is created, so re-attach
+  after changing it. The element must scroll horizontally (`overflow-x: auto`); with React, pass
+  `scroller={horizontal(rtlScroller)}` (`@anchorlist/react/horizontal`), which sets that up. `elementScroller` never mirrors, so any horizontal list under
+  `dir="rtl"` needs `rtlScroller`. Budget: 0.6 kB gzip on top of the list entry.
+
+Both subpath scrollers reuse `elementScroller` through a shared chunk, so they add only their own
+code to an app that already imports the list entry.
 - `simulatedScroller(options?)`: a deterministic, DOM-free layout for tests and benchmarks. It models
   a header, rows with a gap and a footer, and a manual clock (`tick()`, `advance(ms)`). It uses the
   browser's event order: offset clamps queue `scroll`, size changes queue `resize`, and `tick()`
@@ -371,7 +409,7 @@ Server rendering is opt-in, so lists that do not use it carry none of its code: 
 with `initialRect`. Adapters plan with `options.initialPlan(v, options)` when it is set.
 
 `initialPlan(v, options)` returns `v.plan(options)`, except while the plan is empty before
-`attach()`: then it returns the rows that fill `initialRect.height` by `estimateSize` (default
+`attach()`: then it returns the rows that fill the larger side of `initialRect` by `estimateSize` (default
 48 px), forwards from the `initialSnapshot` item when it is still at its index (same key at
 `snapshot.index`, not pinned), else from the `align` edge. It is deterministic, so the server
 render and the hydration render produce the same rows. On `attach()` the engine takes over
@@ -382,7 +420,8 @@ render and the hydration render produce the same rows. On `attach()` the engine 
   top of the scroller: for `align: 'end'` the newest rows are top-aligned until hydration.
 - With `initialSnapshot`, the server HTML starts at the snapshot item (top-aligned, without its
   `delta`), so hydration moves the content by at most the snapshot's `delta`.
-- It reads `initialRect.height` only: vertical lists.
+- It fills the larger side of `initialRect`, which covers vertical and horizontal lists (a wide
+  vertical list renders a few extra rows on the server).
 - Adapters use an isomorphic layout effect (a passive effect where there is no DOM), so server
   rendering never runs layout effects.
 
@@ -393,20 +432,25 @@ position. `keptRow(v, plan, key)` (main entry) tells an adapter where to keep th
 while it is outside `plan`:
 
 - `null` when `key` is null, inside the range, unknown or not committed yet;
-- else `{ index, start }`: its index in `plan.options` (looked up by key when the list changed
-  since the last commit; O(n) only then) and its start in list space (padding included).
+- else `{ index, start, offset }`: its index in `plan.options` (looked up by key when the list
+  changed since the last commit; O(n) only then), its start in content space (like
+  `getItemRect`) and its `offset` in list space (padding included).
 
-The adapter renders it with `position: absolute; top: start; width: 100%` inside the list (the
-scroll container is `position: relative`), before the planned rows when `index < plan.start` and after them
+The adapter renders it with `position: absolute; top: offset; width: 100%` inside the list (the
+list is `position: relative`), before the planned rows when `index < plan.start` and after them
 otherwise, in the same keyed child list, so the framework never moves its node. It stays registered
 with `measureElement`, so it keeps `data-index` / `aria-posinset`. The adapter tracks the focused key
 from `focusin` (the row's `data-index`) and clears it on `focusout` unless the window lost focus.
 
 Lists should also set `aria-busy` on the list element while loading (React: `busy`).
 
-The kept row is positioned in content space, so its containing block must be the scroll
-container (`position: relative` on it, nothing positioned in between). `top` makes it vertical-only
-for now.
+The kept row is positioned in list space, so its containing block must be the list
+(`position: relative` on it). Vertical lists use `top` and `width: 100%`. Horizontal lists use
+`inset-inline-start` and `height: 100%`, which is the left edge, or the right edge in a
+right-to-left container: list space either way (React detects a horizontal list from the list's
+`flex-direction: row`). List space does not depend on where the list sits, so this holds with
+`windowScroller` below a page header too. Until a change at index 0 is committed, `offset` falls
+back to `start` for that one render.
 
 ### Smooth scrolling
 
@@ -417,7 +461,12 @@ function animateToKey(
   v: Pick<Virtualizer, 'getItemRect' | 'scrollToKey'>,
   element: HTMLElement, // the scroll container
   key: Key,
-  options?: ScrollToOptions & { duration?: number; easing?: (t) => number; axis?; signal?: AbortSignal },
+  options?: ScrollToOptions & {
+    duration?: number
+    easing?: (t) => number
+    scroller?: Pick<Scroller, 'offset' | 'setOffset' | 'viewport' | 'scrollSize' | 'inputTarget'>
+    signal?: AbortSignal
+  },
 ): Promise<boolean>
 ```
 
@@ -427,11 +476,17 @@ function animateToKey(
   lands exactly and locks while sizes settle. Default: 400 ms, ease in-out cubic.
 - Frames write the offset like a user scroll, so the engine keeps the visible rows anchored while
   rows mount on the way.
-- `wheel`, `touchstart`, `pointerdown` or `keydown` on the element, `signal`, or a newer animation
-  on the same element cancel it (resolves `false`). An unknown key, a key removed on the way, or a
+- `wheel`, `touchstart`, `pointerdown` or `keydown` on the element or on the scroller's
+  `inputTarget` (the window for `windowScroller`, so input anywhere on the page counts), `signal`, or
+  a newer animation on the same element cancel it (resolves `false`). Input is watched from the first
+  frame, so the event that started the animation (a keyboard shortcut) does not cancel it. An unknown key, a key removed on the way, or a
   container detached on the way (the list unmounted) resolve `false`.
-- `element` must be the scroll container itself. `axis` selects `scrollLeft` for horizontal lists,
-  but RTL offsets are not normalised yet.
+- `element` is the list's container: it receives the input listeners, and its detachment ends the
+  animation. Offsets go through `scroller` (default: `element`'s vertical `scrollTop`). Pass a
+  scroller for other lists; only its offset methods are used, so `list` can be the container:
+  `windowScroller({ list: element, scrollMargin })` for a list that scrolls with the page,
+  `rtlScroller({ element, list: element })` for right-to-left (normalised offsets), and
+  `elementScroller({ element, list: element, axis: HORIZONTAL })` for left-to-right.
 - With `prefers-reduced-motion: reduce` or `duration <= 0` it jumps (`scrollToKey`) at once.
 
 ## Data structures

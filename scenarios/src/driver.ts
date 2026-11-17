@@ -72,6 +72,14 @@ export interface MountConfig extends Partial<ListState> {
   initialSnapshot?: SnapshotData
   /** Viewport size assumed before attach, for server rendering. */
   initialRect?: { width: number; height: number }
+  /**
+   * Scroll layout (default `vertical`): `horizontal` rows run left to right,
+   * `rtl` right to left in a `dir="rtl"` container, and `window` scrolls the
+   * page instead of the container. Item heights are main-axis sizes.
+   */
+  layout?: 'vertical' | 'horizontal' | 'rtl' | 'window'
+  /** For `layout: 'window'`: the height of a fixed bar at the top of the window, passed as `scrollMargin`. */
+  scrollMargin?: number
 }
 
 /** How a state update is applied. */

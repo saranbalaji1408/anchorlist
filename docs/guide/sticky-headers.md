@@ -74,7 +74,9 @@ const { index, offset } = stickyState(scrollerElement, v.getVisibleRange(), (i) 
 
 ## Limits
 
-Sticky items are vertical only for now. The overlay is an extra element in the scroll container,
+Sticky items need a vertical list with its own scroll container (the default `elementScroller`).
+`windowScroller`, horizontal lists and right-to-left lists are not supported yet: `stickyState`
+measures rows against the scroll container's top edge. The overlay is an extra element in the scroll container,
 not part of the list, so it does not affect measurements or anchoring.
 
 ## Size

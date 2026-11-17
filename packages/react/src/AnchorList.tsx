@@ -1,4 +1,4 @@
-import { keptRow, type Key, type Virtualizer, type VirtualizerOptions, type VisibleRange } from '@anchorlist/core'
+import { keptRow, type ElementScrollerOptions, type Key, type Scroller, type Virtualizer, type VirtualizerOptions, type VisibleRange } from '@anchorlist/core'
 import {
   forwardRef,
   memo,
@@ -68,9 +68,20 @@ export interface AnchorListProps<T> extends Omit<VirtualizerOptions, 'count' | '
    * rendered from the visible range. It re-renders only when that range changes.
    */
   sticky?: (range: VisibleRange) => ReactNode
+  /**
+   * Creates the scroller on mount. Default: `elementScroller`, with the
+   * container as a vertical scroll container. With a custom scroller the
+   * container gets no `overflow` style. Read on mount.
+   * - `windowScroller` from `@anchorlist/core/window` scrolls with the page.
+   * - `horizontal()` from `@anchorlist/react/horizontal` lays the list out
+   *   horizontally; `horizontal(rtlScroller)` (with `rtlScroller` from
+   *   `@anchorlist/core/rtl`) also handles right-to-left, which a horizontal
+   *   list under `dir="rtl"` needs.
+   */
+  scroller?: (elements: ElementScrollerOptions) => Scroller<Element>
   /** Class name of the scroll container. */
   className?: string
-  /** Style of the scroll container. Give it a height; do not set a main-axis border. */
+  /** Style of the scroll container. Give it a height (a width when horizontal); do not set a main-axis border. */
   style?: CSSProperties
   /** Class name of each row wrapper. Do not give rows margins; use `gap` instead. */
   rowClassName?: string
@@ -121,6 +132,7 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
   const [v, plan] = useAnchorList(
     { ...props, count: items.length, getKey: (i) => getKey(items[i]!) },
     () => ({ element: element.current!, list: list.current!, content: content.current! }),
+    props.scroller,
   )
   useImperativeHandle(ref, () => ({ ...v, element: element.current! }), [v])
   const row = (i: number, style = ROW): ReactElement => {
@@ -133,13 +145,20 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
   // The focused row stays mounted outside the range, out of flow, in the same
   // keyed array as the rows so that React never re-creates it (see keptRow).
   const kept = keptRow(v, plan, focused.current)
-  if (kept) rows[kept.index < plan.start ? 'unshift' : 'push'](row(kept.index, { position: 'absolute', width: '100%', top: kept.start }))
+  // Positioned in list space (the list is its containing block), so a page header above a
+  // window-scrolled list does not shift it. A horizontal list (`horizontal()` lays the rows out
+  // in a row) keeps it at its inline start: the left edge, or the right edge in right-to-left.
+  const x = list.current?.style.flexDirection == 'row'
+  if (kept)
+    rows[kept.index < plan.start ? 'unshift' : 'push'](
+      row(kept.index, x ? { position: 'absolute', height: '100%', insetInlineStart: kept.offset } : { position: 'absolute', width: '100%', top: kept.offset }),
+    )
   return (
     <div
       {...props.scrollerProps}
       ref={element}
       className={props.className}
-      style={{ overflowY: 'auto', overflowAnchor: 'none', position: 'relative', ...props.style }}
+      style={{ ...(!props.scroller && { overflowY: 'auto' }), overflowAnchor: 'none', position: 'relative', ...props.style }}
     >
       {sticky && <Sticky v={v} render={sticky} />}
       <div ref={content}>
@@ -148,7 +167,7 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
           ref={list}
           role="list"
           aria-busy={props.busy}
-          style={{ display: 'flex', flexDirection: 'column', gap: props.gap }}
+          style={{ display: 'flex', flexDirection: 'column', gap: props.gap, position: 'relative' }}
           // Focus that leaves the window stays in the row: keep it.
           onBlur={() => {
             if (document.hasFocus()) focused.current = null

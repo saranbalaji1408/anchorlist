@@ -1,6 +1,7 @@
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { elementScroller } from '@anchorlist/core'
 import { AnchorList, type AnchorListProps } from './index'
 import { installLayout, type TestLayout } from './testLayout'
 
@@ -90,6 +91,19 @@ describe('focus preservation', () => {
     expect(row('i110')).toBe(el)
     expect(document.activeElement).toBe(button)
     expect(el.getAttribute('data-index')).toBe('120')
+  })
+
+  it('positions the kept row in list space when the list does not start at the scroll content start', async () => {
+    // Like a window-scrolled list below a 300 px page header: the list starts 300 px into the scroll content.
+    await render({ items: make(500, 'i'), paddingStart: 10, scroller: (e) => ({ ...elementScroller(e), listStart: () => 300 }) })
+    await focus('i3')
+    const el = row('i3')!
+    await scrollTo(200 * 50)
+    expect(row('i3')).toBe(el)
+    expect(el.style.position).toBe('absolute')
+    // Inside the list (its containing block): padding plus three rows, without the 300 px.
+    expect(el.parentElement!.style.position).toBe('relative')
+    expect(el.style.top).toBe('160px')
   })
 
   it('lets the row unmount once focus leaves the list', async () => {

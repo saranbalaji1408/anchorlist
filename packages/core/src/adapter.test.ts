@@ -22,6 +22,15 @@ describe('keptRow', () => {
     expect(keptRow(h.v, plan, 'nope')).toBeNull()
   })
 
+  it('never reads a key of an empty list', async () => {
+    const h = mount({ keys: keysOf(500), size: () => 50, viewport: 500 })
+    await h.settle()
+    const getKey = (i: number): Key => {
+      throw new Error(`getKey(${i}) on an empty list`)
+    }
+    expect(keptRow(h.v, h.v.plan({ ...opts(0), getKey }), h.keys[3]!)).toBeNull()
+  })
+
   it('returns the index and content-space start of a row outside the range', async () => {
     const h = mount({ keys: keysOf(500), size: () => 50, viewport: 500, gap: 4, header: 100, options: { paddingStart: 10, estimateSize: () => 50 } })
     await h.settle()
@@ -30,8 +39,8 @@ describe('keptRow', () => {
     const plan = h.v.plan()
     expect(plan.start).toBeGreaterThan(3)
     // Content space: header, padding, then items with gaps (like getItemRect).
-    expect(keptRow(h.v, plan, h.keys[3]!)).toEqual({ index: 3, start: 100 + 10 + 3 * 54 })
-    expect(keptRow(h.v, plan, h.keys[499]!)).toEqual({ index: 499, start: 100 + 10 + 499 * 54 })
+    expect(keptRow(h.v, plan, h.keys[3]!)).toEqual({ index: 3, start: 100 + 10 + 3 * 54, offset: 10 + 3 * 54 })
+    expect(keptRow(h.v, plan, h.keys[499]!)).toEqual({ index: 499, start: 100 + 10 + 499 * 54, offset: 10 + 499 * 54 })
     expect(keptRow(h.v, plan, h.keys[3]!)!.start).toBe(h.v.getItemRect(h.keys[3]!)!.start)
   })
 

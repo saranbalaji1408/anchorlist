@@ -57,7 +57,7 @@ corrections as drift.
 | `followFast` / `followSlow` | Pinned at the bottom, 20 single-item appends 3 or 10 frames apart. Read just before the next append. | `fromBottomMax` (px from the bottom of the scroll range), `unpinnedAppends` (appends after which the list was more than 1 px from the bottom) |
 | `scroll` | Chromium only: scroll up 120 px per frame (a fast flick) for 300 frames through unmeasured rows. | `taskMsPerFrame`, `scriptMsPerFrame`, `layoutMsPerFrame` (main-thread time from the DevTools protocol's Performance metrics, over the whole run, per frame; work in any task counts), `frameMsP95` and `longFrames` (intervals between animation frames over 25 ms) |
 
-Bundle sizes come from size-limit (the repository's own tool) with `.size-limit.json`: the minified
+Bundle sizes come from size-limit (the repository's own tool) with `.size-limit.js`: the minified
 and gzipped bytes of the import each configuration uses (`{ AnchorList }`, `{ useVirtualizer }`,
 `{ Virtuoso }`), with `react` and `react-dom` external.
 

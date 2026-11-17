@@ -1,8 +1,11 @@
-import { AnchorList, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
+import { AnchorList, elementScroller, HORIZONTAL, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
 import { animateToKey } from 'anchorlist/animate'
+import { horizontal as horizontalLayout } from 'anchorlist/horizontal'
+import { rtlScroller } from 'anchorlist/rtl'
 import { snapshotEstimate, takeSnapshot } from 'anchorlist/snapshot'
 import { initialPlan } from 'anchorlist/ssr'
 import { StickyItem } from 'anchorlist/sticky'
+import { windowScroller } from 'anchorlist/window'
 import { StrictMode, startTransition, useLayoutEffect, useState, useSyncExternalStore, version, type ReactNode, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
 import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
@@ -22,6 +25,10 @@ const subscribeHeights = (l: () => void): (() => void) => {
 }
 let renders: Record<string, number> = {}
 let withoutScroller: string[] = []
+/** Rows run along the horizontal axis: item heights are widths. Set on mount. */
+let horizontal = false
+/** The mounted config, for helpers that need the layout (animateToKey's scroller). */
+let mounted: MountConfig = { items: [] }
 
 function Bubble({ item }: { item: Item }): ReactNode {
   const read = (): number | undefined => heights.get(item.id) ?? item.height
@@ -29,7 +36,13 @@ function Bubble({ item }: { item: Item }): ReactNode {
   renders[item.id] = (renders[item.id] ?? 0) + 1
   if (!document.getElementById(SCROLLER_ID)) withoutScroller.push(item.id)
   return (
-    <div style={{ height, boxSizing: 'border-box', borderBottom: '1px solid #ccc', overflowWrap: 'anywhere', background: item.header ? '#ffd' : '#fff' }}>
+    <div
+      style={
+        horizontal
+          ? { width: height, height: '100%', boxSizing: 'border-box', borderInlineEnd: '1px solid #ccc', overflow: 'hidden', background: item.header ? '#ffd' : '#fff' }
+          : { height, boxSizing: 'border-box', borderBottom: '1px solid #ccc', overflowWrap: 'anywhere', background: item.header ? '#ffd' : '#fff' }
+      }
+    >
       {item.text ?? item.id}
     </div>
   )
@@ -85,6 +98,10 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
   bridge.set = set
   const { items, align } = s
   current = items
+  const layout = config.layout ?? 'vertical'
+  const margin = config.scrollMargin ?? 0
+  // Header and footer sizes are along the main axis.
+  const size = horizontal ? 'width' : 'height'
   const follow = ({ atEdge, added }: FollowContext): boolean =>
     atEdge || (align === 'end' ? items.slice(-added) : items.slice(0, added)).some((m) => m.mine)
   const props: AnchorListProps<Item> = {
@@ -101,8 +118,8 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
     ...callbacks,
     style: { height: s.height, width: s.width, border: 'none' },
     scrollerProps: { id: SCROLLER_ID },
-    header: s.header === null ? null : <div style={{ height: s.header, background: '#eef' }}>header</div>,
-    footer: s.footer === null ? null : <div style={{ height: s.footer, background: '#efe' }}>footer</div>,
+    header: s.header === null ? null : <div style={{ [size]: s.header, background: '#eef' }}>header</div>,
+    footer: s.footer === null ? null : <div style={{ [size]: s.footer, background: '#efe' }}>footer</div>,
     ...(s.sticky ? { sticky: pill } : {}),
     ...(s.stickyItems
       ? { sticky: (range: VisibleRange) => <StickyItem range={range} items={items} isSticky={isHeader} renderItem={renderStuck} /> }
@@ -115,9 +132,16 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
       ? { estimateSize: snapshotEstimate(config.initialSnapshot, (i) => items[i]!.id, s.estimate === null ? undefined : () => s.estimate!) }
       : {}),
     ...(config.initialRect ? { initialRect: config.initialRect, initialPlan } : {}),
+    ...(layout === 'horizontal' ? { scroller: horizontalLayout() } : {}),
+    ...(layout === 'rtl' ? { scroller: horizontalLayout(rtlScroller), scrollerProps: { id: SCROLLER_ID, dir: 'rtl' } } : {}),
+    // The page scrolls: the container has no height, and a fixed bar covers the top `margin` px.
+    ...(layout === 'window' ? { scroller: (e) => windowScroller({ ...e, scrollMargin: margin }), style: { width: s.width } } : {}),
   }
   return (
-    <main>
+    <main style={layout === 'window' ? { paddingTop: margin } : undefined}>
+      {layout === 'window' && margin > 0 && (
+        <div id="appbar" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: margin, background: '#fde', zIndex: 2 }} />
+      )}
       <h1>anchorlist fixture</h1>
       <AnchorList<Item> ref={list} {...props} />
       <Committed s={s} onCommit={bridge.committed} />
@@ -178,6 +202,8 @@ export function installDriver(container: HTMLElement): void {
     driver.resetCounters()
     interned.clear()
     const init: ListState = { ...DEFAULTS, ...config, items: intern(config.items) }
+    horizontal = config.layout === 'horizontal' || config.layout === 'rtl'
+    mounted = config
     const app = <App init={init} config={config} bridge={bridge} list={list} />
     return config.strict ? <StrictMode>{app}</StrictMode> : app
   }
@@ -226,7 +252,20 @@ export function installDriver(container: HTMLElement): void {
     rendersWithoutScroller: () => [...withoutScroller],
     frameworkVersion: () => version,
     lastUpdateMs: () => lastUpdateMs,
-    animateToKey: (key, o) => animateToKey(handle(), handle().element, key, o),
+    animateToKey(key, o) {
+      const element = handle().element
+      const layout = mounted.layout
+      // The scroller animateToKey reads and writes the offset through, per layout.
+      const scroller =
+        layout === 'window'
+          ? windowScroller({ list: element, scrollMargin: mounted.scrollMargin ?? 0 })
+          : layout === 'rtl'
+            ? rtlScroller({ element, list: element })
+            : layout === 'horizontal'
+              ? elementScroller({ element, list: element, axis: HORIZONTAL })
+              : undefined
+      return animateToKey(handle(), element, key, { ...o, ...(scroller && { scroller }) })
+    },
     takeSnapshot() {
       const items = current
       return takeSnapshot(handle(), (i) => items[i]!.id, items.length)

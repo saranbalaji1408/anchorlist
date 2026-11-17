@@ -10,6 +10,8 @@ description: API reference for anchorlist, @anchorlist/react and @anchorlist/cor
 | `anchorlist` | Re-exports everything below. |
 | `@anchorlist/react` | React 18 / 19 component. |
 | `@anchorlist/core` | Framework-agnostic engine, zero dependencies: `createVirtualizer`, `elementScroller`, `simulatedScroller`, `keptRow`, data structures, types. |
+| `@anchorlist/core/window`, `@anchorlist/core/rtl` | Opt-in scrollers: [`windowScroller`](#scrollers), [`rtlScroller`](#scrollers). Also `anchorlist/window`, `anchorlist/rtl`. |
+| `@anchorlist/react/horizontal` | Opt-in [`horizontal()`](#horizontal) layout for `<AnchorList>`. Also `anchorlist/horizontal`. |
 | `@anchorlist/core/sticky`, `/animate`, `/snapshot`, `/ssr` | [Opt-in entries](#opt-in-entries): `stickyState`, `animateToKey`, `takeSnapshot` / `snapshotEstimate`, `initialPlan`. Also `anchorlist/sticky`, `anchorlist/animate`, `anchorlist/snapshot`, `anchorlist/ssr`. |
 | `@anchorlist/react/sticky` | [`StickyItem`](#stickyitem). Also `anchorlist/sticky`. |
 
@@ -31,7 +33,8 @@ import { AnchorList, type AnchorListHandle } from 'anchorlist'
 | `renderItem` | `(item: T) => ReactNode` | Renders one item. It receives no index, so a prepend re-renders no mounted rows. Keep it stable (module scope or `useCallback`) to skip re-renders. |
 | `header` / `footer` | `ReactNode` | Rendered above / below the rows, inside the scroll content. They may change size at any time. |
 | `sticky` | `(range: VisibleRange) => ReactNode` | Overlay pinned to the top of the viewport (for example a date pill). Re-renders only when the visible range changes. |
-| `className` / `style` | `string` / `CSSProperties` | Applied to the scroll container. Give it a height, and no main-axis border. |
+| `scroller` | `(elements: ElementScrollerOptions) => Scroller<Element>` | Creates the scroller on mount. Default `elementScroller` (the container scrolls vertically). [`windowScroller`](#scrollers) scrolls with the page; [`horizontal()`](#horizontal) lays the list out horizontally, and `horizontal(rtlScroller)` handles right-to-left too. With a custom scroller the container gets no `overflow` style. Read on mount. |
+| `className` / `style` | `string` / `CSSProperties` | Applied to the scroll container. Give it a height (a width and a height when horizontal; nothing with `windowScroller`), and no main-axis border. |
 | `rowClassName` | `string` | Class of each row wrapper. Don't give rows margins; use `gap`. |
 | `scrollerProps` | `HTMLAttributes<HTMLDivElement>` | Extra attributes for the scroll container (`id`, `aria-label`, `onKeyDown`, ...). |
 | `busy` | `boolean` | Sets `aria-busy` on the list, for example while a page of items is loading. |
@@ -67,12 +70,30 @@ import { StickyItem } from 'anchorlist/sticky' // or '@anchorlist/react/sticky'
 
 The copy is `aria-hidden` and `inert`. Vertical lists only. Guide: [sticky group headers](/guide/sticky-headers).
 
-### `useAnchorList(options, elements)`
+### `horizontal(base?)`
+
+```tsx
+import { horizontal } from 'anchorlist/horizontal' // or '@anchorlist/react/horizontal'
+import { rtlScroller } from 'anchorlist/rtl'       // or '@anchorlist/core/rtl'
+
+<AnchorList scroller={horizontal()} style={{ width: '100%', height: 220 }} /* ... */ />
+<AnchorList scroller={horizontal(rtlScroller)} scrollerProps={{ dir: 'rtl' }} /* ... */ />
+```
+
+Returns a `scroller` factory for a horizontal list. On mount it sets `overflow-x: auto` on the
+container, lays the rows out in a row, puts header, list and footer side by side at their full
+width, and creates `base` (default `elementScroller`) on the `HORIZONTAL` axis. Item sizes are
+widths. The `sticky` overlay sticks to the top only. Create the factory once (module scope), not
+in render. Guides: [horizontal virtual list](/guide/horizontal-list),
+[RTL virtual list](/guide/rtl-virtual-list).
+
+### `useAnchorList(options, elements, scroller?)`
 
 A lower-level hook for custom markup. It returns `[virtualizer, plan]`. Render rows
 `plan.start..plan.end` inside your list element, keyed by `options.getKey(i)`, with a ref that
-calls `virtualizer.measureElement(el, key)`. `elements()` returns `{ element, list, content? }`
-once they are mounted. Most apps should use `<AnchorList>`.
+calls `virtualizer.measureElement(el, key)`. `elements()` returns `{ element, list, content?, axis? }`
+once they are mounted. `scroller` creates the scroller from them when attaching (default
+`elementScroller`). Most apps should use `<AnchorList>`.
 
 ## Core
 
@@ -145,9 +166,25 @@ returns -1.
 ### Scrollers
 
 - `elementScroller({ element, list, content?, axis? })` is the DOM implementation. `axis` is
-  `VERTICAL` (default) or `HORIZONTAL` (left-to-right; RTL is not normalised in v0.1). It listens
-  to `scroll`, `touchstart`, `touchend`, `touchcancel` and `wheel` (passive), and
+  `VERTICAL` (default) or `HORIZONTAL` (left-to-right; use `rtlScroller` for right-to-left). It
+  listens to `scroll`, `touchstart`, `touchend`, `touchcancel` and `wheel` (passive), and
   observes the container, content wrapper, list and rows with one `ResizeObserver`.
+- `windowScroller({ list, content?, axis?, scrollMargin? })` from `@anchorlist/core/window`
+  (`anchorlist/window`): the page scrolls instead of a container, and page content around the list
+  acts as its header and footer. `scrollMargin` (px, default 0, read at creation) is the size of
+  fixed UI covering the start of the window, like CSS `scroll-padding`; it is not the list's offset
+  in the page, which is measured. It sets `overflow-anchor: none` on `content` while attached (restored on detach). An `align: 'start'`
+  list that mounts on an already scrolled page keeps the page in place. It accepts
+  `ElementScrollerOptions` (`element` is ignored), so it can be passed as a `scroller` factory.
+  428 B gzip on top of the list (budget 600 B). Guide: [window scroller](/guide/window-scroller).
+- `rtlScroller({ element, list, content? })` from `@anchorlist/core/rtl` (`anchorlist/rtl`): a
+  horizontal scroller for a `direction: rtl` container. The start edge is the right edge, the
+  spacers are `paddingRight` (before) and `paddingLeft` (after), and the offset is normalised to
+  grow leftwards for all three browser `scrollLeft` conventions. A left-to-right container gets a
+  plain horizontal `elementScroller`. The direction is read at creation; re-attach (remount) after
+  changing it. `rtlConvention()` returns the detected convention: `0` negative (the standard),
+  `1` reverse, `2` default (maximum at the start). 509 B gzip on top of the list (budget 600 B).
+  Guide: [RTL virtual list](/guide/rtl-virtual-list).
 - `simulatedScroller(options?)` is a deterministic, DOM-free layout for tests and benchmarks, with
   a manual clock (`tick()`, `advance(ms)`). `quantize: 'round' | 'trunc'` stores whole-pixel
   offsets like browsers at DPR 1.
@@ -161,12 +198,12 @@ CI.
 | --- | --- | --- |
 | `@anchorlist/core/sticky` | `stickyState(scroller, range, isSticky, size, axis?)`: `{ index, offset }` of the stuck item | 423 B (500 B) |
 | `@anchorlist/react/sticky` | `StickyItem` (core part included) | 794 B (800 B) |
-| `@anchorlist/core/animate` | `animateToKey(v, element, key, options?)`: `Promise<boolean>` | 742 B (800 B) |
+| `@anchorlist/core/animate` | `animateToKey(v, element, key, options?)`: `Promise<boolean>` | 789 B (800 B) |
 | `@anchorlist/core/snapshot` | `takeSnapshot(v, getKey, count, limit = 100)`, `snapshotEstimate(snapshot, getKey, estimateSize?)` | 385 B (500 B) |
-| `@anchorlist/core/ssr` | `initialPlan(v, options)` | 368 B (400 B) |
+| `@anchorlist/core/ssr` | `initialPlan(v, options)` | 379 B (400 B) |
 
 - **`animateToKey`** recomputes the target every frame and lands through `scrollToKey`. Options:
-  `align`, `offset`, `duration` (400 ms), `easing`, `axis`, `signal`. User input, `signal`, a newer
+  `align`, `offset`, `duration` (400 ms), `easing`, `scroller`, `signal`. User input, `signal`, a newer
   animation, a removed key or an unmounted list cancel it (resolves `false`); it jumps under
   `prefers-reduced-motion`. Guide: [smooth scroll](/guide/smooth-scroll).
 - **`takeSnapshot`** is `getSnapshot()` plus `sizes: [key, size][]` for measured items around the
@@ -177,7 +214,8 @@ CI.
   `align` edge, so server and hydration renders match. Guide:
   [server rendering](/guide/server-rendering).
 - **`keptRow(v, plan, key)`** (main entry) tells an adapter where to keep a focused row while it is
-  outside the plan: `{ index, start }` or `null`.
+  outside the plan: `{ index, start, offset }` or `null`. Adapters position it at `offset`
+  (list space) inside a `position: relative` list.
 
 ### Behaviour
 

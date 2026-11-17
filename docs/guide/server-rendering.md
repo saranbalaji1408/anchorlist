@@ -33,9 +33,10 @@ export function Feed({ posts }) {
 }
 ```
 
-- `initialRect` is the viewport size to assume before the list is attached. Only `height` is
-  read.
-- `initialPlan` renders the rows that fill `initialRect.height` from the `align` edge, sized by
+- `initialRect` is the viewport size to assume before the list is attached. The larger of
+  `width` and `height` is read, so it serves vertical and horizontal lists alike (at worst a few
+  extra rows).
+- `initialPlan` renders the rows that fill that size from the `align` edge, sized by
   `estimateSize` (default 48 px). It is deterministic, so the server render and the hydration
   render produce the same rows and React adopts the server markup without a mismatch.
 - After hydration the engine takes over: it measures the rows, writes the spacers and the scroll
@@ -57,6 +58,12 @@ Server Component; use them in client files or outside React. Props you write you
 `renderItem` and `getKey`, are plain functions too, so in practice `AnchorList` is rendered from a
 client component, where any entry works.
 
+The same rule covers `scroller`. `windowScroller` from `anchorlist/window` and `rtlScroller` from
+`anchorlist/rtl` can be passed as they are. A scroller made by a call, such as `horizontal()`,
+`horizontal(rtlScroller)` or a wrapper like `(elements) => windowScroller({ ...elements,
+scrollMargin: 56 })`, is a plain function created where the call runs, so create it in a client
+component.
+
 ## Restoring a position
 
 With `initialSnapshot`, the server HTML starts at the snapshot's item instead of the edge, so a
@@ -72,13 +79,14 @@ hydration.
 
 ## Limits
 
-- Vertical lists only (`initialRect.height`).
+- `initialPlan` fills the larger side of `initialRect`, which can render a few more rows than a
+  wide, short horizontal list needs.
 - Layout effects don't run on the server; anchorlist uses a passive effect where there is no DOM,
   so React doesn't warn.
 
 ## Size
 
-`@anchorlist/core/ssr` is a separate entry of 368 B gzip (budget 400 B).
+`@anchorlist/core/ssr` is a separate entry of 379 B gzip (budget 400 B).
 
 ## How it is tested
 
