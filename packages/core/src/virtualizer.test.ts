@@ -283,6 +283,25 @@ describe('touch WebKit deferral', () => {
     expect(h.sim.offset()).toBe(offset + pending)
     expect(h.visualEnd(anchor)).toBeCloseTo(before, 5)
   })
+
+  it('commits IDLE_MS after the last event even when the clock is coarser than the timer', async () => {
+    const h = mount({ keys: keysOf(100, 'k', 100), size: () => 50, viewport: 500, touchWebKit: true, options: { align: 'end' } })
+    await h.settle(20)
+    h.sim.advance(500)
+    // A clock that reads in 100 ms steps, like a browser that reduces timer precision.
+    const now = h.sim.now.bind(h.sim)
+    h.sim.now = () => Math.floor(now() / 100) * 100
+    h.sim.touch(true)
+    h.sim.userScroll(h.sim.offset() - 1000)
+    await h.settle(1)
+    h.setKeys([...keysOf(10, 'k', 90), ...h.keys])
+    expect(h.sim.translation).not.toBe(0)
+    // The touch ends 10 ms into a clock step: 120 ms later the coarse clock reads only 100 ms.
+    h.sim.advance(110 - (now() % 100))
+    h.sim.touch(false)
+    h.sim.advance(125)
+    expect(h.sim.translation).toBe(0)
+  })
 })
 
 describe('sizes', () => {
@@ -432,6 +451,40 @@ describe('whole-pixel offsets', () => {
         expect(Math.abs(now - anchor.delta)).toBeLessThanOrEqual(1 + 1e-9)
         last = now
       }
+    })
+  }
+})
+
+describe('learned estimate', () => {
+  for (const quantize of ['round', 'trunc'] as const) {
+    it(`is whole pixels, so whole-pixel rows never move under prepends or pin short of the edge (${quantize})`, async () => {
+      // Whole-pixel rows whose average is fractional (233.4...): a fractional
+      // estimate put the estimated rows, and every prepend, on fractions of a
+      // pixel, so the anchor moved up to 0.6 px per prepend.
+      const size = (k: Key): number => 20 + ((Number(String(k).replace(/\D/g, '')) * 37) % 381)
+      const h = mount({ keys: keysOf(80, 'm'), size, viewport: 600, quantize, options: { align: 'end', hasMoreStart: true } })
+      await h.settle()
+      h.sim.userScroll(h.sim.offset() - 2500)
+      await h.settle()
+      h.sim.advance(400) // idle: the estimate becomes the measured average
+      await h.settle()
+      const unmeasured = h.keys.find((k) => !h.v.getItemRect(k)!.measured)!
+      expect(Number.isInteger(h.v.getItemRect(unmeasured)!.size)).toBe(true)
+      const anchor = h.v.getSnapshot().key!
+      const at = h.visualEnd(anchor)!
+      for (let i = 0; i < 6; i++) {
+        h.setKeys([...keysOf(15, `t${i}-`), ...h.keys])
+        await h.settle()
+        expect(h.visualEnd(anchor), `prepend ${i}`).toBe(at)
+        h.sim.advance(400)
+        await h.settle()
+      }
+      // Clear and refill: pinned exactly at the end.
+      h.setKeys([])
+      await h.settle()
+      h.setKeys(keysOf(100, 'r'))
+      await h.settle()
+      expect(h.visualEnd('r99')).toBe(600)
     })
   }
 })

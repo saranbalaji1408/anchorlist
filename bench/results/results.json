@@ -1,0 +1,1528 @@
+{
+  "date": "2026-10-10T22:44:30.863Z",
+  "machine": {
+    "cpu": "Apple M2",
+    "cores": 8,
+    "platform": "darwin"
+  },
+  "runs": 3,
+  "items": 10000,
+  "versions": {
+    "anchorlist": "0d9bffb",
+    "@tanstack/react-virtual": "3.14.14",
+    "react-virtuoso": "4.18.16",
+    "react": "19.3.0"
+  },
+  "sizes": {
+    "anchorlist": 5521,
+    "@tanstack/react-virtual": 7588,
+    "react-virtuoso": 19093
+  },
+  "browsers": {
+    "chromium": {
+      "version": "156.0.8078.4",
+      "scenarios": {
+        "prepend": {
+          "anchorlist": {
+            "median": {
+              "settleMs": 15.4,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 62,
+              "finalOffset": 0,
+              "updateMsP50": 0.8,
+              "updateMsMax": 1.7,
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "settleMs": 20.8,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 62,
+              "finalOffset": 0,
+              "updateMsP50": 1.5,
+              "updateMsMax": 1.9,
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "settleMs": 20.8,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 0.5,
+                "updateMsMax": 1.4,
+                "rerendersPerPrepend": 0
+              },
+              {
+                "settleMs": 14.8,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 62,
+                "finalOffset": 0,
+                "updateMsP50": 0.8,
+                "updateMsMax": 1.7,
+                "rerendersPerPrepend": 0
+              },
+              {
+                "settleMs": 15.4,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 62,
+                "finalOffset": 0,
+                "updateMsP50": 1.5,
+                "updateMsMax": 1.9,
+                "rerendersPerPrepend": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "settleMs": 32.1,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 61,
+              "finalOffset": 0,
+              "updateMsP50": 1.8,
+              "updateMsMax": 2.3,
+              "rerendersPerPrepend": 9.9
+            },
+            "worst": {
+              "settleMs": 32.1,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 61,
+              "finalOffset": 0,
+              "updateMsP50": 2,
+              "updateMsMax": 2.8,
+              "rerendersPerPrepend": 11
+            },
+            "runs": [
+              {
+                "settleMs": 17.9,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 1.8,
+                "updateMsMax": 2.3,
+                "rerendersPerPrepend": 11
+              },
+              {
+                "settleMs": 32.1,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 2.8,
+                "rerendersPerPrepend": 9.9
+              },
+              {
+                "settleMs": 32.1,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 1.4,
+                "updateMsMax": 1.8,
+                "rerendersPerPrepend": 9.9
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "settleMs": 148.1,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 61,
+              "finalOffset": 0,
+              "updateMsP50": 1,
+              "updateMsMax": 2.9,
+              "rerendersPerPrepend": 12
+            },
+            "worst": {
+              "settleMs": 149,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 61,
+              "finalOffset": 0,
+              "updateMsP50": 1.8,
+              "updateMsMax": 3.9,
+              "rerendersPerPrepend": 14
+            },
+            "runs": [
+              {
+                "settleMs": 149,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 1.8,
+                "updateMsMax": 2.5,
+                "rerendersPerPrepend": 14
+              },
+              {
+                "settleMs": 148.1,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 0.7,
+                "updateMsMax": 3.9,
+                "rerendersPerPrepend": 12
+              },
+              {
+                "settleMs": 116.4,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 1,
+                "updateMsMax": 2.9,
+                "rerendersPerPrepend": 12
+              }
+            ]
+          }
+        },
+        "prependMemo": {
+          "anchorlist": {
+            "median": {
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              }
+            ]
+          }
+        },
+        "growAbove": {
+          "anchorlist": {
+            "median": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "worst": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "runs": [
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 31
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 31
+            },
+            "worst": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "runs": [
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 31
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 31
+              }
+            ]
+          },
+          "virtuoso": null
+        },
+        "followFast": {
+          "anchorlist": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "runs": [
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 133,
+              "unpinnedAppends": 1
+            },
+            "runs": [
+              {
+                "fromBottomMax": 133,
+                "unpinnedAppends": 1
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "fromBottomMax": 641,
+              "unpinnedAppends": 9
+            },
+            "worst": {
+              "fromBottomMax": 1026,
+              "unpinnedAppends": 18
+            },
+            "runs": [
+              {
+                "fromBottomMax": 1026,
+                "unpinnedAppends": 18
+              },
+              {
+                "fromBottomMax": 91,
+                "unpinnedAppends": 9
+              },
+              {
+                "fromBottomMax": 641,
+                "unpinnedAppends": 8
+              }
+            ]
+          }
+        },
+        "followSlow": {
+          "anchorlist": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "runs": [
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "runs": [
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "fromBottomMax": 1040,
+              "unpinnedAppends": 16
+            },
+            "worst": {
+              "fromBottomMax": 1503,
+              "unpinnedAppends": 19
+            },
+            "runs": [
+              {
+                "fromBottomMax": 1026,
+                "unpinnedAppends": 16
+              },
+              {
+                "fromBottomMax": 1040,
+                "unpinnedAppends": 19
+              },
+              {
+                "fromBottomMax": 1503,
+                "unpinnedAppends": 13
+              }
+            ]
+          }
+        },
+        "scroll": {
+          "anchorlist": {
+            "median": {
+              "taskMsPerFrame": 1.8,
+              "scriptMsPerFrame": 0.83,
+              "layoutMsPerFrame": 0.2,
+              "frameMsP95": 16.8,
+              "longFrames": 0
+            },
+            "worst": {
+              "taskMsPerFrame": 1.91,
+              "scriptMsPerFrame": 0.89,
+              "layoutMsPerFrame": 0.21,
+              "frameMsP95": 16.8,
+              "longFrames": 0
+            },
+            "runs": [
+              {
+                "taskMsPerFrame": 1.912,
+                "scriptMsPerFrame": 0.889,
+                "layoutMsPerFrame": 0.208,
+                "frameMsP95": 16.8,
+                "longFrames": 0
+              },
+              {
+                "taskMsPerFrame": 1.8,
+                "scriptMsPerFrame": 0.832,
+                "layoutMsPerFrame": 0.195,
+                "frameMsP95": 16.8,
+                "longFrames": 0
+              },
+              {
+                "taskMsPerFrame": 1.735,
+                "scriptMsPerFrame": 0.802,
+                "layoutMsPerFrame": 0.185,
+                "frameMsP95": 16.8,
+                "longFrames": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "taskMsPerFrame": 1.55,
+              "scriptMsPerFrame": 1,
+              "layoutMsPerFrame": 0.09,
+              "frameMsP95": 16.7,
+              "longFrames": 0
+            },
+            "worst": {
+              "taskMsPerFrame": 1.59,
+              "scriptMsPerFrame": 1.03,
+              "layoutMsPerFrame": 0.1,
+              "frameMsP95": 16.8,
+              "longFrames": 1
+            },
+            "runs": [
+              {
+                "taskMsPerFrame": 1.527,
+                "scriptMsPerFrame": 1.004,
+                "layoutMsPerFrame": 0.083,
+                "frameMsP95": 16.7,
+                "longFrames": 0
+              },
+              {
+                "taskMsPerFrame": 1.589,
+                "scriptMsPerFrame": 1.027,
+                "layoutMsPerFrame": 0.093,
+                "frameMsP95": 16.7,
+                "longFrames": 1
+              },
+              {
+                "taskMsPerFrame": 1.553,
+                "scriptMsPerFrame": 0.949,
+                "layoutMsPerFrame": 0.101,
+                "frameMsP95": 16.8,
+                "longFrames": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "taskMsPerFrame": 1.71,
+              "scriptMsPerFrame": 0.9,
+              "layoutMsPerFrame": 0.15,
+              "frameMsP95": 16.8,
+              "longFrames": 0
+            },
+            "worst": {
+              "taskMsPerFrame": 1.73,
+              "scriptMsPerFrame": 0.9,
+              "layoutMsPerFrame": 0.16,
+              "frameMsP95": 16.8,
+              "longFrames": 0
+            },
+            "runs": [
+              {
+                "taskMsPerFrame": 1.705,
+                "scriptMsPerFrame": 0.898,
+                "layoutMsPerFrame": 0.149,
+                "frameMsP95": 16.8,
+                "longFrames": 0
+              },
+              {
+                "taskMsPerFrame": 1.73,
+                "scriptMsPerFrame": 0.897,
+                "layoutMsPerFrame": 0.155,
+                "frameMsP95": 16.8,
+                "longFrames": 0
+              },
+              {
+                "taskMsPerFrame": 1.569,
+                "scriptMsPerFrame": 0.803,
+                "layoutMsPerFrame": 0.132,
+                "frameMsP95": 16.8,
+                "longFrames": 0
+              }
+            ]
+          }
+        }
+      }
+    },
+    "firefox": {
+      "version": "157.0",
+      "scenarios": {
+        "prepend": {
+          "anchorlist": {
+            "median": {
+              "settleMs": 15,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 63,
+              "finalOffset": 0,
+              "updateMsP50": 2,
+              "updateMsMax": 4,
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "settleMs": 18,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 63,
+              "finalOffset": 0,
+              "updateMsP50": 3,
+              "updateMsMax": 5,
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "settleMs": 18,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 63,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 4,
+                "rerendersPerPrepend": 0
+              },
+              {
+                "settleMs": 13,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 3,
+                "updateMsMax": 3,
+                "rerendersPerPrepend": 0
+              },
+              {
+                "settleMs": 15,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 63,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 5,
+                "rerendersPerPrepend": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "settleMs": 30,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 63,
+              "finalOffset": 0,
+              "updateMsP50": 3,
+              "updateMsMax": 4,
+              "rerendersPerPrepend": 9.9
+            },
+            "worst": {
+              "settleMs": 34,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 64,
+              "finalOffset": 0,
+              "updateMsP50": 3,
+              "updateMsMax": 5,
+              "rerendersPerPrepend": 11
+            },
+            "runs": [
+              {
+                "settleMs": 17,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 3,
+                "updateMsMax": 4,
+                "rerendersPerPrepend": 11
+              },
+              {
+                "settleMs": 30,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 64,
+                "finalOffset": 0,
+                "updateMsP50": 3,
+                "updateMsMax": 4,
+                "rerendersPerPrepend": 9.9
+              },
+              {
+                "settleMs": 34,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 63,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 5,
+                "rerendersPerPrepend": 9.9
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "settleMs": 147,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 61,
+              "finalOffset": 0,
+              "updateMsP50": 2,
+              "updateMsMax": 5,
+              "rerendersPerPrepend": 12
+            },
+            "worst": {
+              "settleMs": 151,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 62,
+              "finalOffset": 0,
+              "updateMsP50": 3,
+              "updateMsMax": 5,
+              "rerendersPerPrepend": 12.5
+            },
+            "runs": [
+              {
+                "settleMs": 147,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 62,
+                "finalOffset": 0,
+                "updateMsP50": 3,
+                "updateMsMax": 5,
+                "rerendersPerPrepend": 10
+              },
+              {
+                "settleMs": 151,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 1,
+                "updateMsMax": 5,
+                "rerendersPerPrepend": 12
+              },
+              {
+                "settleMs": 114,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 4,
+                "rerendersPerPrepend": 12.5
+              }
+            ]
+          }
+        },
+        "prependMemo": {
+          "anchorlist": {
+            "median": {
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              }
+            ]
+          }
+        },
+        "growAbove": {
+          "anchorlist": {
+            "median": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "worst": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "runs": [
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 31
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "driftMax": 80,
+              "driftP95": 80,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "worst": {
+              "driftMax": 160,
+              "driftP95": 160,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "runs": [
+              {
+                "driftMax": 80,
+                "driftP95": 80,
+                "lostFrames": 0,
+                "frames": 32
+              },
+              {
+                "driftMax": 160,
+                "driftP95": 160,
+                "lostFrames": 0,
+                "frames": 32
+              },
+              {
+                "driftMax": 80,
+                "driftP95": 80,
+                "lostFrames": 0,
+                "frames": 31
+              }
+            ]
+          },
+          "virtuoso": null
+        },
+        "followFast": {
+          "anchorlist": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "runs": [
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 133,
+              "unpinnedAppends": 1
+            },
+            "runs": [
+              {
+                "fromBottomMax": 133,
+                "unpinnedAppends": 1
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "fromBottomMax": 288,
+              "unpinnedAppends": 13
+            },
+            "worst": {
+              "fromBottomMax": 1026,
+              "unpinnedAppends": 18
+            },
+            "runs": [
+              {
+                "fromBottomMax": 1026,
+                "unpinnedAppends": 18
+              },
+              {
+                "fromBottomMax": 288,
+                "unpinnedAppends": 13
+              },
+              {
+                "fromBottomMax": 36,
+                "unpinnedAppends": 2
+              }
+            ]
+          }
+        },
+        "followSlow": {
+          "anchorlist": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "runs": [
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "runs": [
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "fromBottomMax": 1040,
+              "unpinnedAppends": 16
+            },
+            "worst": {
+              "fromBottomMax": 1754.13,
+              "unpinnedAppends": 19
+            },
+            "runs": [
+              {
+                "fromBottomMax": 1026,
+                "unpinnedAppends": 16
+              },
+              {
+                "fromBottomMax": 1040,
+                "unpinnedAppends": 19
+              },
+              {
+                "fromBottomMax": 1754.13,
+                "unpinnedAppends": 15
+              }
+            ]
+          }
+        }
+      }
+    },
+    "webkit": {
+      "version": "27.2",
+      "scenarios": {
+        "prepend": {
+          "anchorlist": {
+            "median": {
+              "settleMs": 13,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 62,
+              "finalOffset": 0,
+              "updateMsP50": 2,
+              "updateMsMax": 2,
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "settleMs": 90,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 62,
+              "finalOffset": 0,
+              "updateMsP50": 2,
+              "updateMsMax": 3,
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "settleMs": 90,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 62,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 2,
+                "rerendersPerPrepend": 0
+              },
+              {
+                "settleMs": 12,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 62,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 2,
+                "rerendersPerPrepend": 0
+              },
+              {
+                "settleMs": 13,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 62,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 3,
+                "rerendersPerPrepend": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "settleMs": 21,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 61,
+              "finalOffset": 0,
+              "updateMsP50": 2,
+              "updateMsMax": 3,
+              "rerendersPerPrepend": 9.9
+            },
+            "worst": {
+              "settleMs": 28,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 61,
+              "finalOffset": 0,
+              "updateMsP50": 2,
+              "updateMsMax": 3,
+              "rerendersPerPrepend": 11
+            },
+            "runs": [
+              {
+                "settleMs": 16,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 3,
+                "rerendersPerPrepend": 11
+              },
+              {
+                "settleMs": 28,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 3,
+                "rerendersPerPrepend": 9.9
+              },
+              {
+                "settleMs": 21,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 3,
+                "rerendersPerPrepend": 9.9
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "settleMs": 155,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 61,
+              "finalOffset": 0,
+              "updateMsP50": 2,
+              "updateMsMax": 4,
+              "rerendersPerPrepend": 12
+            },
+            "worst": {
+              "settleMs": 158,
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 61,
+              "finalOffset": 0,
+              "updateMsP50": 3,
+              "updateMsMax": 4,
+              "rerendersPerPrepend": 14
+            },
+            "runs": [
+              {
+                "settleMs": 158,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 4,
+                "rerendersPerPrepend": 14
+              },
+              {
+                "settleMs": 155,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 3,
+                "updateMsMax": 4,
+                "rerendersPerPrepend": 12
+              },
+              {
+                "settleMs": 121,
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 61,
+                "finalOffset": 0,
+                "updateMsP50": 2,
+                "updateMsMax": 3,
+                "rerendersPerPrepend": 12
+              }
+            ]
+          }
+        },
+        "prependMemo": {
+          "anchorlist": {
+            "median": {
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "rerendersPerPrepend": 0
+            },
+            "runs": [
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "rerendersPerPrepend": 0
+            },
+            "worst": {
+              "rerendersPerPrepend": 3
+            },
+            "runs": [
+              {
+                "rerendersPerPrepend": 0
+              },
+              {
+                "rerendersPerPrepend": 3
+              },
+              {
+                "rerendersPerPrepend": 0
+              }
+            ]
+          }
+        },
+        "growAbove": {
+          "anchorlist": {
+            "median": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "worst": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "runs": [
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "worst": {
+              "driftMax": 0,
+              "driftP95": 0,
+              "lostFrames": 0,
+              "frames": 32
+            },
+            "runs": [
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 32
+              },
+              {
+                "driftMax": 0,
+                "driftP95": 0,
+                "lostFrames": 0,
+                "frames": 31
+              }
+            ]
+          },
+          "virtuoso": null
+        },
+        "followFast": {
+          "anchorlist": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "runs": [
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 133,
+              "unpinnedAppends": 1
+            },
+            "runs": [
+              {
+                "fromBottomMax": 133,
+                "unpinnedAppends": 1
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "fromBottomMax": 76,
+              "unpinnedAppends": 7
+            },
+            "worst": {
+              "fromBottomMax": 91,
+              "unpinnedAppends": 9
+            },
+            "runs": [
+              {
+                "fromBottomMax": 76,
+                "unpinnedAppends": 7
+              },
+              {
+                "fromBottomMax": 91,
+                "unpinnedAppends": 9
+              },
+              {
+                "fromBottomMax": 36,
+                "unpinnedAppends": 2
+              }
+            ]
+          }
+        },
+        "followSlow": {
+          "anchorlist": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "runs": [
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "tanstack": {
+            "median": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "worst": {
+              "fromBottomMax": 0,
+              "unpinnedAppends": 0
+            },
+            "runs": [
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              },
+              {
+                "fromBottomMax": 0,
+                "unpinnedAppends": 0
+              }
+            ]
+          },
+          "virtuoso": {
+            "median": {
+              "fromBottomMax": 1040,
+              "unpinnedAppends": 16
+            },
+            "worst": {
+              "fromBottomMax": 1503,
+              "unpinnedAppends": 19
+            },
+            "runs": [
+              {
+                "fromBottomMax": 1026,
+                "unpinnedAppends": 16
+              },
+              {
+                "fromBottomMax": 1040,
+                "unpinnedAppends": 19
+              },
+              {
+                "fromBottomMax": 1503,
+                "unpinnedAppends": 13
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

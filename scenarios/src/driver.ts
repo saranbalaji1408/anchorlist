@@ -17,6 +17,8 @@ export interface Item {
   text?: string
   /** "Sent by the user": with `followMine`, adding such an item at the pinned edge forces follow. */
   mine?: boolean
+  /** A sticky item (group header) when the list renders with `stickyItems`. */
+  header?: boolean
 }
 
 /** Serializable scroll position (mirrors the core `Snapshot`). */
@@ -25,6 +27,8 @@ export interface SnapshotData {
   index: number
   delta: number
   pinned: boolean
+  /** Measured sizes by key (from `takeSnapshot`). */
+  sizes?: ReadonlyArray<readonly [string | number, number]>
 }
 
 /** Props that can change after mount. */
@@ -51,6 +55,13 @@ export interface ListState {
   hasMoreEnd: boolean
   /** Follow (jump to the pinned edge) when an added item has `mine: true`. */
   followMine: boolean
+  /**
+   * Sticky items: items with `header: true` stick to the viewport start (a
+   * copy with `data-testid="stuck"` and `aria-hidden`, outside the list). Replaces the pill.
+   */
+  stickyItems: boolean
+  /** Sets `aria-busy` on the list. */
+  busy: boolean
 }
 
 /** Mount-time options. */
@@ -59,6 +70,8 @@ export interface MountConfig extends Partial<ListState> {
   /** Wrap the list in the framework's strict / dev checking mode (React StrictMode). */
   strict?: boolean
   initialSnapshot?: SnapshotData
+  /** Viewport size assumed before attach, for server rendering. */
+  initialRect?: { width: number; height: number }
 }
 
 /** How a state update is applied. */
@@ -100,6 +113,23 @@ export interface Driver extends Dom {
   resetCounters(): void
   /** Version of the framework the fixture runs on (for example React `18.3.1`). */
   frameworkVersion(): string
+  /** Smooth scroll with `animateToKey` (`@anchorlist/core/animate`). Resolves `true` once landed. */
+  animateToKey(key: string, options?: { align?: 'start' | 'center' | 'end'; offset?: number; duration?: number }): Promise<boolean>
+  /** `getSnapshot()` with measured sizes (`takeSnapshot` from `@anchorlist/core/snapshot`). */
+  takeSnapshot(): SnapshotData
+  /**
+   * Server-renders a list (to a string, as on a server) into the container
+   * without hydrating it. Returns the row keys in the server HTML.
+   */
+  serverRender(config: MountConfig): Promise<string[]>
+  /** Hydrates the server-rendered list with the same config. Resolves after 2 frames. */
+  hydrate(): Promise<void>
+  /**
+   * Duration in ms of the framework render and commit (engine work included) of the last sync
+   * `update`, excluding the fixture's own preparation of the items. Optional: perf budgets fall
+   * back to timing `update` as a whole.
+   */
+  lastUpdateMs?(): number
 }
 
 declare global {

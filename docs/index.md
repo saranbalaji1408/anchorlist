@@ -46,8 +46,10 @@ npm install anchorlist
   keyboard resizes.
 - [Infinite scroll feed](/guide/feed): top-anchored, load more, restore the position.
 - [Virtualized list with dynamic height](/guide/dynamic-height): measured rows and width changes.
+- [Sticky group headers](/guide/sticky-headers), [smooth scroll to an item](/guide/smooth-scroll),
+  [accessibility and focus](/guide/accessibility) and [server rendering](/guide/server-rendering).
 - [API reference](/api/)
 - Comparisons: [TanStack Virtual alternative](/compare/tanstack-virtual),
-  [react-virtuoso alternative](/compare/react-virtuoso)
+  [react-virtuoso alternative](/compare/react-virtuoso), [chat benchmark](/compare/benchmark)
 
-v0.1 ships React bindings and the framework-agnostic core. Vue and Svelte bindings are planned.
+v0.2 ships React bindings and the framework-agnostic core. Vue and Svelte bindings are planned.

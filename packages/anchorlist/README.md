@@ -68,22 +68,30 @@ mounted row.
 | Jump to an item | `scrollToKey` stays locked on the target while sizes settle |
 | iOS Safari momentum and rubber-band | Corrections deferred through a transform, the fling is not interrupted |
 | Restore position | `getSnapshot()` / `initialSnapshot` |
-| Accessibility | `aria-posinset` / `aria-setsize` written on rows |
-| Size | Hard gzip budgets in CI: React chat path (core + react) ≤ 5.8 kB, currently 5.37 kB; `@anchorlist/react` alone ≤ 1.3 kB, currently 1.01 kB |
+| Sticky group headers | `StickyItem` from `anchorlist/sticky` |
+| Smooth scroll to any item | `animateToKey` from `anchorlist/animate`, lands exactly, respects reduced motion |
+| Server rendering | Opt-in: `initialRect` + `initialPlan` from `anchorlist/ssr`, no hydration mismatch |
+| Accessibility | `aria-posinset` / `aria-setsize` written on rows; the focused row stays mounted; `busy` sets `aria-busy` |
+| Size | Hard gzip budgets in CI: React chat path (core + react) ≤ 5.8 kB, currently 5.63 kB; `@anchorlist/react` alone ≤ 1.3 kB, currently 1.19 kB |
 | Dependencies | Zero runtime dependencies in core; React is a peer dependency |
 
 ## How it compares
 
 | | anchorlist | TanStack Virtual | react-virtuoso |
 | --- | --- | --- | --- |
-| Chat / end-pinned list | Built in | Implemented by the app | Built in |
-| Prepend without scroll jump | Built in, key-based | Implemented by the app | `firstItemIndex` bookkeeping |
+| Chat / end-pinned list | Built in | `anchorTo: 'end'` | Built in |
+| Prepend without scroll jump | Built in, key-based | Key-based with `anchorTo: 'end'` | `firstItemIndex` bookkeeping |
 | Size estimate required | No | Yes | No |
 | Frameworks | React (Vue, Svelte planned) | Many | React |
-| Grid, window scroll, sticky | Planned | Yes | Yes |
+| Sticky items | Yes (`anchorlist/sticky`) | Implemented by the app | Yes |
+| Grid, window scroll | Planned | Yes | Yes |
 
-Feature comparisons are based on each library's public documentation. Head-to-head benchmarks
-(scroll stability, frame cost and bundle size, measured in one harness) are planned for v0.2.
+Feature comparisons are based on each library's public documentation. In the
+[chat benchmark](https://saranbalaji1408.github.io/anchorlist/compare/benchmark) (pinned versions,
+each configured per its docs) all three keep the message being read still on prepend; anchorlist
+re-renders no mounted row without `React.memo`, stays pinned on every append, and
+`{ AnchorList }` is 5,521 B gzip against 7,588 B for `{ useVirtualizer }` and 19,093 B for
+`{ Virtuoso }`.
 Details: [vs TanStack Virtual](https://saranbalaji1408.github.io/anchorlist/compare/tanstack-virtual),
 [vs react-virtuoso](https://saranbalaji1408.github.io/anchorlist/compare/react-virtuoso).
 
@@ -93,6 +101,10 @@ Details: [vs TanStack Virtual](https://saranbalaji1408.github.io/anchorlist/comp
 - [React chat virtual list with reverse infinite scroll](https://saranbalaji1408.github.io/anchorlist/guide/chat-virtual-list)
 - [React infinite scroll feed](https://saranbalaji1408.github.io/anchorlist/guide/feed)
 - [Virtualized list with dynamic height](https://saranbalaji1408.github.io/anchorlist/guide/dynamic-height)
+- [Sticky group headers](https://saranbalaji1408.github.io/anchorlist/guide/sticky-headers),
+  [smooth scroll](https://saranbalaji1408.github.io/anchorlist/guide/smooth-scroll),
+  [accessibility](https://saranbalaji1408.github.io/anchorlist/guide/accessibility),
+  [server rendering](https://saranbalaji1408.github.io/anchorlist/guide/server-rendering)
 - [API reference](https://saranbalaji1408.github.io/anchorlist/api/)
 - For AI coding tools: [llms.txt](https://saranbalaji1408.github.io/anchorlist/llms.txt),
   [llms-full.txt](https://saranbalaji1408.github.io/anchorlist/llms-full.txt)

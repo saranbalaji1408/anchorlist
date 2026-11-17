@@ -25,8 +25,9 @@ deleted, the messages after it stay still (or, if none survive, the ones before 
 conversation is replaced, for example when switching chats, the list starts over at the bottom.
 
 Browsers store scroll offsets in whole pixels at DPR 1, so most corrections can't be exact.
-At DPR 1, each painted change moves content by at most 0.5 px (at most 1 px only when the error was
-already above 0.5 px), and content is never more than 1 px from its intended position. Errors don't
+At DPR 1, each painted change moves content by at most 0.5 px when rows have whole-pixel heights.
+With fractional heights it is at most 0.5 px too, except at most 1 px once the error has already
+passed 0.5 px. Content is never more than 1 px from its intended position. Errors don't
 build up. This holds both on engines that round offsets (Chromium, Firefox) and on engines that
 truncate them (WebKit). With sub-pixel offsets (DPR 2 and above) the steps halve.
 
@@ -116,7 +117,8 @@ list.current?.scrollToKey(replyId, { align: 'center' })
 ```
 
 `scrollToKey` positions at the estimated offset immediately (no blank frame), then stays locked
-on the target while the surrounding rows are measured. User input cancels the lock.
+on the target while the surrounding rows are measured. User input cancels the lock. To animate
+there instead, use [`animateToKey`](./smooth-scroll).
 
 To show a "jump to latest" button, listen to `onAtEdgeChange`:
 
@@ -186,5 +188,8 @@ The strict 0.5 px-per-paint bound is checked by unit tests. End-to-end scenarios
 
 - [Infinite feed (top-anchored)](./feed)
 - [Dynamic height](./dynamic-height)
+- [Sticky group headers](./sticky-headers) (date separators that stick)
+- [Smooth scroll to a message](./smooth-scroll)
+- [Chat benchmark](/compare/benchmark)
 - [API reference](/api/)
 - [anchorlist vs react-virtuoso](/compare/react-virtuoso)

@@ -1,7 +1,7 @@
 import { defineConfig, type UserConfig } from 'tsdown'
 
 const config: UserConfig = defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/index.ts', 'src/sticky.ts', 'src/animate.ts', 'src/snapshot.ts', 'src/ssr.ts'],
   format: ['esm'],
   platform: 'neutral',
   target: 'es2020',

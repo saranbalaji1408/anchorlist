@@ -10,10 +10,9 @@ with adapters for many frameworks. anchorlist is newer and narrower. It focuses 
 keep their scroll position: chat, reverse infinite scroll and feeds where items are prepended or
 change size. This page says where each one fits.
 
-::: info Benchmarks
-This page compares features only. A head-to-head benchmark (scroll stability, frame cost, bundle
-size measured in one harness) is planned for **v0.2**. Until then, the only numbers here are
-anchorlist's own.
+::: info Benchmark
+The [chat benchmark](./benchmark) measures both libraries in one harness, with TanStack Virtual's
+chat options: drift on prepend and resize, following new messages, re-renders and bundle size.
 :::
 
 ## Feature comparison
@@ -21,13 +20,13 @@ anchorlist's own.
 The TanStack Virtual column reflects its public documentation at the time of writing. Corrections
 are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 
-| | anchorlist v0.1 | TanStack Virtual |
+| | anchorlist v0.2 | TanStack Virtual |
 | --- | --- | --- |
 | Model | Headless core with a React component | Headless (hooks/adapters, you render the DOM) |
 | Frameworks | React (Vue and Svelte planned) | React, Vue, Svelte, Solid, Angular, Lit and vanilla |
-| Pin to the end (chat, newest at the bottom) | Built in: `align: 'end'` | Not built in; implemented by the app |
-| Prepend without scroll jump | Built in, anchored to an item key | Not built in; the app adjusts the offset |
-| Follow new items at the pinned edge | Built in, with a `follow` policy | Not built in |
+| Pin to the end (chat, newest at the bottom) | Built in: `align: 'end'` | `anchorTo: 'end'` plus `scrollToIndex(last)` on mount |
+| Prepend without scroll jump | Built in, anchored to an item key | With `anchorTo: 'end'`, anchored to an item key |
+| Follow new items at the pinned edge | Built in, with a `follow` policy | `followOnAppend` |
 | Dynamic / variable heights | Measured from the DOM; estimate optional | Measured via `measureElement`; `estimateSize` required |
 | Width change re-measure | Built in, anchor restored before paint | Rows re-measured through `ResizeObserver` |
 | Edge triggers (load more) | `onStartReached` / `onEndReached` | Not built in; usually derived from the rendered range |
@@ -36,7 +35,10 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | Window scrolling | Planned (v0.3) | Yes |
 | Horizontal | Core yes (no RTL normalisation yet) | Yes |
 | Grid / masonry | Planned (v0.4) | Yes (lanes, or two virtualizers) |
-| Sticky items | Planned (v0.2) | Yes, via custom range extraction |
+| Sticky items | `StickyItem` (`anchorlist/sticky`) | Yes, via custom range extraction |
+| Smooth scroll to an unrendered item | `animateToKey` (`anchorlist/animate`) | `scrollToIndex` with `behavior: 'smooth'` |
+| Server rendering | Opt-in: `initialRect` + `initialPlan` | `initialRect` |
+| Focused row kept mounted | Built in | Implemented by the app (`rangeExtractor`) |
 | Runtime dependencies (core) | 0 | Framework adapter plus `@tanstack/virtual-core` |
 
 ## Size
@@ -45,15 +47,18 @@ anchorlist enforces gzip size budgets in CI with size-limit:
 
 | Entry | Size (min + gzip) |
 | --- | --- |
-| `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.50 kB (4,497 B) |
-| `@anchorlist/core` everything | ≤ 6.5 kB budget, currently 5.58 kB |
-| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.01 kB |
-| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.37 kB |
+| `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.50 kB (4,498 B) |
+| `@anchorlist/core` main entry, everything | ≤ 6.5 kB budget, currently 5.67 kB |
+| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.19 kB |
+| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.63 kB |
+
+Sticky items, smooth scrolling, snapshot sizes and server rendering are separate entries, so a
+list that doesn't use them doesn't load them.
 
 The budgets are hard limits: CI fails if an entry grows past its budget.
 
-A size comparison against TanStack Virtual, measured with the same tool and settings, will be
-published with the v0.2 benchmark.
+Measured with the same tool and settings in the [benchmark](./benchmark#bundle-size),
+`{ AnchorList }` is 5,521 B and TanStack Virtual's `{ useVirtualizer }` 7,588 B (React external).
 
 ## When to choose anchorlist
 
@@ -66,7 +71,7 @@ published with the v0.2 benchmark.
 ## When to choose TanStack Virtual
 
 - You need Vue, Svelte, Solid, Angular or Lit today.
-- You need grids, masonry, window scrolling or sticky rows today.
+- You need grids, masonry or window scrolling today.
 - You want full control over rendering and are happy to build anchoring yourself.
 
 ## Migrating

@@ -27,6 +27,12 @@ export interface Snapshot {
   readonly delta: number
   /** True when the list was pinned to its `align` edge. */
   readonly pinned: boolean
+  /**
+   * Measured sizes by key, from `takeSnapshot` (`@anchorlist/core/snapshot`).
+   * Not read by the engine: adapters use them as size estimates on restore, so
+   * the restored rows land without estimate corrections.
+   */
+  readonly sizes?: ReadonlyArray<readonly [Key, number]>
 }
 
 /**
@@ -43,7 +49,7 @@ export interface VirtualizerOptions {
    * Size estimate for an unmeasured item. Default: 48, replaced at idle by the
    * average measured size when that drifts by more than 10%.
    */
-  estimateSize?: (index: number) => number
+  estimateSize?: ((index: number) => number) | undefined
   /**
    * The edge the list is pinned to. `'end'` for chat (newest at the bottom),
    * `'start'` for feeds. Anchoring uses the anchor item's edge on this side and
@@ -88,6 +94,18 @@ export interface VirtualizerOptions {
   onAtEdgeChange?: (atEdge: boolean) => void
   /** Scroll position to restore on mount. Read at creation only. */
   initialSnapshot?: Snapshot
+  /**
+   * Viewport size to assume before the list is attached, so that server
+   * rendering and hydration render rows. Not read by the engine: used by
+   * `initialPlan` (`@anchorlist/core/ssr`). Vertical lists use `height`.
+   */
+  initialRect?: { readonly width: number; readonly height: number }
+  /**
+   * Plans the renders before attach. Not read by the engine: adapters call it
+   * instead of `plan()` when set. Pass `initialPlan` from
+   * `@anchorlist/core/ssr` with `initialRect` for server rendering.
+   */
+  initialPlan?: (v: Virtualizer, options: VirtualizerOptions) => Plan
   /** Maximum number of cached sizes; the least recently measured are evicted. Default unlimited. Read at creation only. */
   maxCachedSizes?: number
 }
@@ -262,7 +280,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   /** Deferred correction held in a transform (px). */
   let pending = 0
   let touching = false
-  let lastScrollAt = -Infinity
+  /** Touch WebKit: an event within the last IDLE_MS (momentum may follow). Cleared by the idle timer. */
+  let active = false
   /** Effective offset after our last write or event; a scroll event that lands here is ours. */
   let lastEff = 0
   /**
@@ -367,7 +386,7 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
 
   /** Touch WebKit during touch or momentum, and any rubber-band overscroll. */
   const defer = (): boolean =>
-    sc!.overscrolled() !== 0 || (sc!.touchWebKit && (touching || sc!.now() - lastScrollAt < IDLE_MS))
+    sc!.overscrolled() !== 0 || (sc!.touchWebKit && (touching || active))
 
   /**
    * Writes a whole-pixel offset and clears any pending transform. Engines
@@ -391,7 +410,18 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       } else scheduleIdle()
     }
   }
-  const scheduleIdle = (): void => later(0, () => commitPending(false), IDLE_MS)
+  // Idle is decided by the timer, never by comparing clocks: a timer that fires on time can read
+  // a coarser `now()` (Firefox reduces timer precision) as just under IDLE_MS, which would defer
+  // the commit by another IDLE_MS.
+  const scheduleIdle = (): void =>
+    later(
+      0,
+      () => {
+        active = false
+        commitPending(false)
+      },
+      IDLE_MS,
+    )
 
   /** Moves the effective offset, deferring into a transform when a write would interrupt the user. */
   const scrollTo = (desired: number): void => {
@@ -627,7 +657,10 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
         if (dirty) rebuild(o)
         const avg = cache.average()
         if (!o.estimateSize && avg && Math.abs(avg - estimate) > estimate / 10) {
-          estimate = avg
+          // Whole pixels: a fractional estimate would put every estimated row,
+          // and so the content, on fractions of a pixel, which whole-pixel
+          // offsets can only follow to within 1 px.
+          estimate = Math.round(avg)
           // Unmeasured items take the new estimate (O(n)).
           idx.reset(idx.count, sizeFor(o))
           dirty = true
@@ -640,8 +673,12 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
   const onEvent = (type: ScrollerEvent): void => {
     const s = sc
     if (!s) return
-    // Any event counts as activity for touch WebKit deferral (momentum may follow).
-    lastScrollAt = s.now()
+    // Any event counts as activity for touch WebKit deferral (momentum may follow): it re-arms
+    // the idle timer, so the timer fires IDLE_MS after the last event.
+    if (s.touchWebKit) {
+      active = true
+      scheduleIdle()
+    }
     const scroll = type === 'scroll'
     if (scroll || type === 'resize') {
       // Browsers clamp the offset during layout and fire `scroll` before the
@@ -665,8 +702,8 @@ export function createVirtualizer(options: VirtualizerOptions, host: Virtualizer
       }
       return cycle(scroll)
     }
-    // touchstart, touchend or touchcancel.
-    if (type.startsWith('touch') && !(touching = type === 'touchstart')) return scheduleIdle()
+    // touchstart, touchend or touchcancel: the only event names starting with `t`.
+    if (type[0] == 't' && !(touching = type === 'touchstart')) return scheduleIdle()
     // Any other event is direct input: it cancels a scrollToKey lock.
     if (mode.t === 2) recapture()
   }

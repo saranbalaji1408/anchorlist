@@ -46,7 +46,8 @@ export function useAnchorList(
     s.v = createVirtualizer(options, { render: (sync) => (sync ? flushSync(s.f) : s.f()) })
     return s
   })
-  const plan = s.v.plan(options)
+  // `initialPlan` (server rendering) also plans the renders before attach.
+  const plan = options.initialPlan ? options.initialPlan(s.v, options) : s.v.plan(options)
   useLayoutEffect(() => {
     s.f = force
     if (!s.a) {

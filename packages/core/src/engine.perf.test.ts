@@ -28,7 +28,8 @@ describe.skipIf(!process.env.BENCH)('engine perf (100k items)', () => {
 
     let t = performance.now()
     const h = mount({ keys: keysOf(N), size: sized, viewport: 800, options: { align: 'end' } })
-    report('mount (to first settled frame)', `${(performance.now() - t).toFixed(2)} ms`)
+    const mountMs = performance.now() - t
+    report('mount (to first settled frame)', `${mountMs.toFixed(2)} ms`)
     await h.settle()
 
     // Streaming: same keys, the last item grows (a token stream into the newest message).
@@ -107,6 +108,10 @@ describe.skipIf(!process.env.BENCH)('engine perf (100k items)', () => {
       const fs = (await import(/* @vite-ignore */ 'node:' + 'fs')) as { writeFileSync(file: string, text: string): void }
       fs.writeFileSync(process.env.BENCH_OUT, text)
     } else console.log('\n' + text)
+    // Budgets with headroom for slower machines; the measured numbers are in DESIGN.md.
+    expect(mountMs).toBeLessThan(250)
     expect(s.p50).toBeLessThan(0.05)
+    expect(p.p50).toBeLessThan(1)
+    if (gc) expect(heapAfter - heapBefore).toBeLessThan(2 * 1024 * 1024)
   }, 120_000)
 })

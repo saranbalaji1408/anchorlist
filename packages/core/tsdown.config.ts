@@ -2,7 +2,7 @@ import { defineConfig, type UserConfig } from 'tsdown'
 import pkg from './package.json' with { type: 'json' }
 
 const config: UserConfig = defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/index.ts', 'src/sticky.ts', 'src/snapshot.ts', 'src/animate.ts', 'src/ssr.ts'],
   format: ['esm'],
   platform: 'neutral',
   target: 'es2020',

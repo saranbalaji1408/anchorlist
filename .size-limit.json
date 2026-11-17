@@ -28,5 +28,41 @@
     "ignore": ["react", "react-dom"],
     "limit": "5.8 kB",
     "gzip": true
+  },
+  {
+    "name": "@anchorlist/core/sticky",
+    "path": "packages/core/dist/sticky.js",
+    "import": "*",
+    "limit": "0.5 kB",
+    "gzip": true
+  },
+  {
+    "name": "@anchorlist/react/sticky (core included)",
+    "path": "packages/react/dist/sticky.js",
+    "import": "*",
+    "ignore": ["react", "react-dom"],
+    "limit": "0.8 kB",
+    "gzip": true
+  },
+  {
+    "name": "@anchorlist/core/animate",
+    "path": "packages/core/dist/animate.js",
+    "import": "*",
+    "limit": "0.8 kB",
+    "gzip": true
+  },
+  {
+    "name": "@anchorlist/core/snapshot",
+    "path": "packages/core/dist/snapshot.js",
+    "import": "*",
+    "limit": "0.5 kB",
+    "gzip": true
+  },
+  {
+    "name": "@anchorlist/core/ssr",
+    "path": "packages/core/dist/ssr.js",
+    "import": "*",
+    "limit": "0.4 kB",
+    "gzip": true
   }
 ]

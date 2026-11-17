@@ -1,11 +1,12 @@
 # @anchorlist/core API
 
-Normative reference for `@anchorlist/core` v0.1 and for framework adapters built on it. "Must" and
+Normative reference for `@anchorlist/core` v0.2 and for framework adapters built on it. "Must" and
 "must not" are requirements; an adapter that breaks one will show scroll jumps.
 
 - [Model](#model)
 - [Adapter contract](#adapter-contract)
 - [DOM structure](#dom-structure)
+- [Sticky items](#sticky-items)
 - [createVirtualizer](#createvirtualizer)
 - [Options](#options)
 - [Virtualizer methods](#virtualizer-methods)
@@ -57,7 +58,9 @@ Requirements:
 2. **Plan in render.** Call `plan(options)` during render with the current options object. `plan()`
    never mutates the engine, so concurrent or discarded renders are safe. Before `attach()` it returns
    an empty range. Rows are therefore never mounted in the same commit as the scroll container, and
-   row components can rely on the container existing.
+   row components can rely on the container existing. Adapters call
+   `options.initialPlan(v, options)` instead when that option is set
+   ([server rendering](#server-rendering)); it renders rows before `attach()`.
 3. **Commit before paint.** After every DOM commit that rendered a plan, call `commit(plan)` with that
    plan object, synchronously, before the browser paints (React `useLayoutEffect`, Vue
    `flush: 'post'` / `onUpdated`, Svelte 5 `$effect` + `flushSync`). Do not call it from
@@ -114,6 +117,38 @@ position immediately and run the loop in a microtask.
   pass `content` whenever you render a header or footer.
 - A sticky overlay (for example a date pill) can render from `getVisibleRange()` via `subscribe()`.
   Put it outside the content wrapper.
+- Rows must never be `position: sticky`: the engine measures rows where they are painted, so a
+  stuck row would be measured in the wrong place. Use [sticky items](#sticky-items) instead.
+
+## Sticky items
+
+`@anchorlist/core/sticky` (separate entry, not part of the list entry):
+
+```ts
+function stickyState(
+  scroller: Element,
+  range: VisibleRange,
+  isSticky: (index: number) => boolean,
+  size: number,
+  axis?: Pick<Axis, 'start'>, // default vertical
+): { index: number; offset: number }
+```
+
+Sticky items (for example group headers) stay in normal flow. The adapter renders an
+`aria-hidden`, `inert` copy (so it is neither read nor focusable) of item `index` in the sticky overlay, shifted along the main axis by
+`offset`, and calls `stickyState` again on every `scroll` event and after every commit:
+
+- `index` is the last sticky item whose row starts at or before the viewport start (scanning back
+  from `range.startIndex`; a row that is not mounted is above the viewport), or -1. The scan is
+  remembered per `isSticky` function, so keep one function per item list (a new one when the items
+  change) and scrolling costs only the newly passed indices.
+- `offset` (≤ 0) is how far the next sticky item pushes the copy out:
+  `min(0, nextStart - size)`, where `size` is the copy's size.
+- Rows are found through the `data-index` attribute the engine writes, so the copy must not carry
+  one. Screen readers read each header once, in its row.
+
+React: `StickyItem` from `@anchorlist/react/sticky`, returned from `AnchorList`'s `sticky` prop.
+It shifts the copy with `translateY`: vertical lists only for now.
 
 ## createVirtualizer
 
@@ -141,6 +176,8 @@ interface VirtualizerHost { render(sync: boolean): void }
 | `onRangeChange` | `(range: VisibleRange) => void` | none | Visible range (no overscan) changed. |
 | `onAtEdgeChange` | `(atEdge: boolean) => void` | none | `isAtEdge(align)` changed (also fires once after mount). |
 | `initialSnapshot` | `Snapshot` | none | Restore a position on mount. Creation only. |
+| `initialRect` | `{ width, height }` | none | Viewport assumed before `attach()`, for server rendering. Read by `initialPlan()`, not by the engine. |
+| `initialPlan` | `(v, options) => Plan` | none | Adapters plan with it instead of `plan()`. Pass `initialPlan` from `@anchorlist/core/ssr` for server rendering. Not read by the engine. |
 | `maxCachedSizes` | `number` | unlimited | Size-cache limit (least recently measured are evicted; mounted rows never are, even when this is smaller than the mounted count). Creation only. |
 
 Callbacks run synchronously inside the engine's loop, after the offset is final for that pass.
@@ -301,15 +338,101 @@ relative to the viewport start. Passing it as `initialSnapshot` restores the anc
 row is measured. If the key no longer exists, the list starts at the `align` edge. `pinned: true`
 restores to the `align` edge.
 
+`@anchorlist/core/snapshot` (separate entry) adds measured sizes, so that the rows around the
+anchor are laid out at their real sizes from the first frame (the anchor is restored either way;
+this keeps the scroll range and the rows above it exact):
+
+```ts
+function takeSnapshot(v, getKey: (index) => Key, count: number, limit = 100): Snapshot // + sizes
+function snapshotEstimate(snapshot, getKey: (index) => Key, estimateSize?): ((index) => number) | undefined
+```
+
+- `takeSnapshot` stores `sizes: [key, size][]` for the measured items within `limit` indices around
+  the anchor. The result is JSON-serializable.
+- `snapshotEstimate` returns an `estimateSize` that answers stored sizes, then `estimateSize`, then
+  the average stored size. Pass it with `initialSnapshot`. It returns `estimateSize` unchanged when
+  there are no stored sizes. Because it sets `estimateSize`, the idle average refresh is off.
+
 ### Idle work
 
 300 ms after the last settled frame, the engine:
 
 - validates every key against `getKey` (O(n)) and rebuilds on a mismatch. Edge diffs only see the
   edges, and the rendered range is validated on every commit.
-- refreshes size estimates when the measured average drifts by more than 10%.
+- refreshes size estimates when the measured average drifts by more than 10%. The new estimate is
+  rounded to whole pixels, so lists of whole-pixel rows stay on whole pixels.
 
 At 100k items this takes about 5–9 ms. See DESIGN.md.
+
+### Server rendering
+
+Server rendering is opt-in, so lists that do not use it carry none of its code: pass
+`initialPlan` from `@anchorlist/core/ssr` (separate entry) as the `initialPlan` option, together
+with `initialRect`. Adapters plan with `options.initialPlan(v, options)` when it is set.
+
+`initialPlan(v, options)` returns `v.plan(options)`, except while the plan is empty before
+`attach()`: then it returns the rows that fill `initialRect.height` by `estimateSize` (default
+48 px), forwards from the `initialSnapshot` item when it is still at its index (same key at
+`snapshot.index`, not pinned), else from the `align` edge. It is deterministic, so the server
+render and the hydration render produce the same rows. On `attach()` the engine takes over
+(writing spacers and the offset, and restoring `initialSnapshot` exactly).
+
+- Without `initialRect`, nothing changes: no rows before `attach()`.
+- The server markup has no spacers and no scroll offset, so before hydration the rows sit at the
+  top of the scroller: for `align: 'end'` the newest rows are top-aligned until hydration.
+- With `initialSnapshot`, the server HTML starts at the snapshot item (top-aligned, without its
+  `delta`), so hydration moves the content by at most the snapshot's `delta`.
+- It reads `initialRect.height` only: vertical lists.
+- Adapters use an isomorphic layout effect (a passive effect where there is no DOM), so server
+  rendering never runs layout effects.
+
+### Focus preservation
+
+The row containing focus must never unmount: unmounting blurs it and loses the screen reader
+position. `keptRow(v, plan, key)` (main entry) tells an adapter where to keep the row with `key`
+while it is outside `plan`:
+
+- `null` when `key` is null, inside the range, unknown or not committed yet;
+- else `{ index, start }`: its index in `plan.options` (looked up by key when the list changed
+  since the last commit; O(n) only then) and its start in list space (padding included).
+
+The adapter renders it with `position: absolute; top: start; width: 100%` inside the list (the
+scroll container is `position: relative`), before the planned rows when `index < plan.start` and after them
+otherwise, in the same keyed child list, so the framework never moves its node. It stays registered
+with `measureElement`, so it keeps `data-index` / `aria-posinset`. The adapter tracks the focused key
+from `focusin` (the row's `data-index`) and clears it on `focusout` unless the window lost focus.
+
+Lists should also set `aria-busy` on the list element while loading (React: `busy`).
+
+The kept row is positioned in content space, so its containing block must be the scroll
+container (`position: relative` on it, nothing positioned in between). `top` makes it vertical-only
+for now.
+
+### Smooth scrolling
+
+`@anchorlist/core/animate` (separate entry):
+
+```ts
+function animateToKey(
+  v: Pick<Virtualizer, 'getItemRect' | 'scrollToKey'>,
+  element: HTMLElement, // the scroll container
+  key: Key,
+  options?: ScrollToOptions & { duration?: number; easing?: (t) => number; axis?; signal?: AbortSignal },
+): Promise<boolean>
+```
+
+- Every animation frame recomputes the target from `getItemRect(key)` (estimated for unmounted
+  rows, then measured as rows mount) and covers the eased share of the remaining distance, so a
+  target that moves is still met at the end. The last frame calls `scrollToKey(key, options)`, which
+  lands exactly and locks while sizes settle. Default: 400 ms, ease in-out cubic.
+- Frames write the offset like a user scroll, so the engine keeps the visible rows anchored while
+  rows mount on the way.
+- `wheel`, `touchstart`, `pointerdown` or `keydown` on the element, `signal`, or a newer animation
+  on the same element cancel it (resolves `false`). An unknown key, a key removed on the way, or a
+  container detached on the way (the list unmounted) resolve `false`.
+- `element` must be the scroll container itself. `axis` selects `scrollLeft` for horizontal lists,
+  but RTL offsets are not normalised yet.
+- With `prefers-reduced-motion: reduce` or `duration <= 0` it jumps (`scrollToKey`) at once.
 
 ## Data structures
 
@@ -339,7 +462,7 @@ interface Range { readonly start: number; readonly end: number } // inclusive, e
 interface Plan extends Range { readonly options: VirtualizerOptions }
 interface VisibleRange { startIndex: number; endIndex: number; startKey: Key | null; endKey: Key | null }
 interface FollowContext { atEdge: boolean; added: number; count: number }
-interface Snapshot { key: Key | null; index: number; delta: number; pinned: boolean }
+interface Snapshot { key: Key | null; index: number; delta: number; pinned: boolean; sizes?: [Key, number][] }
 interface ItemRect { start: number; size: number; measured: boolean }
 interface ScrollToOptions { align?: ItemAlign; offset?: number }
 ```

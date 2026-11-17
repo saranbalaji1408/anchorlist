@@ -31,13 +31,16 @@ const renderMessage = (m) => <Message message={m} /> // stable: module scope or 
 ## Why anchorlist
 
 - **Stable scroll anchoring:** prepend history, append messages, remove items and resize rows
-  without the viewport jumping. At DPR 1 each painted change moves content by at most 0.5 px and
-  content is never more than 1 px from its intended position, checked by a seeded fuzz test.
+  without the viewport jumping. At DPR 1 each painted change moves content by at most 0.5 px for whole-pixel rows (at most 1 px
+  with fractional heights once the error has passed 0.5 px), and content is never more than 1 px
+  from its intended position, checked by a seeded fuzz test.
 - **Chat and feeds from one option:** `align: 'end'` stays pinned to the newest item, and
   `'start'` serves top-anchored feeds.
 - **Dynamic heights:** rows are measured as they render, so no fixed row height or estimate is
   required.
-- **Small:** hard gzip budgets enforced in CI. The React chat path (core + react) must stay at or below 5.8 kB and is currently 5.37 kB.
+- **Production features as opt-in entries:** sticky group headers, smooth scrolling to unrendered
+  items, snapshot sizes and server rendering, plus focus preservation and `aria-busy` built in.
+- **Small:** hard gzip budgets enforced in CI. The React chat path (core + react) must stay at or below 5.8 kB and is currently 5.63 kB.
 
 ## Packages
 
@@ -54,7 +57,7 @@ Vue and Svelte bindings are planned.
 - [anchorlist vs TanStack Virtual](https://saranbalaji1408.github.io/anchorlist/compare/tanstack-virtual)
 - [anchorlist vs react-virtuoso](https://saranbalaji1408.github.io/anchorlist/compare/react-virtuoso)
 
-Head-to-head benchmarks are planned for v0.2.
+- [Chat benchmark](https://saranbalaji1408.github.io/anchorlist/compare/benchmark): drift, following, re-renders and bundle size against both, in one harness ([`bench/`](bench)).
 
 ## Development
 

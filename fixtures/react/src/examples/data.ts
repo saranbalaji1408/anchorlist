@@ -33,4 +33,10 @@ let postId = 0
 export const createPosts = (count: number): Post[] =>
   Array.from({ length: count }, () => ({ id: `post-${++postId}`, title: sentence(2, 6), body: sentence(10, 80) }))
 
-export const delay = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
+/**
+ * Stands in for a network request. While a scenario sets `window.__hold` to a
+ * promise, the request also waits for it, so the scenario decides when a page
+ * lands instead of racing the timer.
+ */
+export const delay = (ms: number): Promise<void> =>
+  new Promise<void>((r) => setTimeout(r, ms)).then(() => (window as { __hold?: Promise<void> }).__hold)
