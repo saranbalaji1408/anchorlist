@@ -14,6 +14,7 @@ description: API reference for anchorlist, @anchorlist/react and @anchorlist/cor
 | `@anchorlist/react/horizontal` | Opt-in [`horizontal()`](#horizontal) layout for `<AnchorList>`. Also `anchorlist/horizontal`. |
 | `@anchorlist/core/sticky`, `/animate`, `/snapshot`, `/ssr` | [Opt-in entries](#opt-in-entries): `stickyState`, `animateToKey`, `takeSnapshot` / `snapshotEstimate`, `initialPlan`. Also `anchorlist/sticky`, `anchorlist/animate`, `anchorlist/snapshot`, `anchorlist/ssr`. |
 | `@anchorlist/react/sticky` | [`StickyItem`](#stickyitem). Also `anchorlist/sticky`. |
+| `@anchorlist/core/lanes`, `@anchorlist/react/lanes` | [Lanes](#lanes) (`grid`, `masonry`) and [`<LanesList>`](#laneslist). Also `anchorlist/lanes`, which re-exports both. |
 
 All packages are ESM only, ship TypeScript declarations and target ES2020.
 
@@ -86,6 +87,23 @@ width, and creates `base` (default `elementScroller`) on the `HORIZONTAL` axis. 
 widths. The `sticky` overlay sticks to the top only. Create the factory once (module scope), not
 in render. Guides: [horizontal virtual list](/guide/horizontal-list),
 [RTL virtual list](/guide/rtl-virtual-list).
+
+### `<LanesList>`
+
+```tsx
+import { LanesList, grid, masonry } from 'anchorlist/lanes' // or '@anchorlist/react/lanes' + '@anchorlist/core/lanes'
+
+const [lanes] = useState(() => grid({ lanes: 4, gap: 16 }))
+<LanesList lanes={lanes} style={{ height: 600 }} items={items} getKey={getKey} renderItem={renderItem} />
+```
+
+`<AnchorList>` with items laid out in lanes and positioned absolutely. It takes every
+`<AnchorList>` prop plus `lanes` (from [`grid` or `masonry`](#lanes), created once per list and read
+on mount). The lanes own the gap; `paddingStart` and `paddingEnd` are not used. A custom `scroller`
+(`windowScroller`, or `horizontal()` with `horizontal: true` lanes) is wrapped by the lanes; that is
+expected to work but not yet covered by tests. A grid
+always renders whole rows. Keep `overscan` (default 400) at least as large as the largest item.
+342 B gzip on top of `<AnchorList>` (budget 400 B). Guide: [virtual grid and masonry](/guide/virtual-grid-masonry).
 
 ### `useAnchorList(options, elements, scroller?)`
 
@@ -188,6 +206,26 @@ returns -1.
 - `simulatedScroller(options?)` is a deterministic, DOM-free layout for tests and benchmarks, with
   a manual clock (`tick()`, `advance(ms)`). `quantize: 'round' | 'trunc'` stores whole-pixel
   offsets like browsers at DPR 1.
+
+### Lanes
+
+`@anchorlist/core/lanes` (`anchorlist/lanes`): `grid({ lanes, gap?, horizontal? })` fills rows in
+index order (a row is as tall as its tallest item); `masonry({ lanes, gap?, horizontal? })` puts
+each item into the lane that ends first. Lanes are columns, or rows when `horizontal`. The engine
+stays one-dimensional; the returned `Lanes` object adapts the host:
+
+| Method | Notes |
+| --- | --- |
+| `options(o)` | Engine options: `estimateSize` becomes each item's share of the main axis; `gap`, `paddingStart` and `paddingEnd` are cleared. Pure. |
+| `range(plan, count)` | The items to render: whole rows for a grid, the plan itself for masonry. Pure. |
+| `sync(o)` | Records the committed count and keys. Commit phase, before `commit()`. |
+| `scroller(s)` | Wraps a scroller: writes each item's position and lane size, and sizes the list. |
+| `position(i)` | `{ start, lane }` of item `i`, laid out lazily up to it. |
+
+Give the list `position: relative`. Padding is not supported (use a header or footer). A change
+before the viewport that is not a whole grid row, or any change for masonry, can move later items
+to other lanes; the anchor item keeps its main-axis position. 1,436 B gzip (budget 1.5 kB). Full
+contract: [`API.md`](https://github.com/saranbalaji1408/anchorlist/blob/main/packages/core/API.md#lanes).
 
 ### Opt-in entries
 

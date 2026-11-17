@@ -23,11 +23,13 @@ const llmsPlugins = llmstxt({
   title: SITE_NAME,
   description: 'A virtual list for React with stable scroll anchoring (chat, reverse infinite scroll, feeds, dynamic heights).',
   details: [
-    'anchorlist v0.2 ships `@anchorlist/core` (framework-agnostic engine, zero dependencies) and',
+    'anchorlist v0.4 ships `@anchorlist/core` (framework-agnostic engine, zero dependencies) and',
     '`@anchorlist/react`; the unscoped `anchorlist` package re-exports both.',
     "Use `align: 'end'` for chat (pinned to the newest item) and `align: 'start'` (default) for feeds.",
     'Pass `scroller={windowScroller}` (`anchorlist/window`) to scroll with the page, `scroller={horizontal()}`',
     '(`anchorlist/horizontal`) for a horizontal list and `horizontal(rtlScroller)` (`anchorlist/rtl`) for right-to-left.',
+    'Grids and masonry: `<LanesList lanes={grid({ lanes: 4 })} />` or `masonry({ lanes: 3, gap: 8 })` from `anchorlist/lanes`;',
+    'create the layout once per list (useState), keep `overscan` at least the largest item, and use a header instead of padding.',
     'Items need unique, stable keys; replace arrays instead of mutating them; never set scrollTop directly.',
     'Keep `renderItem` stable (module scope or useCallback) so a prepend re-renders no mounted row.',
     'Opt-in entries: `anchorlist/sticky` (StickyItem), `anchorlist/animate` (animateToKey), `anchorlist/snapshot`',
@@ -66,7 +68,7 @@ function structuredData(pageData: PageData, url: string): HeadConfig[] {
       runtimePlatform: 'browser',
       version: pkg.version,
       keywords:
-        'virtual list, virtualized list, react virtual list, chat, reverse infinite scroll, infinite scroll, scroll anchoring, dynamic height, sticky headers, server rendering, window scroller, horizontal virtual list, rtl',
+        'virtual list, virtualized list, react virtual list, chat, reverse infinite scroll, infinite scroll, scroll anchoring, dynamic height, sticky headers, server rendering, window scroller, horizontal virtual list, rtl, virtual grid, masonry',
     }),
   ]
 
@@ -184,6 +186,7 @@ export default defineConfig({
           { text: 'Window scroller', link: '/guide/window-scroller' },
           { text: 'Horizontal list', link: '/guide/horizontal-list' },
           { text: 'Right-to-left (RTL)', link: '/guide/rtl-virtual-list' },
+          { text: 'Grid and masonry', link: '/guide/virtual-grid-masonry' },
         ],
       },
       {

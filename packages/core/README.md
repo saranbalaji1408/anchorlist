@@ -31,5 +31,9 @@ Other scrollers are opt-in entries, so the list entry does not grow: `windowScro
 `rtlScroller` from `@anchorlist/core/rtl` normalises right-to-left horizontal lists. Pass
 `axis: HORIZONTAL` to `elementScroller` for a left-to-right horizontal list.
 
+Grid and masonry layouts are an opt-in entry too: `grid({ lanes })` and `masonry({ lanes, gap })`
+from `@anchorlist/core/lanes` wrap the scroller and position items in lanes while the engine stays
+one-dimensional ([guide](https://saranbalaji1408.github.io/anchorlist/guide/virtual-grid-masonry)).
+
 See [API.md](./API.md) for the adapter contract and the full API, and [DESIGN.md](./DESIGN.md) for
 how it works.

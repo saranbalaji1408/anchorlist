@@ -51,8 +51,9 @@ npm install anchorlist
 - [Window scroller](/guide/window-scroller): a list that scrolls with the page, under a fixed app bar.
 - [Horizontal virtual list](/guide/horizontal-list) and [RTL virtual list](/guide/rtl-virtual-list):
   the same anchoring on the x axis, right-to-left included.
+- [Virtual grid and masonry](/guide/virtual-grid-masonry): lanes of cards or photos, any item height.
 - [API reference](/api/)
 - Comparisons: [TanStack Virtual alternative](/compare/tanstack-virtual),
   [react-virtuoso alternative](/compare/react-virtuoso), [chat benchmark](/compare/benchmark)
 
-v0.2 ships React bindings and the framework-agnostic core. Vue and Svelte bindings are planned.
+v0.4 ships React bindings and the framework-agnostic core. Vue and Svelte bindings are planned.

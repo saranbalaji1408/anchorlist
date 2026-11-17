@@ -79,7 +79,7 @@ simulated scroller).
 - No border compensation: don't put main-axis borders on the scroll container or the list.
 - The same measuring works along the x axis ([horizontal list](./horizontal-list),
   [RTL](./rtl-virtual-list)) and for a list that scrolls with the page
-  ([window scroller](./window-scroller)). Grid and masonry layouts are planned.
+  ([window scroller](./window-scroller)), and inside [grid and masonry](./virtual-grid-masonry) layouts.
 
 ## Related
 

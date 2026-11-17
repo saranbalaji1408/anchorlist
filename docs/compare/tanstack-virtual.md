@@ -34,7 +34,7 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | Restore scroll position | `getSnapshot` / `initialSnapshot` (key-based) | `initialOffset` (pixel-based) |
 | Window scrolling | `windowScroller` (`anchorlist/window`) | Yes |
 | Horizontal | `horizontal()` (`anchorlist/horizontal`); right-to-left with `rtlScroller` | Yes |
-| Grid / masonry | Planned (v0.4) | Yes (lanes, or two virtualizers) |
+| Grid / masonry | `grid` and `masonry` with `LanesList` (`anchorlist/lanes`) | Yes (lanes, or two virtualizers) |
 | Sticky items | `StickyItem` (`anchorlist/sticky`) | Yes, via custom range extraction |
 | Smooth scroll to an unrendered item | `animateToKey` (`anchorlist/animate`) | `scrollToIndex` with `behavior: 'smooth'` |
 | Server rendering | Opt-in: `initialRect` + `initialPlan` | `initialRect` |
@@ -49,8 +49,8 @@ anchorlist enforces gzip size budgets in CI with size-limit:
 | --- | --- |
 | `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.50 kB (4,495 B) |
 | `@anchorlist/core` main entry, everything | ≤ 6.5 kB budget, currently 5.7 kB |
-| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.25 kB |
-| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.7 kB |
+| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.27 kB |
+| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.73 kB |
 
 Sticky items, smooth scrolling, snapshot sizes and server rendering are separate entries, so a
 list that doesn't use them doesn't load them.
@@ -71,7 +71,6 @@ Measured with the same tool and settings in the [benchmark](./benchmark#bundle-s
 ## When to choose TanStack Virtual
 
 - You need Vue, Svelte, Solid, Angular or Lit today.
-- You need grids, masonry or window scrolling today.
 - You want full control over rendering and are happy to build anchoring yourself.
 
 ## Migrating

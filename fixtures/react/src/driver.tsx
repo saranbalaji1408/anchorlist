@@ -1,6 +1,7 @@
 import { AnchorList, elementScroller, HORIZONTAL, type AnchorListHandle, type AnchorListProps, type FollowContext, type VisibleRange } from 'anchorlist'
 import { animateToKey } from 'anchorlist/animate'
 import { horizontal as horizontalLayout } from 'anchorlist/horizontal'
+import { grid, LanesList, masonry, type Lanes } from 'anchorlist/lanes'
 import { rtlScroller } from 'anchorlist/rtl'
 import { snapshotEstimate, takeSnapshot } from 'anchorlist/snapshot'
 import { initialPlan } from 'anchorlist/ssr'
@@ -29,6 +30,8 @@ let withoutScroller: string[] = []
 let horizontal = false
 /** The mounted config, for helpers that need the layout (animateToKey's scroller). */
 let mounted: MountConfig = { items: [] }
+/** The lane layout of the mounted list, if any. Created on mount. */
+let lanes: Lanes | undefined
 
 function Bubble({ item }: { item: Item }): ReactNode {
   const read = (): number | undefined => heights.get(item.id) ?? item.height
@@ -143,7 +146,7 @@ function App({ init, config, bridge, list }: { init: ListState; config: MountCon
         <div id="appbar" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: margin, background: '#fde', zIndex: 2 }} />
       )}
       <h1>anchorlist fixture</h1>
-      <AnchorList<Item> ref={list} {...props} />
+      {lanes ? <LanesList<Item> ref={list} {...props} lanes={lanes} /> : <AnchorList<Item> ref={list} {...props} />}
       <Committed s={s} onCommit={bridge.committed} />
     </main>
   )
@@ -204,6 +207,8 @@ export function installDriver(container: HTMLElement): void {
     const init: ListState = { ...DEFAULTS, ...config, items: intern(config.items) }
     horizontal = config.layout === 'horizontal' || config.layout === 'rtl'
     mounted = config
+    const l = config.lanes
+    lanes = l && (l.kind === 'grid' ? grid : masonry)({ lanes: l.lanes, gap: l.gap ?? 0, horizontal })
     const app = <App init={init} config={config} bridge={bridge} list={list} />
     return config.strict ? <StrictMode>{app}</StrictMode> : app
   }

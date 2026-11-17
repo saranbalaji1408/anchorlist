@@ -1,4 +1,4 @@
-import { keptRow, type ElementScrollerOptions, type Key, type Scroller, type Virtualizer, type VirtualizerOptions, type VisibleRange } from '@anchorlist/core'
+import { keptRow, type ElementScrollerOptions, type Key, type Range, type Scroller, type Virtualizer, type VirtualizerOptions, type VisibleRange } from '@anchorlist/core'
 import {
   forwardRef,
   memo,
@@ -122,7 +122,16 @@ function Sticky({ v, render }: { v: Virtualizer; render: (range: VisibleRange) =
   return <div style={STICKY}>{render(useSyncExternalStore(v.subscribe, v.getVisibleRange, v.getVisibleRange))}</div>
 }
 
-function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorListHandle>): ReactElement {
+/**
+ * Props that are not part of the public API. `LanesList` sets `mapRange` to
+ * `lanes.range`, so a grid renders whole rows of the planned range.
+ */
+export interface InternalProps {
+  /** Maps the planned range to the range to render. Pure. */
+  mapRange?: (range: Range, count: number) => Range
+}
+
+function AnchorListImpl<T>(props: AnchorListProps<T> & InternalProps, ref: ForwardedRef<AnchorListHandle>): ReactElement {
   const { items, getKey, renderItem, sticky } = props
   const element = useRef<HTMLDivElement>(null)
   const content = useRef<HTMLDivElement>(null)
@@ -140,17 +149,19 @@ function AnchorListImpl<T>(props: AnchorListProps<T>, ref: ForwardedRef<AnchorLi
     const k = getKey(item)
     return <Row key={k} k={k} v={v} item={item} render={renderItem as AnyRender} className={props.rowClassName} style={style} focus={focused} />
   }
+  // The rows to render: the plan, or what `mapRange` makes of it (whole grid rows).
+  const r = props.mapRange ? { ...plan, ...props.mapRange(plan, items.length) } : plan
   const rows: ReactNode[] = []
-  for (let i = plan.start; i <= plan.end; i++) rows.push(row(i))
+  for (let i = r.start; i <= r.end; i++) rows.push(row(i))
   // The focused row stays mounted outside the range, out of flow, in the same
   // keyed array as the rows so that React never re-creates it (see keptRow).
-  const kept = keptRow(v, plan, focused.current)
+  const kept = keptRow(v, r, focused.current)
   // Positioned in list space (the list is its containing block), so a page header above a
   // window-scrolled list does not shift it. A horizontal list (`horizontal()` lays the rows out
   // in a row) keeps it at its inline start: the left edge, or the right edge in right-to-left.
   const x = list.current?.style.flexDirection == 'row'
   if (kept)
-    rows[kept.index < plan.start ? 'unshift' : 'push'](
+    rows[kept.index < r.start ? 'unshift' : 'push'](
       row(kept.index, x ? { position: 'absolute', height: '100%', insetInlineStart: kept.offset } : { position: 'absolute', width: '100%', top: kept.offset }),
     )
   return (

@@ -237,6 +237,51 @@ The cache maps key → measured size and keeps the running sum for the average.
   animation-frame callback counts quiet frames (2 needed, 500 ms cap from its first frame) and never
   writes the offset. `touchstart`, `wheel` or any user scroll cancel the lock.
 
+## Lanes
+
+`@anchorlist/core/lanes` adds grid and masonry layouts without touching the engine (the list entry
+has no room). The seam is the `Scroller`: `lanes.scroller()` wraps it.
+
+- **Shares.** The engine measures each item through `measure()`, which returns the item's real
+  start (so anchoring holds the real element still) and its *share* of the main axis instead of
+  its size. A grid gives the row's size (its tallest item, read live from the mounted siblings,
+  plus the gap) to the row's last item and 0 to the rest, so the engine's `SizeIndex` holds the
+  row sizes and every item's offset is its row's offset in the layout. The last item of a partial
+  last row carries it, so the share moves when the count changes at the end. After an append
+  that fills that row, an unmounted old last item keeps its cached row share and the scroll size
+  is up to one row too large; after a trim that leaves a partial row, the new last item keeps its
+  cached 0 and the scroll size is up to one row too small. Both recover when the row is measured
+  again, which happens once it mounts (overscan > 0 mounts it before it is visible). Masonry gives `(size + gap) / lanes`, which depends
+  only on the item itself (no ordering issues inside a pass), and the engine offset of item `i` is
+  the average lane end before it. With shortest-lane placement every item starts between that
+  average minus one item size and the average, so an overscan of one item size covers it.
+- **Layout.** Item sizes live in a map by key (measured) with the host's estimate as the fallback.
+  Positions are computed lazily, in typed arrays, only up to the last item needed: grid row tops
+  and sizes; masonry starts, ends, lanes and a running maximum of lane ends, which sizes the list.
+  A size change invalidates from its index (masonry) or its row (grid); `sync()` invalidates from
+  the old end for appends, everything for other structural changes, from the first changed key
+  in the laid-out prefix for a reorder that keeps both edge keys, and nothing otherwise
+  (streaming). The keys are the ones recorded when each item was laid out, not the previous
+  `getKey`, because adapters may read items that were mutated in place (Vue and Svelte state).
+  That walk costs O(deepest laid-out index) per `sync()`, once per host render: about 50-90 µs
+  for 10,000 laid-out items. A masonry re-layout starts from the lane ends
+  found by scanning back to the last item of each lane. Sizes of removed keys are pruned when
+  they outnumber the live ones.
+- **Writing positions.** `setIndex` (in `commit()`, before measuring) and `setSpacers` (each pass,
+  after measuring and before the anchor is restored) write `position`, the main-axis start, the
+  cross offset and the cross size of every mounted item. The list's size goes into the
+  after-spacer: layout extent through the end of the longest run of consecutive mounted indices
+  (an item kept mounted for focus is a single index apart and the engine's after-spacer already
+  counts it) plus the engine's after-spacer.
+- **Rows.** `range()` widens a grid plan to whole rows, so a row's last item and its siblings
+  are mounted together. Extra mounted items outside the plan are measured and positioned like the
+  others. React's `LanesList` passes `range` to `AnchorList` as an internal `mapRange` prop
+  (about 20 B in `@anchorlist/react`).
+- **Limits.** Prepends that are not whole rows (grid) or any earlier change (masonry) re-lay out
+  later items, which may change lanes; only the anchor's main-axis position is held. Jumps over
+  unmeasured items use estimates for everything before the viewport. Engine padding is not
+  supported. Lanes are never mirrored for RTL except through logical `inset-inline-start`.
+
 ## Testing
 
 | Suite | What it checks |
@@ -246,6 +291,7 @@ The cache maps key → measured size and keeps the running sum for the average.
 | `sizeCache.test.ts` | Average, stale marking, LRU, and a property test against a reference. |
 | `scroller.test.ts` | `isTouchWebKit`, both axes, `elementScroller` against fake elements, the simulator layout and event order. |
 | `window.test.ts` | `windowScroller` against a fake document element and window: offsets, sizes, measurements with and without `scrollMargin`, horizontal, and the listeners it adds and removes. |
+| `lanes.test.ts` | Property tests of grid and masonry against naive layouts over prepends, appends, trims, replaces, measurements and out-of-order probes; shares, written styles and list size through the scroller wrapper; lazy layout; pruning. |
 | `rtl.test.ts` | `rtlConvention` for all three conventions; `rtlScroller` offset, overscroll, measurement, spacer and transform mirroring per convention, and the left-to-right fallback. |
 | `virtualizer.test.ts` | Behaviour for both aligns, including: follow; anchor removal; `scrollToKey` lock and cancel; edges and edge triggers; overscroll and touch deferral; cross-axis remeasure; gap and padding; estimate refresh; rebuild; aria; snapshots; user movement before the `scroll` event; state without callbacks; whole-pixel per-change and absolute bounds (rounding and truncating engines); clear and replace; holding the rows after a gap; `getSnapshot` without a scroller; duplicate keys; `maxCachedSizes` below the mounted count. |
 | `engine.fuzz.test.ts` | 20 operation types, seeded. 5 variants × 2 aligns: plain, gap + padding, touch WebKit with random touches, whole pixels with rounding, and whole pixels with truncation. `FUZZ_ITERATIONS` (local default 1500; CI runs 10,000 per configuration), `FUZZ_SEED`, `FUZZ_LOG`, `FUZZ_TRACE`. |
@@ -305,7 +351,7 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | --- | --- | --- |
 | `{ createVirtualizer, elementScroller }` | 4495 B | 4500 B |
 | main entry, everything (`*`) | 5702 B | 6500 B |
-| React chat path (core + react) | 5710 B | 5800 B |
+| React chat path (core + react) | 5726 B | 5800 B |
 | `@anchorlist/core/sticky` | 423 B | 500 B |
 | `@anchorlist/core/animate` | 789 B | 800 B |
 | `@anchorlist/core/snapshot` | 385 B | 500 B |
@@ -313,6 +359,10 @@ These are ranges over 3 runs (`pnpm --filter @anchorlist/core bench`).
 | `@anchorlist/core/window` (shared scroller chunk external) | 428 B | 600 B |
 | `@anchorlist/core/rtl` (shared scroller chunk external) | 509 B | 600 B |
 | `@anchorlist/react/horizontal` (react and core external) | 189 B | 300 B |
+| `@anchorlist/core/lanes` | 1436 B | 1500 B |
+| `@anchorlist/react/lanes` (react, core and the shared list chunk external) | 342 B | 400 B |
+
+`pnpm size` also runs `scripts/treeshake.ts`, which bundles the list import (from the sources and from `dist`) and fails if any optional entry (`/window`, `/rtl`, `/lanes`, and any later one listed in `exports`) contributes code. It does the same for `AnchorList` from `@anchorlist/react` against the React package's optional entries (`/horizontal`, `/lanes`).
 
 The budgets live in `.size-limit.js`. An entry that ignores a relative chunk (`./scroller.js`)
 keeps that import in the measured bundle; `modifyRolldownConfig` writes it as `./scroller.js`.
@@ -374,4 +424,7 @@ Size-driven choices:
   (`keptRow().offset`, from item 0's rect minus `paddingStart`, so no new engine method), which is
   also right under `windowScroller` below a page header. Not yet: `StickyItem` / `stickyState` on horizontal, RTL and window lists (the React sticky entry has
   6 B of budget left).
-- **Not yet:** lanes.
+- **Lanes** are positioned relative to the list (`position: relative` on it), so they work with
+  every scroller, `windowScroller` included. The lanes wrapper writes the position of every
+  registered item on each commit, a kept focused item included, so the kept row's content-space
+  `top` is replaced by its lane position.

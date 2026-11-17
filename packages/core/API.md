@@ -11,6 +11,7 @@ Normative reference for `@anchorlist/core` v0.2 and for framework adapters built
 - [Options](#options)
 - [Virtualizer methods](#virtualizer-methods)
 - [Scrollers](#scrollers)
+- [Lanes](#lanes)
 - [Behaviour](#behaviour)
 - [Data structures](#data-structures)
 - [Types](#types)
@@ -275,6 +276,51 @@ code to an app that already imports the list entry.
   whole-pixel offsets like browsers at DPR 1 (Chromium and Firefox round; WebKit truncates).
 - `ScrollerEvent`: `'scroll' | 'resize' | 'touchstart' | 'touchend' | 'touchcancel'`, and anything
   else (`'input'`, `'wheel'`, …) counts as user input (it cancels a `scrollToKey` lock).
+
+## Lanes
+
+`@anchorlist/core/lanes` lays items out in lanes, positioned absolutely: `grid({ lanes, gap?,
+horizontal? })` fills rows in index order (a row is as tall as its tallest item), and
+`masonry({ lanes, gap?, horizontal? })` puts each item into the lane that ends first (the
+lowest-numbered lane on a tie). Lanes are columns for a vertical list and rows when `horizontal`.
+
+The engine stays 1-D. A `Lanes` object adapts the host's options and scroller so that the engine
+sees each item's share of the main axis:
+
+```ts
+const lanes = masonry({ lanes: 3, gap: 8 })                   // once per list
+const plan = v.plan(lanes.options(options))                    // render: pure
+// render items lanes.range(plan, options.count), keyed as usual
+lanes.sync(options)                                            // commit phase, before commit()
+if (!attached) v.attach(lanes.scroller(elementScroller(els)))  // once
+v.commit(plan)
+```
+
+- `options(o)` returns the engine options: `estimateSize` becomes the item's share (from your
+  `estimateSize`, the size of one item, default 48), and `gap`, `paddingStart` and `paddingEnd`
+  are cleared (lanes own the gap; padding is not supported, use a header or footer).
+- `range(plan, count)` widens a grid plan to whole rows; masonry renders the plan as is.
+- `sync(o)` records the committed count and keys. Call it in the commit phase, before `commit()`.
+- `scroller(s)` wraps a scroller. On `setIndex` and on every pass it writes each item's
+  `position: absolute`, main-axis start (`top`, or `inset-inline-start` when horizontal), cross
+  offset and cross size (a CSS `calc()` of the list's cross size, so lanes follow width changes).
+  It sizes the list through its after-spacer: the layout through the last mounted item plus the
+  engine's size of everything after it. `measure()` returns the element's real start and its share.
+- `position(i)` returns `{ start, lane }` (laid out lazily up to `i`).
+- Give the list `position: relative`. Keep `overscan` at least as large as the largest item:
+  masonry items start up to one item before or after their share's position.
+
+Shares: a grid reports each row's size plus the gap on the row's last item and 0 on the others,
+so every item's engine offset is its row's offset (`scrollToKey` and `getItemRect` of any item in
+a row land on the row). Masonry reports `(size + gap) / lanes`, so engine
+offsets track the average lane end. Item sizes are kept by key, so they survive prepends, but a
+change of item count that is not a whole number of grid rows, or any change for masonry, re-lays
+out the items after it (they can change lanes). The anchor item keeps its main-axis position.
+A grid's partial last row is charged to its last item, so a count change at the end moves the
+share: an append that fills that row can leave the scroll size up to one row too large, and a trim
+that leaves a partial row up to one row too small, until that row mounts and is measured again.
+
+React: `<LanesList lanes={lanes} … />` from `@anchorlist/react/lanes` takes every `AnchorList` prop and does all of the above, grid rows included: it hands `lanes.range` to `AnchorList` through an internal prop, so a grid always renders whole rows. Budget: 1.5 kB gzip (core), 0.4 kB (React).
 
 ## Behaviour
 

@@ -104,4 +104,20 @@ export default [
     limit: '0.3 kB',
     gzip: true,
   },
+  {
+    name: '@anchorlist/core/lanes',
+    path: 'packages/core/dist/lanes.js',
+    import: '{ grid, masonry }',
+    limit: '1.5 kB',
+    gzip: true,
+  },
+  {
+    name: '@anchorlist/react/lanes (react, core and the shared list chunk external)',
+    path: 'packages/react/dist/lanes.js',
+    import: '{ LanesList }',
+    ignore: ['react', 'react-dom', '@anchorlist/core', './AnchorList.js'],
+    limit: '0.4 kB',
+    gzip: true,
+    modifyRolldownConfig: chunkPaths,
+  },
 ]

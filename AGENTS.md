@@ -26,7 +26,7 @@ pnpm build        # build all packages
 pnpm typecheck    # tsc across the workspace
 pnpm lint         # eslint (flat config)
 pnpm test         # vitest unit tests
-pnpm size         # size-limit budgets (run after build)
+pnpm size         # size-limit budgets and the tree-shaking check (run after build)
 pnpm e2e          # playwright; first run: pnpm exec playwright install chromium webkit firefox
 pnpm docs:build   # build the docs site
 ```

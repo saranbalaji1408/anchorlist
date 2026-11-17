@@ -34,7 +34,7 @@ are welcome on [GitHub](https://github.com/saranbalaji1408/anchorlist/issues).
 | Restore scroll position | `getSnapshot` / `initialSnapshot` | `getState` / `restoreStateFrom` |
 | Grouped lists, sticky headers | Sticky items: `StickyItem` from `anchorlist/sticky` | Yes (`GroupedVirtuoso`) |
 | Tables | Not planned yet | Yes (`TableVirtuoso`) |
-| Grid | Planned (v0.4) | Yes (`VirtuosoGrid`) |
+| Grid | `grid` and `masonry` with `LanesList` (`anchorlist/lanes`) | Yes (`VirtuosoGrid`) |
 | Window scrolling | `windowScroller` (`anchorlist/window`) | Yes (`useWindowScroll`) |
 | SSR | Opt-in: `initialRect` + `initialPlan` | Yes (`initialItemCount`) |
 | Smooth scroll to an unrendered item | `animateToKey` (`anchorlist/animate`) | `scrollToIndex({ behavior: 'smooth' })` |
@@ -47,8 +47,8 @@ anchorlist enforces gzip size budgets in CI with size-limit:
 | --- | --- |
 | `@anchorlist/core` list entry (`createVirtualizer` + `elementScroller`) | ≤ 4.5 kB budget, currently 4.50 kB (4,495 B) |
 | `@anchorlist/core` main entry, everything | ≤ 6.5 kB budget, currently 5.7 kB |
-| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.25 kB |
-| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.7 kB |
+| `@anchorlist/react` alone (React and core external) | ≤ 1.3 kB budget, currently 1.27 kB |
+| React chat path (core + react) | ≤ 5.8 kB budget, currently 5.73 kB |
 
 Sticky items, smooth scrolling, snapshot sizes and server rendering are separate entries, so a
 list that doesn't use them doesn't load them.
@@ -69,7 +69,7 @@ Measured with the same tool and settings in the [benchmark](./benchmark#bundle-s
 
 ## When to choose react-virtuoso
 
-- You need tables, grids or window scrolling today.
+- You need tables today.
 - You want a mature, widely used library with a long track record.
 
 ## Migrating
