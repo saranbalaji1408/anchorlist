@@ -1,27 +1,40 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const PORT = 4173
+// Overridable so parallel worktrees don't reuse each other's preview server via reuseExistingServer.
+const PORT = Number(process.env.E2E_PORT ?? 4173)
 const isCI = !!process.env.CI
+const BASE = `http://localhost:${PORT}/`
+const browsers = [
+  { name: 'chromium', device: devices['Desktop Chrome'] },
+  { name: 'webkit', device: devices['Desktop Safari'] },
+  { name: 'firefox', device: devices['Desktop Firefox'] },
+]
 
 export default defineConfig({
   testDir: './scenarios/tests',
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
+  // Retries must not hide flaky drift: a test that only passes on retry fails the run.
+  failOnFlakyTests: isCI,
   reporter: isCI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: `http://localhost:${PORT}`,
     trace: 'on-first-retry',
   },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-  ],
+  // Every browser runs the fixture on React 19 (`/`) and on React 18 (`/react18/`).
+  // Scenarios navigate with relative URLs (`./`), so they stay under the base path.
+  projects: browsers.flatMap(({ name, device }) => [
+    { name, use: { ...device, baseURL: BASE } },
+    { name: `${name}-react18`, use: { ...device, baseURL: `${BASE}react18/` } },
+  ]),
   webServer: {
-    command: `pnpm --filter @anchorlist/fixture-react build && pnpm --filter @anchorlist/fixture-react preview --port ${PORT} --strictPort`,
-    url: `http://localhost:${PORT}`,
+    // Builds the packages, then development builds of the fixture for React 19
+    // and React 18 (StrictMode checks and React warnings on), served together.
+    command:
+      'pnpm build && pnpm --filter @anchorlist/fixture-react build:dev && ' +
+      `pnpm --filter @anchorlist/fixture-react18 build:dev && pnpm --filter @anchorlist/fixture-react preview --port ${PORT} --strictPort`,
+    url: BASE,
     reuseExistingServer: !isCI,
-    timeout: 120_000,
+    timeout: 180_000,
   },
 })

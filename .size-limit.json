@@ -2,7 +2,7 @@
   {
     "name": "@anchorlist/core (list entry)",
     "path": "packages/core/dist/index.js",
-    "import": "{ VERSION }",
+    "import": "{ createVirtualizer, elementScroller }",
     "limit": "4.5 kB",
     "gzip": true
   },

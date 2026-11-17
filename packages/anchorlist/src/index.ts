@@ -1,2 +1,3 @@
+// Client module: tsdown.config.ts prepends the 'use client' directive to every built chunk.
 export * from '@anchorlist/core'
-export { VERSION as REACT_VERSION } from '@anchorlist/react'
+export * from '@anchorlist/react'
