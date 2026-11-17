@@ -302,6 +302,24 @@ describe('touch WebKit deferral', () => {
     h.sim.advance(125)
     expect(h.sim.translation).toBe(0)
   })
+
+  it('forgets an unfinished touch when the scroller is re-attached', async () => {
+    const h = mount({ keys: keysOf(100, 'k', 100), size: () => 50, viewport: 500, touchWebKit: true, options: { align: 'end' } })
+    await h.settle(20)
+    h.sim.advance(500)
+    h.sim.touch(true)
+    h.sim.userScroll(h.sim.offset() - 1000)
+    await h.settle(1)
+    // Re-attached mid-touch: its touchend never reaches this virtualizer.
+    h.v.attach(h.sim)
+    h.sim.advance(500)
+    const anchor = h.v.getSnapshot().key!
+    const before = h.visualEnd(anchor)!
+    h.setKeys([...keysOf(10, 'k', 90), ...h.keys])
+    h.sim.advance(200)
+    expect(h.sim.translation).toBe(0)
+    expect(h.visualEnd(anchor)).toBeCloseTo(before, 5)
+  })
 })
 
 describe('sizes', () => {
